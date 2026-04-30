@@ -11,7 +11,8 @@ import {
   Settings2, 
   ChevronRight,
   Loader2,
-  Globe
+  Globe,
+  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Input, M3Textarea, M3Select } from "@/components/ui/m3-ui";
@@ -137,7 +138,7 @@ export default function ApiBuilder() {
               <M3Select 
                 label="Method"
                 value={method} 
-                onChange={(e) => setMethod(e.target.value as Method)}
+                onChange={(val) => setMethod(val as Method)}
                 options={[
                   { label: "GET", value: "GET" },
                   { label: "POST", value: "POST" },
@@ -330,26 +331,5 @@ export default function ApiBuilder() {
         </div>
       </div>
     </ToolLayout>
-  );
-}
-
-function AlertCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
   );
 }

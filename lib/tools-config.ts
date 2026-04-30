@@ -27,7 +27,15 @@ import {
   Pipette,
   Layers,
   Film,
-  Paintbrush
+  Paintbrush,
+  Calculator,
+  Ruler,
+  Scale,
+  ShieldPlus,
+  Lock,
+  Timer,
+  FileSpreadsheet as FileText, // Re-using or mapping for GDocs
+  Terminal
 } from "lucide-react";
 import React from "react";
 
@@ -369,6 +377,78 @@ export class ToolRegistry {
       "/tools/gradient-generator",
       "generation",
       ["radial", "linear", "style", "css"]
+    ),
+    new Tool(
+      "md-gdocs",
+      "Docs MD",
+      "Convert Markdown to Rich Text for Google Docs pasting.",
+      FileText,
+      "/tools/md-gdocs",
+      "converters",
+      ["google", "docs", "formatting", "rich-text"]
+    ),
+    new Tool(
+      "calculator",
+      "Calculator",
+      "Perform basic and scientific mathematical operations.",
+      Calculator,
+      "/tools/calculator",
+      "utils",
+      ["math", "sum", "scientific", "numbers"]
+    ),
+    new Tool(
+      "distance-converter",
+      "Distance Conv",
+      "Convert between kilometers, miles, meters, and more.",
+      Ruler,
+      "/tools/distance-converter",
+      "converters",
+      ["length", "units", "imperial", "metric"]
+    ),
+    new Tool(
+      "weight-converter",
+      "Weight Conv",
+      "Convert between kilograms, pounds, ounces, and grams.",
+      Scale,
+      "/tools/weight-converter",
+      "converters",
+      ["mass", "units", "imperial", "metric"]
+    ),
+    new Tool(
+      "hmac-generator",
+      "HMAC Gen",
+      "Generate Hash-based Message Authentication Codes.",
+      ShieldPlus,
+      "/tools/hmac-generator",
+      "security",
+      ["crypto", "token", "sha256", "signature"]
+    ),
+    new Tool(
+      "aes-tool",
+      "AES Tool",
+      "Encrypt and decrypt data using AES-256 algorithm.",
+      Lock,
+      "/tools/aes-tool",
+      "security",
+      ["crypto", "encryption", "privacy", "secure"]
+    ),
+    new Tool(
+      "jwt-expiry",
+      "JWT Simulator",
+      "Simulate and check JWT token expiration states.",
+      Timer,
+      "/tools/jwt-expiry",
+      "security",
+      ["auth", "token", "session", "expiration"]
+    ),
+    new Tool(
+      "password-policy",
+      "Policy Builder",
+      "Build and test enterprise-grade password policies.",
+      ShieldCheck,
+      "/tools/password-policy",
+      "security",
+      ["auth", "validation", "requirements", "enterprise"]
     ),
   ];
 

@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
 import cronstrue from "cronstrue";
-import { Clock, Info, CheckCircle2, XCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Clock, Info, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { M3Input } from "@/components/ui/m3-ui";
 import { cn } from "@/lib/utils";
 
 export default function CronParser() {
@@ -51,21 +51,16 @@ export default function CronParser() {
 
         <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 md:p-12 space-y-10 shadow-2xl">
           <div className="space-y-4">
-            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-2">Cron Schedule String</label>
-            <div className="relative">
-              <Input
+            <M3Input
+                label="Cron Schedule String"
                 className={cn(
-                  "bg-zinc-950 border-zinc-800 h-20 text-2xl font-mono text-center tracking-widest text-primary focus:ring-0 focus:border-primary/50 transition-all rounded-3xl",
+                  "h-20 text-2xl font-mono text-center tracking-widest text-primary focus:ring-0 focus:border-primary/50 transition-all rounded-3xl",
                   error && "border-red-500/50 text-red-500"
                 )}
                 placeholder="* * * * *"
                 value={expression}
                 onChange={(e) => setExpression(e.target.value)}
               />
-              <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                 {error ? <XCircle className="w-6 h-6 text-red-500" /> : <CheckCircle2 className="w-6 h-6 text-green-500" />}
-              </div>
-            </div>
           </div>
 
           <div className="min-h-[120px] flex items-center justify-center p-8 bg-zinc-900/30 border border-zinc-800 rounded-3xl relative overflow-hidden group">
@@ -106,24 +101,3 @@ export default function CronParser() {
     </ToolLayout>
   );
 }
-
-function AlertCircle(props: any) {
-    return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-    );
-  }

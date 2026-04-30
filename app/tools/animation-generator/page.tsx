@@ -16,7 +16,7 @@ import {
   Settings2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { M3Input, M3Select } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -117,35 +117,36 @@ export default function AnimationGenerator() {
                       </div>
                    </div>
 
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                         <label className="text-[9px] font-black uppercase tracking-widest text-zinc-600 block ml-1">Duration (s)</label>
-                         <Input 
-                            type="number" step="0.1" value={duration} 
-                            onChange={(e) => setDuration(parseFloat(e.target.value))}
-                            className="bg-zinc-950 border-zinc-800 rounded-xl font-mono text-center"
-                         />
-                      </div>
-                      <div className="space-y-2">
-                         <label className="text-[9px] font-black uppercase tracking-widest text-zinc-600 block ml-1">Delay (s)</label>
-                         <Input 
-                            type="number" step="0.1" value={delay} 
-                            onChange={(e) => setDelay(parseFloat(e.target.value))}
-                            className="bg-zinc-950 border-zinc-800 rounded-xl font-mono text-center"
-                         />
-                      </div>
-                   </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <M3Input 
+                          label="Duration (s)"
+                          type="number" 
+                          step="0.1" 
+                          value={duration} 
+                          onChange={(e) => setDuration(parseFloat(e.target.value))}
+                          className="font-mono text-center"
+                       />
+                       <M3Input 
+                          label="Delay (s)"
+                          type="number" 
+                          step="0.1" 
+                          value={delay} 
+                          onChange={(e) => setDelay(parseFloat(e.target.value))}
+                          className="font-mono text-center"
+                       />
+                    </div>
 
                    <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-zinc-600 block ml-1">Iteration</label>
-                      <select 
-                         value={iteration} onChange={(e) => setIteration(e.target.value)}
-                         className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4 text-xs font-bold uppercase outline-none focus:border-primary/50"
-                      >
-                         <option value="1">1 Time</option>
-                         <option value="infinite">Infinite</option>
-                         <option value="alternate infinite">Alternate Loop</option>
-                      </select>
+                      <M3Select 
+                        label="Iteration"
+                        value={iteration} 
+                        onChange={setIteration}
+                        options={[
+                          { label: "1 Time", value: "1" },
+                          { label: "Infinite", value: "infinite" },
+                          { label: "Alternate Loop", value: "alternate infinite" },
+                        ]}
+                      />
                    </div>
                 </div>
 

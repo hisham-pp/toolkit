@@ -1,0 +1,191 @@
+"use client";
+
+import { useState } from "react";
+import { TOOLS } from "@/lib/tools-config";
+import { 
+  Lock, 
+  Unlock,
+  Copy,
+  RotateCcw,
+  ShieldAlert,
+  ShieldCheck,
+  Eye,
+  EyeOff
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { M3Input, M3Textarea } from "@/components/ui/m3-ui";
+import { toast } from "sonner";
+import CryptoJS from "crypto-js";
+import { cn } from "@/lib/utils";
+
+export default function AesToolPage() {
+  const tool = TOOLS.find(t => t.id === "aes-tool")!;
+  const [data, setData] = useState("");
+  const [password, setPassword] = useState("");
+  const [result, setResult] = useState("");
+  const [mode, setMode] = useState<"encrypt" | "decrypt">("encrypt");
+  const [showPass, setShowPass] = useState(false);
+
+  const handleProcess = () => {
+    if (!data || !password) {
+      toast.error("Please provide both data and a password");
+      return;
+    }
+
+    try {
+      if (mode === "encrypt") {
+        const encrypted = CryptoJS.AES.encrypt(data, password).toString();
+        setResult(encrypted);
+        toast.success("Data encrypted successfully");
+      } else {
+        const bytes = CryptoJS.AES.decrypt(data, password);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+        if (!decrypted) throw new Error("Invalid password or corrupted data");
+        setResult(decrypted);
+        toast.success("Data decrypted successfully");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Operation failed");
+      setResult("");
+    }
+  };
+
+  const copy = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(result);
+    toast.success("Result copied to clipboard");
+  };
+
+  const clear = () => {
+    setData("");
+    setPassword("");
+    setResult("");
+  };
+
+  return (
+    <div className="flex flex-col h-full max-w-5xl mx-auto gap-8">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">{tool.name}</h1>
+        <p className="text-zinc-500 font-medium uppercase tracking-widest text-[10px]">{tool.description}</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
+        {/* Controls */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+           <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 space-y-8 shadow-2xl">
+              <div className="flex bg-zinc-950 p-1 rounded-2xl border border-zinc-900">
+                 <button 
+                   onClick={() => { setMode("encrypt"); setResult(""); }}
+                   className={cn(
+                     "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all gap-2 flex items-center justify-center",
+                     mode === "encrypt" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-600 hover:text-zinc-400"
+                   )}
+                 >
+                    <Lock className="w-3 h-3" /> Encrypt
+                 </button>
+                 <button 
+                   onClick={() => { setMode("decrypt"); setResult(""); }}
+                   className={cn(
+                     "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all gap-2 flex items-center justify-center",
+                     mode === "decrypt" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-600 hover:text-zinc-400"
+                   )}
+                 >
+                    <Unlock className="w-3 h-3" /> Decrypt
+                 </button>
+              </div>
+
+              <div className="space-y-6">
+                 <M3Textarea 
+                   label={mode === "encrypt" ? "Plain Text Data" : "Encrypted Base64 Data"}
+                   placeholder={mode === "encrypt" ? "Enter text to secure..." : "Paste encrypted string..."}
+                   className="min-h-[160px] font-mono text-xs"
+                   value={data}
+                   onChange={(e) => setData(e.target.value)}
+                 />
+
+                 <div className="relative">
+                    <M3Input 
+                      label="Encryption Key"
+                      type={showPass ? "text" : "password"}
+                      placeholder="Strong password..."
+                      className="font-mono pr-12"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button 
+                      onClick={() => setShowPass(!showPass)}
+                      className="absolute right-4 top-[38px] text-zinc-600 hover:text-primary transition-colors"
+                    >
+                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                 </div>
+              </div>
+
+              <div className="flex gap-4">
+                 <Button 
+                   onClick={handleProcess}
+                   className="flex-1 h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest gap-3 shadow-xl shadow-primary/20"
+                 >
+                    {mode === "encrypt" ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+                    {mode === "encrypt" ? "Secure" : "Convert"}
+                 </Button>
+                 <Button 
+                   onClick={clear}
+                   variant="outline"
+                   className="h-16 w-16 rounded-2xl border-zinc-800 text-zinc-600 hover:text-white"
+                 >
+                    <RotateCcw className="w-5 h-5" />
+                 </Button>
+              </div>
+           </div>
+
+           <div className="bg-amber-500/5 border border-amber-500/10 p-5 rounded-3xl flex gap-4 items-start">
+              <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Security Warning</p>
+                 <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">Never share your encryption key. AES-256 is highly secure, but only as strong as your password choice.</p>
+              </div>
+           </div>
+        </div>
+
+        {/* Result Area */}
+        <div className="lg:col-span-7 flex flex-col gap-6">
+           <div className="flex items-center justify-between px-2">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 flex items-center gap-3">
+                 {mode === "encrypt" ? "Encrypted Output" : "Decrypted Secret"}
+              </h3>
+              {result && (
+                <button 
+                  onClick={copy}
+                  className="text-[9px] font-black uppercase tracking-widest text-primary hover:text-white transition-all flex items-center gap-2"
+                >
+                  <Copy className="w-3 h-3" /> Copy to Clipboard
+                </button>
+              )}
+           </div>
+
+           <div className="flex-1 bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-10 flex flex-col items-center justify-center relative group overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+              
+              {!result ? (
+                <div className="flex flex-col items-center justify-center opacity-10 gap-6">
+                   <ShieldCheck className="w-24 h-24" />
+                   <span className="text-xl font-black uppercase tracking-widest">Locked</span>
+                </div>
+              ) : (
+                <div className="w-full h-full font-mono text-[13px] text-zinc-300 leading-relaxed break-all whitespace-pre-wrap overflow-auto custom-scrollbar p-2">
+                   {result}
+                </div>
+              )}
+           </div>
+
+           <div className="bg-zinc-950/50 border border-zinc-900 p-6 rounded-3xl">
+              <p className="text-[10px] font-bold text-zinc-600 leading-relaxed uppercase tracking-wider text-center">
+                 Uses OpenSSL-compatible AES-256 (CBC) encryption with Salted Key Derivation.
+              </p>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
