@@ -56,9 +56,15 @@ export default function Home() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-zinc-600"
           />
+          <Link href="/tools" className="mt-2 block md:hidden text-center text-[10px] uppercase font-bold text-zinc-600 hover:text-zinc-400">
+            Browse All Categories
+          </Link>
         </div>
 
         <div className="hidden lg:flex gap-6 items-center text-[10px] uppercase tracking-widest font-mono">
+          <Link href="/tools" className="px-4 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-zinc-400 hover:text-primary hover:border-primary/30 transition-all">
+            View Directory
+          </Link>
           <span className="flex items-center gap-2 text-zinc-400">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> 
             System Ready

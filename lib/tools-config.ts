@@ -26,6 +26,8 @@ export type ToolConfig = {
   icon: React.ElementType;
   route: string;
   category: "formatting" | "converters" | "encoding" | "generation" | "security" | "utils";
+  metaTitle: string;
+  metaDescription: string;
 };
 
 export const TOOLS: ToolConfig[] = [
@@ -36,6 +38,8 @@ export const TOOLS: ToolConfig[] = [
     icon: FileJson,
     route: "/tools/json-formatter",
     category: "formatting",
+    metaTitle: "JSON Formatter | DevHub",
+    metaDescription: "Beautify, minify, and validate JSON data instantly in your browser.",
   },
   {
     id: "base64",
@@ -44,6 +48,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Hash,
     route: "/tools/base64",
     category: "encoding",
+    metaTitle: "Base64 Tool | DevHub",
+    metaDescription: "Encode and decode strings to and from Base64 format securely.",
   },
   {
     id: "url-encoder",
@@ -52,6 +58,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Link2,
     route: "/tools/url-encoder",
     category: "encoding",
+    metaTitle: "URL Encoder | DevHub",
+    metaDescription: "Safely encode and decode URL components and parameters.",
   },
   {
     id: "jwt-decoder",
@@ -60,6 +68,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Code2,
     route: "/tools/jwt-decoder",
     category: "security",
+    metaTitle: "JWT Decoder | DevHub",
+    metaDescription: "Inspect and decode JSON Web Tokens (JWT) headers and payloads.",
   },
   {
     id: "uuid-generator",
@@ -68,6 +78,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Fingerprint,
     route: "/tools/uuid-generator",
     category: "generation",
+    metaTitle: "UUID Generator | DevHub",
+    metaDescription: "Generate high-quality v4 UUIDs for your development and database needs.",
   },
   {
     id: "http-status",
@@ -76,6 +88,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Globe,
     route: "/tools/http-status",
     category: "utils",
+    metaTitle: "HTTP Status Explorer | DevHub",
+    metaDescription: "Browse and understand HTTP response status codes and their meanings.",
   },
   {
     id: "csv-json",
@@ -84,6 +98,8 @@ export const TOOLS: ToolConfig[] = [
     icon: FileSpreadsheet,
     route: "/tools/csv-json",
     category: "converters",
+    metaTitle: "CSV to JSON Converter | DevHub",
+    metaDescription: "Convert CSV data to JSON array format and vice versa instantly.",
   },
   {
     id: "yaml-json",
@@ -92,6 +108,8 @@ export const TOOLS: ToolConfig[] = [
     icon: FileType,
     route: "/tools/yaml-json",
     category: "converters",
+    metaTitle: "YAML to JSON Converter | DevHub",
+    metaDescription: "Switch between YAML and JSON formats with preserved structure.",
   },
   {
     id: "password-gen",
@@ -100,6 +118,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Key,
     route: "/tools/password-generator",
     category: "security",
+    metaTitle: "Password Generator | DevHub",
+    metaDescription: "Generate secure, random passwords with customizable parameters.",
   },
   {
     id: "lorem-ipsum",
@@ -108,6 +128,8 @@ export const TOOLS: ToolConfig[] = [
     icon: AlignLeft,
     route: "/tools/lorem-ipsum",
     category: "generation",
+    metaTitle: "Lorem Ipsum Generator | DevHub",
+    metaDescription: "Generate placeholder text in words, sentences, or paragraphs.",
   },
   {
     id: "timezone",
@@ -116,6 +138,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Clock,
     route: "/tools/timezone-converter",
     category: "utils",
+    metaTitle: "Timezone Converter | DevHub",
+    metaDescription: "Convert and compare times across different global time zones easily.",
   },
   {
     id: "hash-gen",
@@ -124,6 +148,8 @@ export const TOOLS: ToolConfig[] = [
     icon: ShieldCheck,
     route: "/tools/hash-generator",
     category: "security",
+    metaTitle: "Hash Generator | DevHub",
+    metaDescription: "Generate MD5, SHA1, SHA256, and SHA512 hashes for any text input.",
   },
   {
     id: "bcrypt-gen",
@@ -132,6 +158,8 @@ export const TOOLS: ToolConfig[] = [
     icon: ShieldCheck,
     route: "/tools/bcrypt-generator",
     category: "security",
+    metaTitle: "Bcrypt Generator | DevHub",
+    metaDescription: "Securely hash passwords using the Bcrypt algorithm with adjustable salt rounds.",
   },
   {
     id: "bcrypt-comp",
@@ -140,6 +168,8 @@ export const TOOLS: ToolConfig[] = [
     icon: ShieldCheck,
     route: "/tools/bcrypt-comparator",
     category: "security",
+    metaTitle: "Bcrypt Checker | DevHub",
+    metaDescription: "Verify and compare plain text passwords against Bcrypt hashes.",
   },
   {
     id: "sql-formatter",
@@ -148,6 +178,8 @@ export const TOOLS: ToolConfig[] = [
     icon: FileJson,
     route: "/tools/sql-formatter",
     category: "formatting",
+    metaTitle: "SQL Formatter | DevHub",
+    metaDescription: "Beautify and format SQL queries for better readability and structure.",
   },
   {
     id: "regex-tester",
@@ -156,6 +188,8 @@ export const TOOLS: ToolConfig[] = [
     icon: Search,
     route: "/tools/regex-tester",
     category: "utils",
+    metaTitle: "Regex Tester | DevHub",
+    metaDescription: "Test and debug JavaScript regular expressions with real-time match highlighting.",
   },
   {
     id: "markdown-preview",
@@ -164,5 +198,7 @@ export const TOOLS: ToolConfig[] = [
     icon: Eye,
     route: "/tools/markdown-preview",
     category: "formatting",
+    metaTitle: "Markdown Previewer | DevHub",
+    metaDescription: "Write and preview GitHub-flavored markdown with live sync.",
   },
 ];
