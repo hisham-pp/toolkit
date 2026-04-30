@@ -21,7 +21,8 @@ import {
   Zap,
   LayoutGrid,
   Split,
-  Files
+  Files,
+  FileCode
 } from "lucide-react";
 import React from "react";
 
@@ -143,6 +144,14 @@ export class ToolRegistry {
       ShieldCheck,
       "/tools/password-strength",
       "security"
+    ),
+    new Tool(
+      "markdown-html",
+      "MD to HTML",
+      "Convert Markdown content into clean, semantic HTML code.",
+      FileCode,
+      "/tools/markdown-html",
+      "converters"
     ),
     new Tool(
       "xml-json",
