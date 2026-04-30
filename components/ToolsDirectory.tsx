@@ -29,7 +29,8 @@ export default function ToolsDirectory() {
     const filtered = TOOLS.filter(tool => 
       tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tool.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      tool.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tool.keywords?.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     return filtered.reduce((acc, tool) => {

@@ -40,7 +40,8 @@ export class Tool {
     public description: string,
     public icon: React.ElementType,
     public route: string,
-    public category: ToolCategory
+    public category: ToolCategory,
+    public keywords: string[] = []
   ) {}
 
   get metaTitle() {
@@ -60,7 +61,8 @@ export class ToolRegistry {
       "Format, obscure, and manage .env file variables securely.",
       Settings2,
       "/tools/env-manager",
-      "formatting"
+      "formatting",
+      ["environment", "variables", "secrets", "config", "dotenv"]
     ),
     new Tool(
       "base64-file",
@@ -68,7 +70,8 @@ export class ToolRegistry {
       "Convert images and files to Base64 data strings for embedding.",
       ImagePlus,
       "/tools/base64-file",
-      "encoding"
+      "encoding",
+      ["image", "upload", "string", "data-uri", "binary"]
     ),
     new Tool(
       "api-builder",
@@ -76,7 +79,8 @@ export class ToolRegistry {
       "Mini Postman-style UI for testing REST API requests.",
       Globe,
       "/tools/api-builder",
-      "utils"
+      "utils",
+      ["rest", "http", "request", "fetch", "endpoint", "postman"]
     ),
     new Tool(
       "code-diff",
@@ -84,7 +88,8 @@ export class ToolRegistry {
       "Compare various code languages with syntax highlighting support.",
       Split,
       "/tools/code-diff",
-      "diff"
+      "diff",
+      ["compare", "git", "merge", "syntax", "highlight"]
     ),
     new Tool(
       "yaml-diff",
@@ -92,7 +97,8 @@ export class ToolRegistry {
       "Structural comparison for YAML configuration files.",
       Files,
       "/tools/yaml-diff",
-      "diff"
+      "diff",
+      ["config", "kubernetes", "infra", "comparison"]
     ),
     new Tool(
       "excel-diff",
@@ -100,7 +106,8 @@ export class ToolRegistry {
       "Compare two Spreadsheet/CSV files for row differences.",
       FileSpreadsheet,
       "/tools/excel-diff",
-      "diff"
+      "diff",
+      ["csv", "data", "spreadsheet", "rows", "columns"]
     ),
     new Tool(
       "json-diff",
@@ -108,7 +115,8 @@ export class ToolRegistry {
       "Compare two JSON payloads and see the differences.",
       FileJson,
       "/tools/json-diff",
-      "diff"
+      "diff",
+      ["api", "payload", "structure", "object", "comparison"]
     ),
     new Tool(
       "text-diff",
@@ -116,7 +124,8 @@ export class ToolRegistry {
       "Compare two blocks of text side-by-side.",
       AlignLeft,
       "/tools/text-diff",
-      "diff"
+      "diff",
+      ["letter", "word", "line", "comparison"]
     ),
     new Tool(
       "box-shadow",
@@ -124,7 +133,8 @@ export class ToolRegistry {
       "Interactive CSS box-shadow generator and preview.",
       LayoutGrid,
       "/tools/box-shadow",
-      "generation"
+      "generation",
+      ["style", "css", "visual", "ui", "design"]
     ),
     new Tool(
       "cron-parser",
@@ -132,7 +142,8 @@ export class ToolRegistry {
       "Decode cron expressions into human-readable text.",
       Clock,
       "/tools/cron-parser",
-      "utils"
+      "utils",
+      ["schedule", "time", "job", "linux", "automation"]
     ),
     new Tool(
       "password-strength",
@@ -140,7 +151,8 @@ export class ToolRegistry {
       "Analyze password strength and entropy.",
       ShieldCheck,
       "/tools/password-strength",
-      "security"
+      "security",
+      ["auth", "entropy", "security", "bits"]
     ),
     new Tool(
       "markdown-html",
@@ -148,7 +160,8 @@ export class ToolRegistry {
       "Convert Markdown content into clean, semantic HTML code.",
       FileCode,
       "/tools/markdown-html",
-      "converters"
+      "converters",
+      ["convert", "web", "rich-text", "blog"]
     ),
     new Tool(
       "xml-json",
@@ -156,7 +169,8 @@ export class ToolRegistry {
       "Convert between XML and JSON formats easily.",
       FileType,
       "/tools/xml-json",
-      "converters"
+      "converters",
+      ["soap", "rest", "parsing"]
     ),
     new Tool(
       "json-formatter",
@@ -164,7 +178,8 @@ export class ToolRegistry {
       "Beautify and validate your JSON data with history support.",
       FileJson,
       "/tools/json-formatter",
-      "formatting"
+      "formatting",
+      ["pretty", "lint", "validate", "history"]
     ),
     new Tool(
       "base64",
@@ -172,7 +187,8 @@ export class ToolRegistry {
       "Encode or decode strings to Base64 format.",
       Hash,
       "/tools/base64",
-      "encoding"
+      "encoding",
+      ["encode", "decode", "binary", "data"]
     ),
     new Tool(
       "url-encoder",
@@ -180,7 +196,8 @@ export class ToolRegistry {
       "Encode or decode URL components safely.",
       Link2,
       "/tools/url-encoder",
-      "encoding"
+      "encoding",
+      ["uri", "params", "query", "web"]
     ),
     new Tool(
       "jwt-decoder",
@@ -188,7 +205,8 @@ export class ToolRegistry {
       "Decode and inspect JSON Web Tokens payloads.",
       Code2,
       "/tools/jwt-decoder",
-      "security"
+      "security",
+      ["auth", "token", "payload", "header", "signature"]
     ),
     new Tool(
       "uuid-generator",
@@ -196,7 +214,8 @@ export class ToolRegistry {
       "Generate v4 UUIDs for your projects.",
       Fingerprint,
       "/tools/uuid-generator",
-      "generation"
+      "generation",
+      ["guid", "id", "random", "unique"]
     ),
     new Tool(
       "http-status",
@@ -204,7 +223,8 @@ export class ToolRegistry {
       "Explore HTTP status codes and their meanings.",
       Globe,
       "/tools/http-status",
-      "utils"
+      "utils",
+      ["error", "response", "codes", "lookup"]
     ),
     new Tool(
       "csv-json",
@@ -212,7 +232,8 @@ export class ToolRegistry {
       "Convert CSV data to JSON objects and vice versa.",
       FileSpreadsheet,
       "/tools/csv-json",
-      "converters"
+      "converters",
+      ["excel", "export", "import", "data"]
     ),
     new Tool(
       "yaml-json",
@@ -220,7 +241,8 @@ export class ToolRegistry {
       "Convert between YAML and JSON formats.",
       FileType,
       "/tools/yaml-json",
-      "converters"
+      "converters",
+      ["config", "docker", "parsing"]
     ),
     new Tool(
       "password-gen",
@@ -228,7 +250,8 @@ export class ToolRegistry {
       "Create secure, random passwords instantly.",
       Key,
       "/tools/password-generator",
-      "security"
+      "security",
+      ["random", "entropy", "privacy"]
     ),
     new Tool(
       "lorem-ipsum",
@@ -236,7 +259,8 @@ export class ToolRegistry {
       "Generate placeholder text for your designs.",
       AlignLeft,
       "/tools/lorem-ipsum",
-      "generation"
+      "generation",
+      ["filler", "text", "mock", "dummy"]
     ),
     new Tool(
       "timezone",
@@ -244,7 +268,8 @@ export class ToolRegistry {
       "Convert and compare times across zones.",
       Clock,
       "/tools/timezone-converter",
-      "utils"
+      "utils",
+      ["world", "clock", "offset", "utc"]
     ),
     new Tool(
       "hash-gen",
@@ -252,7 +277,8 @@ export class ToolRegistry {
       "Generate MD5, SHA256 hashes for any text.",
       ShieldCheck,
       "/tools/hash-generator",
-      "security"
+      "security",
+      ["crypto", "md5", "sha256", "integrity"]
     ),
     new Tool(
       "bcrypt-gen",
@@ -260,7 +286,8 @@ export class ToolRegistry {
       "Securely hash passwords using Bcrypt algorithm.",
       ShieldCheck,
       "/tools/bcrypt-generator",
-      "security"
+      "security",
+      ["hash", "crypto", "rounds", "auth"]
     ),
     new Tool(
       "bcrypt-comp",
@@ -268,7 +295,8 @@ export class ToolRegistry {
       "Verify if a password matches a Bcrypt hash.",
       ShieldCheck,
       "/tools/bcrypt-comparator",
-      "security"
+      "security",
+      ["compare", "verify", "auth"]
     ),
     new Tool(
       "sql-formatter",
@@ -276,7 +304,8 @@ export class ToolRegistry {
       "Format and beautify your SQL queries.",
       FileJson,
       "/tools/sql-formatter",
-      "formatting"
+      "formatting",
+      ["database", "postgres", "mysql", "pretty"]
     ),
     new Tool(
       "regex-tester",
@@ -284,7 +313,8 @@ export class ToolRegistry {
       "Test and debug regular expressions.",
       Search,
       "/tools/regex-tester",
-      "utils"
+      "utils",
+      ["match", "replace", "pattern", "expression"]
     ),
     new Tool(
       "markdown-preview",
@@ -292,7 +322,8 @@ export class ToolRegistry {
       "Write and preview markdown in real-time.",
       Eye,
       "/tools/markdown-preview",
-      "formatting"
+      "formatting",
+      ["live", "render", "gfm", "editor"]
     ),
     new Tool(
       "color-picker",
@@ -300,7 +331,8 @@ export class ToolRegistry {
       "Advanced color selector with HSL, RGB, and Hex support.",
       Palette,
       "/tools/color-picker",
-      "generation"
+      "generation",
+      ["ui", "palette", "design", "hex", "rgb"]
     ),
     new Tool(
       "image-color-picker",
@@ -308,7 +340,8 @@ export class ToolRegistry {
       "Extract colors and pick specific pixels from uploaded images.",
       Pipette,
       "/tools/image-color-picker",
-      "generation"
+      "generation",
+      ["upload", "palette", "extraction"]
     ),
     new Tool(
       "theme-generator",
@@ -316,7 +349,8 @@ export class ToolRegistry {
       "Generate cohesive color themes and palettes from base colors.",
       Layers,
       "/tools/theme-generator",
-      "generation"
+      "generation",
+      ["shadcn", "sidebar", "layout", "visual"]
     ),
     new Tool(
       "animation-generator",
@@ -324,7 +358,8 @@ export class ToolRegistry {
       "Build CSS animations and keyframes with live previews.",
       Film,
       "/tools/animation-generator",
-      "generation"
+      "generation",
+      ["motion", "keyframes", "css", "transitions"]
     ),
     new Tool(
       "gradient-generator",
@@ -332,7 +367,8 @@ export class ToolRegistry {
       "Design complex CSS gradients with multiple color stops.",
       Paintbrush,
       "/tools/gradient-generator",
-      "generation"
+      "generation",
+      ["radial", "linear", "style", "css"]
     ),
   ];
 
