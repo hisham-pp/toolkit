@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { TOOLS } from '@/lib/tools-config';
 
-const tool = TOOLS.find(t => t.id === 'gradient-generator')!;
+const tool = TOOLS.find(t => t.id === 'theme-generator')!;
 
 export const metadata: Metadata = {
   title: tool.metaTitle,

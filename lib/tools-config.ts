@@ -22,7 +22,12 @@ import {
   LayoutGrid,
   Split,
   Files,
-  FileCode
+  FileCode,
+  Palette,
+  Pipette,
+  Layers,
+  Film,
+  Paintbrush
 } from "lucide-react";
 import React from "react";
 
@@ -112,14 +117,6 @@ export class ToolRegistry {
       AlignLeft,
       "/tools/text-diff",
       "diff"
-    ),
-    new Tool(
-      "gradient-gen",
-      "Gradient Gen",
-      "Visually design CSS/Tailwind gradients and copy code.",
-      Zap,
-      "/tools/gradient-generator",
-      "generation"
     ),
     new Tool(
       "box-shadow",
@@ -296,6 +293,46 @@ export class ToolRegistry {
       Eye,
       "/tools/markdown-preview",
       "formatting"
+    ),
+    new Tool(
+      "color-picker",
+      "Color Picker",
+      "Advanced color selector with HSL, RGB, and Hex support.",
+      Palette,
+      "/tools/color-picker",
+      "generation"
+    ),
+    new Tool(
+      "image-color-picker",
+      "Image Color Picker",
+      "Extract colors and pick specific pixels from uploaded images.",
+      Pipette,
+      "/tools/image-color-picker",
+      "generation"
+    ),
+    new Tool(
+      "theme-generator",
+      "Theme Generator",
+      "Generate cohesive color themes and palettes from base colors.",
+      Layers,
+      "/tools/theme-generator",
+      "generation"
+    ),
+    new Tool(
+      "animation-generator",
+      "Animation Gen",
+      "Build CSS animations and keyframes with live previews.",
+      Film,
+      "/tools/animation-generator",
+      "generation"
+    ),
+    new Tool(
+      "gradient-generator",
+      "Gradient Gen",
+      "Design complex CSS gradients with multiple color stops.",
+      Paintbrush,
+      "/tools/gradient-generator",
+      "generation"
     ),
   ];
 
