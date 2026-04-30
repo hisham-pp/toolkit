@@ -7,6 +7,12 @@ import { TOOLS, ToolConfig } from "@/lib/tools-config";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 function SystemTime() {
   const [time, setTime] = useState<string>("");
 
@@ -62,21 +68,29 @@ export default function Home() {
       </header>
 
       {/* Grid of Tools */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+      <section className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-4">
           {filteredTools.map((tool, index) => (
-            <Link key={tool.id} href={tool.route} className="group block h-full">
-              <div className="relative h-full bg-[#161618]/50 border border-zinc-800/50 rounded-3xl p-6 flex flex-col items-center justify-center gap-4 transition-all duration-300 group-hover:bg-[#1C1C1E] group-hover:border-primary/40 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-primary/5">
-                <div className="p-4 bg-zinc-900/80 rounded-2xl group-hover:bg-primary/10 group-hover:scale-110 transition-all duration-500 border border-zinc-800">
-                  <tool.icon className="w-8 h-8 md:w-10 md:h-10 text-zinc-500 group-hover:text-primary transition-colors" />
-                </div>
-                <div className="text-center space-y-1">
-                  <h3 className="font-semibold text-sm md:text-base text-zinc-200 group-hover:text-white transition-colors">{tool.name}</h3>
-                  <p className="text-[10px] md:text-xs text-zinc-500 line-clamp-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                    {tool.description}
-                  </p>
-                </div>
-              </div>
-            </Link>
+            <Tooltip key={tool.id}>
+              <TooltipTrigger>
+                <Link href={tool.route} className="group block h-full">
+                  <div className="relative h-full bg-[#161618]/50 border border-zinc-800/50 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center gap-3 md:gap-4 transition-all duration-300 group-hover:bg-[#1C1C1E] group-hover:border-primary/40 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-primary/5">
+                    <div className="p-3 bg-zinc-900/80 rounded-xl group-hover:bg-primary/10 group-hover:scale-110 transition-all duration-500 border border-zinc-800">
+                      <tool.icon className="w-6 h-6 md:w-8 md:h-8 text-zinc-500 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <h3 className="font-semibold text-[10px] sm:text-xs md:text-sm text-zinc-200 group-hover:text-white transition-colors line-clamp-1">{tool.name}</h3>
+                      <p className="text-[8px] md:text-[10px] text-zinc-500 line-clamp-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                        {tool.description}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs bg-zinc-900 border-zinc-800 text-zinc-200 shadow-xl">
+                <p className="font-medium">{tool.name}</p>
+                <p className="text-zinc-500">{tool.description}</p>
+              </TooltipContent>
+            </Tooltip>
           ))}
       </section>
 
@@ -109,35 +123,5 @@ export default function Home() {
         </div>
       </footer>
     </main>
-  );
-}
-
-function ToolCard({ tool, index }: { tool: ToolConfig; index: number }) {
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 30 }}
-    >
-      <Link href={tool.route} className="group block h-full">
-        <div className="relative h-full bg-[#161618]/50 border border-zinc-800/50 rounded-3xl p-6 flex flex-col items-center justify-center gap-4 transition-all duration-300 group-hover:bg-[#1C1C1E] group-hover:border-primary/40 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-primary/5">
-          {/* Subtle Glow on Hover */}
-          <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity blur-2xl bg-primary/10 pointer-events-none" />
-          
-          <div className="p-4 bg-zinc-900/80 rounded-2xl group-hover:bg-primary/10 group-hover:scale-110 transition-all duration-500 border border-zinc-800">
-            <tool.icon className="w-8 h-8 md:w-10 md:h-10 text-zinc-500 group-hover:text-primary transition-colors" />
-          </div>
-          
-          <div className="text-center space-y-1">
-            <h3 className="font-semibold text-sm md:text-base text-zinc-200 group-hover:text-white transition-colors">{tool.name}</h3>
-            <p className="text-[10px] md:text-xs text-zinc-500 line-clamp-1 opacity-60 group-hover:opacity-100 transition-opacity">
-              {tool.description}
-            </p>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
   );
 }
