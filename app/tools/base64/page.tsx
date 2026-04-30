@@ -3,35 +3,70 @@
 import React, { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
-import { Copy, Check, RotateCcw, ArrowRightLeft } from "lucide-react";
+import { 
+  ArrowLeftRight, 
+  Trash2, 
+  Copy, 
+  Binary, 
+  WholeWord,
+  AlertCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-export default function Base64Tool() {
+export default function Base64Converter() {
   const tool = TOOLS.find((t) => t.id === "base64")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
-  const [mode, setMode] = useState<"encode" | "decode">("encode");
-  const [copied, setCopied] = useState(false);
+  const [direction, setDirection] = useState<"encode" | "decode">("encode");
+  const [isAutoDetected, setIsAutoDetected] = useState(false);
 
-  const handleConvert = () => {
+  const detectAndSetInput = (val: string) => {
+    setInput(val);
+    if (!val.trim()) {
+      setIsAutoDetected(false);
+      return;
+    }
+
+    const trimmed = val.trim();
+    // Base64 regex: letters, numbers, +, /, and padding =
+    const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(trimmed) && trimmed.length % 4 === 0;
+    
+    if (isBase64 && trimmed.length > 4) {
+      setDirection("decode");
+      setIsAutoDetected(true);
+    } else {
+      setDirection("encode");
+      setIsAutoDetected(false);
+    }
+  };
+
+  const convert = () => {
+    if (!input.trim()) return;
+
     try {
-      if (mode === "encode") {
+      if (direction === "encode") {
         setOutput(btoa(input));
       } else {
         setOutput(atob(input));
       }
-    } catch (err) {
-      toast.error(mode === "encode" ? "Could not encode to Base64" : "Invalid Base64 string");
+    } catch (e: any) {
+      toast.error("Transformation failed: " + (direction === "decode" ? "Invalid Base64" : "Encoding error"));
     }
   };
 
-  const handleCopy = () => {
+  const swap = () => {
+    setDirection(direction === "encode" ? "decode" : "encode");
+    setInput(output);
+    setOutput("");
+  };
+
+  const copy = () => {
+    if (!output) return;
     navigator.clipboard.writeText(output);
-    setCopied(true);
     toast.success("Copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const clear = () => {
@@ -41,58 +76,78 @@ export default function Base64Tool() {
 
   return (
     <ToolLayout tool={tool}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Input</h2>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setMode(mode === "encode" ? "decode" : "encode")}
-                className="h-8 gap-2 bg-zinc-900 border-zinc-800"
-              >
-                <ArrowRightLeft className="w-3.5 h-3.5" />
-                {mode === "encode" ? "Encode" : "Decode"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clear}
-                className="h-8 gap-2"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Clear
-              </Button>
+      <div className="flex flex-col h-full gap-8">
+        {/* Swapper View */}
+        <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
+          <div className="flex items-center gap-8">
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "encode" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
+            )}>
+               <WholeWord className="w-4 h-4" />
+               <span className="text-[10px] font-bold uppercase tracking-widest">Plain Text</span>
+               {isAutoDetected && direction === "encode" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
+            </div>
+            
+            <Button variant="ghost" size="sm" onClick={swap} className="hover:bg-zinc-800 rounded-full h-8 w-8 p-0 text-zinc-500">
+               <ArrowLeftRight className="w-4 h-4" />
+            </Button>
+
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "decode" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
+            )}>
+               <Binary className="w-4 h-4" />
+               <span className="text-[10px] font-bold uppercase tracking-widest">Base64</span>
+               {isAutoDetected && direction === "decode" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
             </div>
           </div>
-          <Textarea
-            placeholder={mode === "encode" ? "Paste text to encode..." : "Paste Base64 to decode..."}
-            className="min-h-[400px] bg-[#161618] border-zinc-800 focus-visible:ring-primary/20 transition-all font-mono text-sm resize-none"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-          <Button onClick={handleConvert} className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold group">
-            {mode === "encode" ? "Encode to Base64" : "Decode from Base64"}
-          </Button>
-        </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Output</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopy}
-              className="h-8 gap-2 bg-zinc-900 border-zinc-800"
-              disabled={!output}
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? "Copied" : "Copy"}
+          <div className="flex gap-2">
+            <Button onClick={convert} disabled={!input} className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-6">
+              {direction === "encode" ? "Encode" : "Decode"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={clear} className="bg-zinc-900 border-zinc-800 hover:text-red-400">
+               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
-          <div className="min-h-[400px] bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 font-mono text-sm text-zinc-300 break-all overflow-auto">
-            {output || <span className="text-zinc-700 italic">Result will appear here...</span>}
+        </div>
+
+        {/* Workspace */}
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
+          <div className="flex flex-col gap-3 group">
+             <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Input</span>
+             </div>
+             <div className="flex-1 relative">
+                <Textarea
+                  className="w-full h-full bg-zinc-950 border-zinc-800 font-mono text-[11px] p-6 resize-none focus:border-primary/50 transition-all rounded-3xl"
+                  placeholder="Paste text or Base64 here..."
+                  value={input}
+                  onChange={(e) => detectAndSetInput(e.target.value)}
+                />
+             </div>
+          </div>
+
+          <div className="flex flex-col gap-3 group">
+             <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Output Result</span>
+                <Button variant="ghost" size="sm" onClick={copy} className="h-6 px-2 text-[10px] uppercase font-bold text-zinc-500 hover:text-primary">
+                   <Copy className="w-3 h-3 mr-1" /> Copy
+                </Button>
+             </div>
+             <div className="flex-1 relative">
+                <Textarea
+                  readOnly
+                  className="w-full h-full bg-[#0F0F10] border-zinc-800 font-mono text-[11px] p-6 resize-none transition-all rounded-3xl text-zinc-300"
+                  value={output}
+                  placeholder="Output will appear here..."
+                />
+             </div>
           </div>
         </div>
       </div>

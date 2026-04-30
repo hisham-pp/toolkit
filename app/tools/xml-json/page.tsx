@@ -23,6 +23,26 @@ export default function XmlJsonConverter() {
   const [output, setOutput] = useState("");
   const [direction, setDirection] = useState<"xml-to-json" | "json-to-xml">("xml-to-json");
   const [error, setError] = useState<string | null>(null);
+  const [isAutoDetected, setIsAutoDetected] = useState(false);
+
+  const detectAndSetInput = (val: string) => {
+    setInput(val);
+    if (!val.trim()) {
+      setIsAutoDetected(false);
+      return;
+    }
+
+    const trimmed = val.trim();
+    if (trimmed.startsWith("<")) {
+      setDirection("xml-to-json");
+      setIsAutoDetected(true);
+    } else if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      setDirection("json-to-xml");
+      setIsAutoDetected(true);
+    } else {
+      setIsAutoDetected(false);
+    }
+  };
 
   const convert = () => {
     if (!input.trim()) return;
@@ -78,23 +98,28 @@ export default function XmlJsonConverter() {
         <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
           <div className="flex items-center gap-8">
             <div className={cn(
-              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all",
-              direction === "xml-to-json" ? "bg-primary/10 border border-primary/20" : "bg-zinc-900 border border-zinc-800"
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "xml-to-json" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
             )}>
-               <FileCode className={cn("w-4 h-4", direction === "xml-to-json" ? "text-primary" : "text-zinc-500")} />
+               <FileCode className="w-4 h-4" />
                <span className="text-[10px] font-bold uppercase tracking-widest">XML</span>
+               {isAutoDetected && direction === "xml-to-json" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
             </div>
             
-            <Button variant="ghost" size="sm" onClick={swap} className="hover:bg-zinc-800 rounded-full h-8 w-8 p-0">
-               <ArrowLeftRight className="w-4 h-4 text-zinc-500" />
+            <Button variant="ghost" size="sm" onClick={swap} className="hover:bg-zinc-800 rounded-full h-8 w-8 p-0 text-zinc-500">
+               <ArrowLeftRight className="w-4 h-4" />
             </Button>
-
             <div className={cn(
-              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all",
-              direction === "json-to-xml" ? "bg-primary/10 border border-primary/20" : "bg-zinc-900 border border-zinc-800"
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "json-to-xml" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
             )}>
-               <FileJson className={cn("w-4 h-4", direction === "json-to-xml" ? "text-primary" : "text-zinc-500")} />
+               <FileJson className="w-4 h-4" />
                <span className="text-[10px] font-bold uppercase tracking-widest">JSON</span>
+               {isAutoDetected && direction === "json-to-xml" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
             </div>
           </div>
 
@@ -120,7 +145,7 @@ export default function XmlJsonConverter() {
                   className="w-full h-full bg-zinc-950 border-zinc-800 font-mono text-[11px] p-6 resize-none focus:border-primary/50 transition-all rounded-3xl"
                   placeholder={direction === "xml-to-json" ? "<root><item>Value</item></root>" : '{ "root": { "item": "Value" } }'}
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={(e) => detectAndSetInput(e.target.value)}
                 />
              </div>
           </div>

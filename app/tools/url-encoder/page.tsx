@@ -3,84 +3,149 @@
 import React, { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
-import { Copy, Check, RotateCcw, Link2 } from "lucide-react";
+import { 
+  ArrowLeftRight, 
+  Trash2, 
+  Copy, 
+  Link2, 
+  Unlink,
+  AlertCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-export default function URLEncoderTool() {
+export default function UrlEncoderConverter() {
   const tool = TOOLS.find((t) => t.id === "url-encoder")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [direction, setDirection] = useState<"encode" | "decode">("encode");
+  const [isAutoDetected, setIsAutoDetected] = useState(false);
 
-  const handleEncode = () => {
-    setOutput(encodeURIComponent(input));
-  };
+  const detectAndSetInput = (val: string) => {
+    setInput(val);
+    if (!val.trim()) {
+      setIsAutoDetected(false);
+      return;
+    }
 
-  const handleDecode = () => {
-    try {
-      setOutput(decodeURIComponent(input));
-    } catch (err) {
-      toast.error("Invalid URL encoded string");
+    const trimmed = val.trim();
+    // Check if it's likely encoded (contains % followed by 2 hex digits)
+    if (/%[0-9A-Fa-f]{2}/.test(trimmed)) {
+      setDirection("decode");
+      setIsAutoDetected(true);
+    } else {
+      setDirection("encode");
+      setIsAutoDetected(false);
     }
   };
 
-  const handleCopy = () => {
+  const convert = () => {
+    if (!input.trim()) return;
+
+    try {
+      if (direction === "encode") {
+        setOutput(encodeURIComponent(input));
+      } else {
+        setOutput(decodeURIComponent(input));
+      }
+    } catch (e: any) {
+      toast.error("Transformation failed: Invalid input");
+    }
+  };
+
+  const swap = () => {
+    setDirection(direction === "encode" ? "decode" : "encode");
+    setInput(output);
+    setOutput("");
+  };
+
+  const copy = () => {
+    if (!output) return;
     navigator.clipboard.writeText(output);
-    setCopied(true);
     toast.success("Copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const clear = () => {
+    setInput("");
+    setOutput("");
   };
 
   return (
     <ToolLayout tool={tool}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Input</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { setInput(""); setOutput(""); }}
-              className="h-8 gap-2"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Reset
+      <div className="flex flex-col h-full gap-8">
+        {/* Swapper View */}
+        <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
+          <div className="flex items-center gap-8">
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "encode" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
+            )}>
+               <Link2 className="w-4 h-4" />
+               <span className="text-[10px] font-bold uppercase tracking-widest">Raw Text</span>
+               {isAutoDetected && direction === "encode" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
+            </div>
+            
+            <Button variant="ghost" size="sm" onClick={swap} className="hover:bg-zinc-800 rounded-full h-8 w-8 p-0 text-zinc-500">
+               <ArrowLeftRight className="w-4 h-4" />
             </Button>
+
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "decode" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
+            )}>
+               <Unlink className="w-4 h-4" />
+               <span className="text-[10px] font-bold uppercase tracking-widest">Encoded</span>
+               {isAutoDetected && direction === "decode" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
+            </div>
           </div>
-          <Textarea
-            placeholder="Paste URL or content to transform..."
-            className="min-h-[400px] bg-[#161618] border-zinc-800 focus-visible:ring-primary/20 transition-all font-mono text-sm resize-none"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-          <div className="flex gap-4">
-            <Button onClick={handleEncode} className="flex-1 h-12 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white font-bold">
-              Encode
+
+          <div className="flex gap-2">
+            <Button onClick={convert} disabled={!input} className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-6">
+              {direction === "encode" ? "Encode" : "Decode"}
             </Button>
-            <Button onClick={handleDecode} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-white font-bold">
-              Decode
+            <Button variant="outline" size="sm" onClick={clear} className="bg-zinc-900 border-zinc-800 hover:text-red-400">
+               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Output</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopy}
-              className="h-8 gap-2 bg-zinc-900 border-zinc-800"
-              disabled={!output}
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? "Copied" : "Copy"}
-            </Button>
+        {/* Workspace */}
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
+          <div className="flex flex-col gap-3 group">
+             <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Input Data</span>
+             </div>
+             <div className="flex-1 relative">
+                <Textarea
+                  className="w-full h-full bg-zinc-950 border-zinc-800 font-mono text-[11px] p-6 resize-none focus:border-primary/50 transition-all rounded-3xl"
+                  placeholder="Paste URL or content to transform..."
+                  value={input}
+                  onChange={(e) => detectAndSetInput(e.target.value)}
+                />
+             </div>
           </div>
-          <div className="min-h-[400px] bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 font-mono text-sm text-zinc-300 break-all overflow-auto">
-            {output || <span className="text-zinc-700 italic">Result will appear here...</span>}
+
+          <div className="flex flex-col gap-3 group">
+             <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Output Result</span>
+                <Button variant="ghost" size="sm" onClick={copy} className="h-6 px-2 text-[10px] uppercase font-bold text-zinc-500 hover:text-primary">
+                   <Copy className="w-3 h-3 mr-1" /> Copy
+                </Button>
+             </div>
+             <div className="flex-1 relative">
+                <Textarea
+                  readOnly
+                  className="w-full h-full bg-[#0F0F10] border-zinc-800 font-mono text-[11px] p-6 resize-none transition-all rounded-3xl text-zinc-300"
+                  value={output}
+                  placeholder="Output will appear here..."
+                />
+             </div>
           </div>
         </div>
       </div>

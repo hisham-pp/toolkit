@@ -3,87 +3,170 @@
 import React, { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
-import { Copy, ArrowLeftRight } from "lucide-react";
+import yaml from "js-yaml";
+import { 
+  ArrowLeftRight, 
+  Trash2, 
+  Copy, 
+  FileCode, 
+  FileJson,
+  AlertCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import yaml from "js-yaml";
+import { cn } from "@/lib/utils";
 
-export default function YamlJsonTool() {
+export default function YamlJsonConverter() {
   const tool = TOOLS.find((t) => t.id === "yaml-json")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
-  const [mode, setMode] = useState<"yaml2json" | "json2yaml">("yaml2json");
+  const [direction, setDirection] = useState<"yaml-to-json" | "json-to-yaml">("yaml-to-json");
+  const [error, setError] = useState<string | null>(null);
+  const [isAutoDetected, setIsAutoDetected] = useState(false);
+
+  const detectAndSetInput = (val: string) => {
+    setInput(val);
+    if (!val.trim()) {
+      setIsAutoDetected(false);
+      return;
+    }
+
+    const trimmed = val.trim();
+    // Try to detect JSON
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      setDirection("json-to-yaml");
+      setIsAutoDetected(true);
+    } else {
+      // Default to YAML if not obviously JSON
+      setDirection("yaml-to-json");
+      setIsAutoDetected(false);
+    }
+  };
 
   const convert = () => {
+    if (!input.trim()) return;
+
     try {
-      if (mode === "yaml2json") {
+      if (direction === "yaml-to-json") {
         const doc = yaml.load(input);
         setOutput(JSON.stringify(doc, null, 2));
       } else {
         const obj = JSON.parse(input);
         setOutput(yaml.dump(obj));
       }
-    } catch (err) {
-      toast.error("Conversion failed. Please verify your input format.");
+      setError(null);
+    } catch (e: any) {
+      setError(e.message);
+      toast.error("Conversion failed");
     }
   };
 
-  const handleCopy = () => {
+  const swap = () => {
+    setDirection(direction === "yaml-to-json" ? "json-to-yaml" : "yaml-to-json");
+    setInput(output);
+    setOutput("");
+    setError(null);
+  };
+
+  const copy = () => {
+    if (!output) return;
     navigator.clipboard.writeText(output);
     toast.success("Copied to clipboard");
   };
 
+  const clear = () => {
+    setInput("");
+    setOutput("");
+    setError(null);
+  };
+
   return (
     <ToolLayout tool={tool}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">
-              {mode === "yaml2json" ? "YAML Input" : "JSON Input"}
-            </h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setMode(mode === "yaml2json" ? "json2yaml" : "yaml2json");
-                setInput("");
-                setOutput("");
-              }}
-              className="h-8 gap-2 bg-zinc-900 border-zinc-800"
-            >
-              <ArrowLeftRight className="w-3.5 h-3.5" />
-              Switch Mode
+      <div className="flex flex-col h-full gap-8">
+        {/* Swapper View */}
+        <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
+          <div className="flex items-center gap-8">
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "yaml-to-json" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
+            )}>
+               <FileCode className="w-4 h-4" />
+               <span className="text-[10px] font-bold uppercase tracking-widest">YAML</span>
+               {isAutoDetected && direction === "yaml-to-json" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
+            </div>
+            
+            <Button variant="ghost" size="sm" onClick={swap} className="hover:bg-zinc-800 rounded-full h-8 w-8 p-0 text-zinc-500">
+               <ArrowLeftRight className="w-4 h-4" />
+            </Button>
+
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-xl transition-all relative",
+              direction === "json-to-yaml" ? "bg-primary/10 border border-primary/20 text-primary" : "bg-zinc-900 border border-zinc-800 text-zinc-500"
+            )}>
+               <FileJson className="w-4 h-4" />
+               <span className="text-[10px] font-bold uppercase tracking-widest">JSON</span>
+               {isAutoDetected && direction === "json-to-yaml" && (
+                 <div className="absolute -top-2 -right-2 bg-primary text-black text-[8px] font-black px-1 rounded animate-bounce">AUTO</div>
+               )}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button onClick={convert} disabled={!input} className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-6">
+              Convert
+            </Button>
+            <Button variant="outline" size="sm" onClick={clear} className="bg-zinc-900 border-zinc-800 hover:text-red-400">
+               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
-          <Textarea
-            placeholder={mode === "yaml2json" ? "Paste YAML here..." : "Paste JSON here..."}
-            className="min-h-[400px] bg-[#161618] border-zinc-800 focus-visible:ring-primary/20 transition-all font-mono text-xs resize-none"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-          <Button onClick={convert} className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold">
-            Convert to {mode === "yaml2json" ? "JSON" : "YAML"}
-          </Button>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Result</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopy}
-              className="h-8 gap-2 bg-zinc-900 border-zinc-800"
-              disabled={!output}
-            >
-              <Copy className="w-3.5 h-3.5" />
-              Copy
-            </Button>
+        {/* Workspace */}
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
+          <div className="flex flex-col gap-3 group">
+             <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Source Input</span>
+                {error && <span className="text-[10px] text-red-500 flex items-center gap-1 animate-pulse"><AlertCircle className="w-3 h-3" /> {error}</span>}
+             </div>
+             <div className="flex-1 relative">
+                <Textarea
+                  className="w-full h-full bg-zinc-950 border-zinc-800 font-mono text-[11px] p-6 resize-none focus:border-primary/50 transition-all rounded-3xl"
+                  placeholder={direction === "yaml-to-json" ? "server: port: 8080" : '{ "server": { "port": 8080 } }'}
+                  value={input}
+                  onChange={(e) => detectAndSetInput(e.target.value)}
+                />
+             </div>
           </div>
-          <div className="min-h-[400px] bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 font-mono text-xs text-zinc-300 overflow-auto whitespace-pre">
-            {output || <span className="text-zinc-700 italic">Result will appear here...</span>}
+
+          <div className="flex flex-col gap-3 group">
+             <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Converted Results</span>
+                <Button variant="ghost" size="sm" onClick={copy} className="h-6 px-2 text-[10px] uppercase font-bold text-zinc-500 hover:text-primary">
+                   <Copy className="w-3 h-3 mr-1" /> Copy
+                </Button>
+             </div>
+             <div className="flex-1 relative">
+                <Textarea
+                  readOnly
+                  className="w-full h-full bg-[#0F0F10] border-zinc-800 font-mono text-[11px] p-6 resize-none transition-all rounded-3xl text-zinc-300"
+                  value={output}
+                  placeholder="Output will appear here..."
+                />
+             </div>
           </div>
+        </div>
+
+        {/* Footer info */}
+        <div className="p-4 bg-zinc-900/40 border border-zinc-800/50 rounded-2xl flex items-center gap-4">
+           <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500">
+              <AlertCircle className="w-4 h-4" />
+           </div>
+           <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
+             Supports YAML to JSON and vice-versa. YAML parsing follows the Cloud-agnostic spec. Large datasets are handled safely in your browser.
+           </p>
         </div>
       </div>
     </ToolLayout>
