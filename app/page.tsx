@@ -63,17 +63,25 @@ export default function Home() {
 
       {/* Grid of Tools */}
       <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-        <AnimatePresence mode="popLayout">
           {filteredTools.map((tool, index) => (
-            <ToolCard key={tool.id} tool={tool} index={index} />
+            <Link key={tool.id} href={tool.route} className="group block h-full">
+              <div className="relative h-full bg-[#161618]/50 border border-zinc-800/50 rounded-3xl p-6 flex flex-col items-center justify-center gap-4 transition-all duration-300 group-hover:bg-[#1C1C1E] group-hover:border-primary/40 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-primary/5">
+                <div className="p-4 bg-zinc-900/80 rounded-2xl group-hover:bg-primary/10 group-hover:scale-110 transition-all duration-500 border border-zinc-800">
+                  <tool.icon className="w-8 h-8 md:w-10 md:h-10 text-zinc-500 group-hover:text-primary transition-colors" />
+                </div>
+                <div className="text-center space-y-1">
+                  <h3 className="font-semibold text-sm md:text-base text-zinc-200 group-hover:text-white transition-colors">{tool.name}</h3>
+                  <p className="text-[10px] md:text-xs text-zinc-500 line-clamp-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                    {tool.description}
+                  </p>
+                </div>
+              </div>
+            </Link>
           ))}
-        </AnimatePresence>
       </section>
 
       {filteredTools.length === 0 && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+        <div 
           className="flex flex-col items-center justify-center py-20 text-center space-y-4"
         >
           <div className="p-4 bg-secondary/30 rounded-full">
@@ -83,7 +91,7 @@ export default function Home() {
             <h3 className="text-lg font-medium">No tools found</h3>
             <p className="text-sm text-muted-foreground">Try searching for something else like "JSON" or "Base64"</p>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Bottom Metadata & SEO Status Bar */}
