@@ -35,7 +35,13 @@ import {
   Lock,
   Timer,
   FileSpreadsheet as FileText, // Re-using or mapping for GDocs
-  Terminal
+  Terminal,
+  CopyCheck,
+  Scaling,
+  Minimize2,
+  Dice5,
+  Keyboard,
+  ListFilter
 } from "lucide-react";
 import React from "react";
 
@@ -458,6 +464,69 @@ export class ToolRegistry {
       "/tools/psk-generator",
       "security",
       ["wpa2", "wpa3", "vpn", "ipsec", "encryption"]
+    ),
+    new Tool(
+      "json-duplicates",
+      "Duplicate Finder",
+      "Identify and remove duplicates from JSON arrays.",
+      CopyCheck,
+      "/tools/json-duplicates",
+      "utils",
+      ["json", "duplicates", "cleaning", "unique"]
+    ),
+    new Tool(
+      "deep-compare",
+      "Deep Compare",
+      "Deeply compare two JSON objects and find differences.",
+      Scaling,
+      "/tools/deep-compare",
+      "diff",
+      ["comparison", "diff", "deep", "json"]
+    ),
+    new Tool(
+      "json-flattener",
+      "JSON Flattener",
+      "Flatten and unflatten nested JSON objects.",
+      Minimize2,
+      "/tools/json-flattener",
+      "converters",
+      ["flatten", "unflatten", "nested", "dot-notation"]
+    ),
+    new Tool(
+      "case-converter",
+      "Case Converter",
+      "Convert text between camel, snake, kebab, and pascal cases.",
+      Type,
+      "/tools/case-converter",
+      "utils",
+      ["case", "string", "camel", "snake", "pascal"]
+    ),
+    new Tool(
+      "data-generator",
+      "Data Generator",
+      "Generate mock data like names, emails, and addresses.",
+      Dice5,
+      "/tools/data-generator",
+      "generation",
+      ["mock", "faker", "random", "test-data"]
+    ),
+    new Tool(
+      "shortcut-cheatsheet",
+      "Shortcuts",
+      "Keyboard shortcut cheat sheet for developers.",
+      Keyboard,
+      "/tools/shortcut-cheatsheet",
+      "utils",
+      ["hotkeys", "keyboard", "productivity", "cheat-sheet"]
+    ),
+    new Tool(
+      "json-sorter",
+      "JSON Sorter",
+      "Sort and visualize JSON object keys and array elements.",
+      ListFilter,
+      "/tools/json-sorter",
+      "formatters" as ToolCategory,
+      ["sort", "organize", "alphabetical", "visualize"]
     ),
   ];
 
