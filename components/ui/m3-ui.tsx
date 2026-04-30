@@ -2,9 +2,8 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
-
-import Select, { StylesConfig } from "react-select";
+import Select, { StylesConfig, components, DropdownIndicatorProps } from "react-select";
+import { ChevronDown, Eye, EyeOff, Lock } from "lucide-react";
 
 /**
  * M3 Inspired Input component
@@ -46,6 +45,55 @@ const M3Input = React.forwardRef<HTMLInputElement, M3InputProps>(
   }
 );
 M3Input.displayName = "M3Input";
+
+/**
+ * M3 Inspired Password component
+ */
+export interface M3PasswordProps extends Omit<M3InputProps, 'type'> {}
+
+const M3Password = React.forwardRef<HTMLInputElement, M3PasswordProps>(
+  ({ className, label, error, ...props }, ref) => {
+    const [showPassword, setShowPassword] = React.useState(false);
+
+    return (
+      <div className="w-full space-y-2">
+        {label && (
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">
+            {label}
+          </label>
+        )}
+        <div className="relative group">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors pointer-events-none group-focus-within:text-primary">
+            <Lock className="w-4 h-4" />
+          </div>
+          <input
+            type={showPassword ? "text" : "password"}
+            className={cn(
+              "flex h-14 w-full rounded-2xl border border-zinc-800 bg-zinc-950/50 pl-12 pr-12 py-2 text-sm ring-offset-zinc-950 transition-all duration-300 font-mono",
+              "placeholder:text-zinc-700",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/50",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              "group-hover:border-zinc-700 font-medium",
+              error && "border-red-500/50 focus-visible:ring-red-500/20",
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-700 hover:text-white transition-colors p-1 rounded-lg hover:bg-zinc-800"
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        {error && <p className="text-[10px] text-red-500 font-bold ml-1 uppercase tracking-widest">{error}</p>}
+      </div>
+    );
+  }
+);
+M3Password.displayName = "M3Password";
 
 /**
  * M3 Inspired Textarea component
@@ -117,6 +165,10 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
       opacity: disabled ? 0.5 : 1,
       transition: "all 0.3s ease",
     }),
+    valueContainer: (base) => ({
+      ...base,
+      paddingLeft: "1rem",
+    }),
     singleValue: (base) => ({
       ...base,
       color: "white",
@@ -129,6 +181,7 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
       ...base,
       color: "rgb(63 63 70)", // zinc-700
       fontSize: "12px",
+      paddingLeft: "1rem",
     }),
     input: (base) => ({
       ...base,
@@ -142,7 +195,7 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
       overflow: "hidden",
       zIndex: 50,
       marginTop: "0.5rem",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+      boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
     }),
     option: (base, state) => ({
       ...base,
@@ -152,25 +205,25 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
           ? "rgb(24 24 27)" // zinc-900
           : "transparent",
       color: state.isSelected ? "white" : "rgb(161 161 170)", // zinc-400
-      padding: "0.75rem 1rem",
-      fontSize: "11px",
-      fontWeight: "700",
+      padding: "1rem 1.25rem",
+      fontSize: "10px",
+      fontWeight: "800",
       textTransform: "uppercase",
-      letterSpacing: "0.1em",
+      letterSpacing: "0.15em",
       cursor: "pointer",
+      borderBottom: "1px solid rgb(24 24 27 / 0.5)",
+      transition: "all 0.2s ease",
       "&:active": {
         backgroundColor: "var(--color-primary)",
+      },
+      "&:last-child": {
+        borderBottom: "none",
       }
     }),
     indicatorSeparator: () => ({ display: "none" }),
-    dropdownIndicator: (base, state) => ({
+    dropdownIndicator: (base) => ({
       ...base,
-      color: state.isFocused ? "var(--color-primary)" : "rgb(82 82 91)", // zinc-600
-      transform: state.selectProps.menuIsOpen ? "rotate(180deg)" : "none",
-      transition: "all 0.2s ease",
-      "&:hover": {
-        color: "var(--color-primary)",
-      }
+      padding: "0 1rem",
     }),
   };
 
@@ -190,17 +243,18 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
         isDisabled={disabled}
         styles={customStyles}
         components={{
-          DropdownIndicator: (props) => (
-            <div 
-              className={cn(
-                "pr-4 transition-colors", 
-                props.isFocused ? "text-primary" : "text-zinc-600"
-              )}
-            >
-              <ChevronDown className="w-4 h-4" />
-            </div>
+          DropdownIndicator: (props: DropdownIndicatorProps<any, false>) => (
+            <components.DropdownIndicator {...props}>
+              <div 
+                className={cn(
+                  "transition-colors", 
+                  props.isFocused ? "text-primary" : "text-zinc-600"
+                )}
+              >
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </components.DropdownIndicator>
           ),
-          IndicatorSeparator: null
         }}
       />
     </div>
@@ -208,4 +262,4 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
 };
 M3Select.displayName = "M3Select";
 
-export { M3Input, M3Textarea, M3Select };
+export { M3Input, M3Textarea, M3Select, M3Password };

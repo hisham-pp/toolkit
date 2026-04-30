@@ -2,13 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { TOOLS } from "@/lib/tools-config";
-import { 
-  Scale, 
-  ArrowRightLeft,
-  Copy,
-  RotateCcw
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import ToolLayout from "@/components/ToolLayout";
 import { M3Input, M3Select } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -67,87 +61,86 @@ export default function WeightConverterPage() {
   }));
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto gap-10">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">{tool.name}</h1>
-        <p className="text-zinc-500 font-medium uppercase tracking-widest text-[10px]">{tool.description}</p>
-      </div>
+    <ToolLayout tool={tool}>
+      <div className="flex flex-col h-full max-w-6xl mx-auto gap-10 pt-6">
+        <div className="bg-[#161618] border border-zinc-800 rounded-[3.5rem] p-10 md:p-14 space-y-12 shadow-2xl relative overflow-hidden text-white">
+          {/* Background Decor */}
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-11 gap-10 items-center relative z-10">
+            <div className="md:col-span-5 space-y-8">
+              <M3Select 
+                label="Baseline Unit"
+                value={fromUnit}
+                onChange={setFromUnit}
+                options={unitOptions}
+              />
+              <M3Input 
+                label="Mass Magnitude"
+                type="number"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="text-4xl font-black h-24 tracking-tighter"
+              />
+            </div>
 
-      <div className="bg-[#161618] border border-zinc-800 rounded-[3rem] p-8 md:p-12 space-y-10 shadow-2xl relative overflow-hidden">
-        {/* Background Decor */}
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="grid grid-cols-1 md:grid-cols-11 gap-6 items-center">
-          <div className="md:col-span-5 space-y-6">
-            <M3Select 
-              label="From Unit"
-              value={fromUnit}
-              onChange={setFromUnit}
-              options={unitOptions}
-            />
-            <M3Input 
-              label="Amount"
-              type="number"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="text-2xl font-black h-20"
-            />
-          </div>
+            <div className="md:col-span-1 flex justify-center">
+               <button 
+                 onClick={swap}
+                 className="w-16 h-16 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center hover:bg-primary hover:border-primary/50 text-zinc-500 hover:text-white transition-all transform hover:rotate-180 duration-700 shadow-2xl group"
+               >
+                  <ArrowRightLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />
+               </button>
+            </div>
 
-          <div className="md:col-span-1 flex justify-center">
-             <button 
-               onClick={swap}
-               className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center hover:bg-primary hover:border-primary/50 text-zinc-500 hover:text-white transition-all transform hover:rotate-180 duration-500 shadow-xl"
-             >
-                <ArrowRightLeft className="w-5 h-5" />
-             </button>
-          </div>
-
-          <div className="md:col-span-5 space-y-6">
-             <M3Select 
-              label="To Unit"
-              value={toUnit}
-              onChange={setToUnit}
-              options={unitOptions}
-            />
-            <div className="relative group">
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1 mb-2">Weight Result</div>
-                <div className="h-20 w-full rounded-2xl bg-zinc-950/50 border border-zinc-800 flex items-center px-6 text-2xl font-black text-primary group-hover:border-primary/30 transition-all">
-                   {result}
-                </div>
+            <div className="md:col-span-5 space-y-8">
+               <M3Select 
+                label="Output Scale"
+                value={toUnit}
+                onChange={setToUnit}
+                options={unitOptions}
+              />
+              <div className="relative group">
+                  <div className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 ml-1 mb-3">Converted Mass</div>
+                  <div className="h-24 w-full rounded-[2rem] bg-zinc-950 border border-zinc-900 flex items-center px-8 text-4xl font-black text-primary group-hover:border-primary/40 transition-all shadow-inner tracking-tighter overflow-hidden overflow-ellipsis">
+                     {result}
+                  </div>
+              </div>
             </div>
           </div>
+
+          <div className="flex justify-center gap-6 relative z-10">
+             <Button 
+               onClick={copy}
+               className="h-16 px-12 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-primary/40 text-zinc-400 hover:text-white font-black uppercase tracking-widest text-[11px] gap-4 shadow-xl transition-all"
+             >
+                <Copy className="w-5 h-5" /> Copy Weight Metrics
+             </Button>
+             <Button 
+               onClick={() => { setValue("1"); setFromUnit("kg"); setToUnit("lb"); }}
+               variant="ghost"
+               className="h-16 px-12 rounded-2xl text-zinc-700 hover:text-white font-black uppercase tracking-widest text-[11px] gap-4 transition-colors"
+             >
+                <RotateCcw className="w-5 h-5" /> Reset Calculations
+             </Button>
+          </div>
         </div>
 
-        <div className="flex justify-center gap-4">
-           <Button 
-             onClick={copy}
-             className="h-14 px-10 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-white font-black uppercase tracking-widest text-[10px] gap-3"
-           >
-              <Copy className="w-4 h-4" /> Copy Weight
-           </Button>
-           <Button 
-             onClick={() => { setValue("1"); setFromUnit("kg"); setToUnit("lb"); }}
-             variant="ghost"
-             className="h-14 px-10 rounded-2xl text-zinc-600 hover:text-white font-black uppercase tracking-widest text-[10px] gap-3"
-           >
-              <RotateCcw className="w-4 h-4" /> Reset
-           </Button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10">
+           {[
+             { label: "1 kg to Pounds", res: "2.20462 lb" },
+             { label: "1 lb to Ounces", res: "16 oz" },
+             { label: "100g to Ounces", res: "3.5274 oz" }
+           ].map((item, i) => (
+             <div key={i} className="bg-zinc-950/40 border border-zinc-900 p-8 rounded-[2rem] flex flex-col items-center text-center gap-3 hover:bg-zinc-900/40 transition-all duration-300 shadow-sm">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">{item.label}</span>
+                <span className="text-xl font-black text-zinc-300 italic">{item.res}</span>
+             </div>
+           ))}
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         {[
-           { label: "1 kg to Pounds", res: "2.20462 lb" },
-           { label: "1 lb to Ounces", res: "16 oz" },
-           { label: "100g to Ounces", res: "3.5274 oz" }
-         ].map((item, i) => (
-           <div key={i} className="bg-zinc-950/50 border border-zinc-900 p-6 rounded-3xl flex flex-col items-center text-center gap-2 hover:bg-zinc-900/50 transition-colors">
-              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{item.label}</span>
-              <span className="text-lg font-black text-zinc-300">{item.res}</span>
-           </div>
-         ))}
-      </div>
-    </div>
+    </ToolLayout>
+  );
+}
   );
 }

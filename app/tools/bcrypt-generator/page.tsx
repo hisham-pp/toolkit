@@ -5,7 +5,7 @@ import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
 import { Copy, Check, RotateCcw, ShieldCheck, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { M3Input } from "@/components/ui/m3-ui";
+import { M3Input, M3Password } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import bcrypt from "bcryptjs";
 
@@ -82,11 +82,10 @@ export default function BcryptGenerator() {
         {/* Generator Section */}
         <div className="space-y-6">
           <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-6 md:p-8 space-y-8">
-            <M3Input
+            <M3Password
               label="Password / Plain Text"
-              type="text"
               placeholder="Enter text to hash..."
-              className="font-mono text-primary"
+              className="text-primary"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
