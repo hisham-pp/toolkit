@@ -12,7 +12,8 @@ import {
   Zap,
   ArrowRight,
   Search,
-  X
+  X,
+  Split
 } from "lucide-react";
 import { 
   Tooltip,
@@ -42,12 +43,13 @@ export default function ToolsIndexPage() {
     }, {} as Record<string, Tool[]>);
   }, [searchQuery]);
 
-  const categoryOrder = ["formatting", "converters", "encoding", "generation", "security", "utils"];
+  const categoryOrder = ["diff", "formatting", "converters", "encoding", "generation", "security", "utils"];
   
   const totalCount = TOOLS.length;
   const filteredCount = Object.values(categories).flat().length;
 
   const CATEGORY_ICONS: Record<string, any> = {
+    diff: Split,
     formatting: Braces,
     converters: Zap,
     encoding: Terminal,

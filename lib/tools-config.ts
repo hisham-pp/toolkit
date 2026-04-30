@@ -19,11 +19,13 @@ import {
   Settings2,
   ImagePlus,
   Zap,
-  LayoutGrid
+  LayoutGrid,
+  Split,
+  Files
 } from "lucide-react";
 import React from "react";
 
-export type ToolCategory = "formatting" | "converters" | "encoding" | "generation" | "security" | "utils";
+export type ToolCategory = "formatting" | "converters" | "encoding" | "generation" | "security" | "utils" | "diff";
 
 export class Tool {
   constructor(
@@ -71,12 +73,36 @@ export class ToolRegistry {
       "utils"
     ),
     new Tool(
+      "code-diff",
+      "Code Diff",
+      "Compare various code languages with syntax highlighting support.",
+      Split,
+      "/tools/code-diff",
+      "diff"
+    ),
+    new Tool(
+      "yaml-diff",
+      "YAML Diff",
+      "Structural comparison for YAML configuration files.",
+      Files,
+      "/tools/yaml-diff",
+      "diff"
+    ),
+    new Tool(
+      "excel-diff",
+      "Excel Diff",
+      "Compare two Spreadsheet/CSV files for row differences.",
+      FileSpreadsheet,
+      "/tools/excel-diff",
+      "diff"
+    ),
+    new Tool(
       "json-diff",
       "JSON Diff",
       "Compare two JSON payloads and see the differences.",
       FileJson,
       "/tools/json-diff",
-      "formatting"
+      "diff"
     ),
     new Tool(
       "text-diff",
@@ -84,7 +110,7 @@ export class ToolRegistry {
       "Compare two blocks of text side-by-side.",
       AlignLeft,
       "/tools/text-diff",
-      "utils"
+      "diff"
     ),
     new Tool(
       "gradient-gen",
