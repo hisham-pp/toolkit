@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Monitor, AppWindow, History, SortAsc, ArrowRight, Sparkles, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
+import { motion } from "motion/react";
 import { TOOLS, Tool } from "@/lib/tools-config";
 import Link from "next/link";
 import { cn } from "@/lib/utils";

@@ -41,7 +41,8 @@ import {
   Minimize2,
   Dice5,
   Keyboard,
-  ListFilter
+  ListFilter,
+  ListTodo
 } from "lucide-react";
 import React from "react";
 
@@ -401,6 +402,15 @@ export class ToolRegistry {
       "/tools/calculator",
       "utils",
       ["math", "sum", "scientific", "numbers"]
+    ),
+    new Tool(
+      "advanced-todos",
+      "Advanced Todos",
+      "Local-only project and todo workspace with IndexedDB persistence.",
+      ListTodo,
+      "/tools/advanced-todos",
+      "utils",
+      ["projects", "tasks", "checklist", "indexeddb", "offline"]
     ),
     new Tool(
       "distance-converter",
