@@ -15,7 +15,8 @@ import {
   Terminal,
   FileCode,
   LayoutGrid,
-  Settings2
+  Settings2,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Select } from "@/components/ui/m3-ui";
@@ -78,7 +79,7 @@ export default function DataGeneratorPage() {
           break;
         case "internet":
           data.push({
-            username: faker.internet.userName(),
+            username: faker.internet.username(),
             domain: faker.internet.domainName(),
             ip: faker.internet.ip(),
             userAgent: faker.internet.userAgent(),

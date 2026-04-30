@@ -175,7 +175,7 @@ export class ToolRegistry {
       FileCode,
       "/tools/markdown-html",
       "converters",
-      ["convert", "web", "rich-text", "blog"]
+      ["convert", "web", "rich-text", "blog", "md", "markdown"]
     ),
     new Tool(
       "xml-json",
@@ -193,7 +193,7 @@ export class ToolRegistry {
       FileJson,
       "/tools/json-formatter",
       "formatting",
-      ["pretty", "lint", "validate", "history"]
+      ["pretty", "lint", "validate", "history", "beautify", "json", "format"]
     ),
     new Tool(
       "base64",
@@ -202,7 +202,7 @@ export class ToolRegistry {
       Hash,
       "/tools/base64",
       "encoding",
-      ["encode", "decode", "binary", "data"]
+      ["encode", "decode", "binary", "data", "b64", "base64"]
     ),
     new Tool(
       "url-encoder",
@@ -220,7 +220,7 @@ export class ToolRegistry {
       Code2,
       "/tools/jwt-decoder",
       "security",
-      ["auth", "token", "payload", "header", "signature"]
+      ["auth", "token", "payload", "header", "signature", "jwt", "json"]
     ),
     new Tool(
       "uuid-generator",
@@ -229,7 +229,7 @@ export class ToolRegistry {
       Fingerprint,
       "/tools/uuid-generator",
       "generation",
-      ["guid", "id", "random", "unique"]
+      ["guid", "id", "random", "unique", "uuid", "v4"]
     ),
     new Tool(
       "http-status",
@@ -337,7 +337,7 @@ export class ToolRegistry {
       Eye,
       "/tools/markdown-preview",
       "formatting",
-      ["live", "render", "gfm", "editor"]
+      ["live", "render", "gfm", "editor", "md", "markdown"]
     ),
     new Tool(
       "color-picker",
@@ -391,7 +391,7 @@ export class ToolRegistry {
       FileText,
       "/tools/md-gdocs",
       "converters",
-      ["google", "docs", "formatting", "rich-text"]
+      ["google", "docs", "formatting", "rich-text", "md", "markdown"]
     ),
     new Tool(
       "calculator",
@@ -463,7 +463,7 @@ export class ToolRegistry {
       Key,
       "/tools/psk-generator",
       "security",
-      ["wpa2", "wpa3", "vpn", "ipsec", "encryption"]
+      ["wpa2", "wpa3", "vpn", "ipsec", "encryption", "wifi", "password", "key"]
     ),
     new Tool(
       "json-duplicates",
@@ -472,7 +472,7 @@ export class ToolRegistry {
       CopyCheck,
       "/tools/json-duplicates",
       "utils",
-      ["json", "duplicates", "cleaning", "unique"]
+      ["json", "duplicates", "cleaning", "unique", "dedupe", "array"]
     ),
     new Tool(
       "deep-compare",
@@ -508,7 +508,7 @@ export class ToolRegistry {
       Dice5,
       "/tools/data-generator",
       "generation",
-      ["mock", "faker", "random", "test-data"]
+      ["mock", "faker", "random", "test-data", "fake", "dummy"]
     ),
     new Tool(
       "shortcut-cheatsheet",
