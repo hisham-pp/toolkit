@@ -30,7 +30,7 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto flex flex-col gap-8 bg-[#09090B] text-zinc-400">
+    <main className="min-h-screen p-6 md:p-12 w-full flex flex-col gap-8 bg-[#09090B] text-zinc-400">
       {/* Header / Top Bar */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -97,13 +97,6 @@ export default function Home() {
       {/* Bottom Metadata & SEO Status Bar */}
       <footer className="mt-auto h-8 flex flex-col md:flex-row items-center justify-between border-t border-zinc-800/50 pt-8 pb-4 px-2 gap-4">
         <div className="flex gap-6 items-center">
-          <span className="text-[10px] text-zinc-600 flex items-center gap-1.5 font-mono uppercase tracking-widest">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
-            SEO: Optimized Hub
-          </span>
-          <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest hidden sm:inline">
-            Metadata: Indexable
-          </span>
         </div>
         <div className="flex gap-6 items-center">
           <div className="flex -space-x-1.5 transition-all hover:-space-x-0.5">
@@ -113,9 +106,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">
-            Next.js App Router v15+
-          </span>
         </div>
       </footer>
     </main>
