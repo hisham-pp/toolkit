@@ -12,22 +12,30 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DevHub | Modular Developer Tools",
-  description: "A fast, modern hub for developer tools. JSON formatting, encoding, and more.",
-  keywords: ["developer tools", "JSON formatter", "dev tools hub", "web tools"],
+  title: {
+    default: "Developer OS | Professional Developer Utilities",
+    template: "%s | Developer OS"
+  },
+  description: "A comprehensive suite of browser-based utilities for developers: Diff tools, Regex testers, Markdown previews, and data converters. All processing occurs locally in your browser for maximum security.",
+  keywords: ["developer tools", "regex tester", "markdown preview", "json formatter", "diff checker", "base64 encoder", "yaml validator"],
+  authors: [{ name: "Developer OS" }],
   openGraph: {
-    title: "DevHub | Developer Tools Hub",
-    description: "The ultimate developer utility belt.",
     type: "website",
+    locale: "en_US",
+    url: "https://ais-pre-ux363wemzkx62lhysnmjdz-842599029511.run.app",
+    siteName: "Developer OS",
+    title: "Developer OS | The Unified Tool Hub",
+    description: "Browser-based tools for modern development workflows.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DevHub",
-    description: "Modular tools for developers.",
+    title: "Developer OS | Developer Utilities",
+    description: "Modular tools for developers with no tracking.",
   },
   icons: {
-    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛠️</text></svg>',
+    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>',
   },
+  robots: "index, follow",
 };
 
 import { ThemeProvider } from "@/components/theme-provider";
