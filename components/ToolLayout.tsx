@@ -1,12 +1,6 @@
-"use client";
-
 import React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Home, ShieldCheck, Zap, Info } from "lucide-react";
-import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
 import { Tool } from "@/lib/tools-config";
+import ToolBackButton from "@/components/ToolBackButton";
 
 interface ToolLayoutProps {
   tool: Tool;
@@ -14,21 +8,13 @@ interface ToolLayoutProps {
 }
 
 export default function ToolLayout({ tool, children }: ToolLayoutProps) {
-  const router = useRouter();
-
   return (
     <div className="min-h-screen bg-[#09090B] text-zinc-400 flex flex-col font-sans">
       {/* Tool Header */}
       <header className="border-b border-zinc-700/50 bg-[#09090B]/80 backdrop-blur-md sticky top-0 z-50 w-full">
         <div className="w-full px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => router.back()}
-              className="p-2 hover:bg-zinc-800 rounded-xl transition-colors group cursor-pointer"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-5 h-5 text-zinc-500 group-hover:text-primary transition-colors" />
-            </button>
+            <ToolBackButton />
             <div className="h-6 w-[1px] bg-zinc-800 mx-1" />
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center shadow-lg group-hover:border-primary/50 transition-all">

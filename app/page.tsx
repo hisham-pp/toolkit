@@ -140,7 +140,7 @@ export default function Home() {
                   transition={{ delay: index * 0.1 }}
                 >
                   <Tooltip>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger>
                       <Link 
                         href={tool.route} 
                         onClick={() => trackToolClick(tool.id)}
@@ -247,4 +247,3 @@ function Button({ children, variant = "primary", size = "md", className, onClick
     </button>
   );
 }
-
