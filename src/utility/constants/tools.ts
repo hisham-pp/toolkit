@@ -42,7 +42,11 @@ import {
   Dice5,
   Keyboard,
   ListFilter,
-  ListTodo
+  ListTodo,
+  Network,
+  Database,
+  Activity,
+  Server
 } from "lucide-react";
 import { ToolCategory } from "@/utility/enums/tool-category";
 import { Tool } from "@/utility/types/tool";
@@ -51,6 +55,42 @@ export { Tool };
 
 export class ToolRegistry {
   private static tools: Tool[] = [
+    new Tool(
+      "system-diagram",
+      "System Diagram",
+      "Interactive drag-and-drop system architecture diagram builder.",
+      Network,
+      "/tools/system-diagram",
+      ToolCategory.System,
+      ["architecture", "design", "diagram", "blocks", "infrastructure"]
+    ),
+    new Tool(
+      "db-schema",
+      "DB Schema Designer",
+      "Visual database schema designer with table relations and field types.",
+      Database,
+      "/tools/db-schema",
+      ToolCategory.System,
+      ["database", "sql", "schema", "erd", "relations", "tables"]
+    ),
+    new Tool(
+      "api-flow",
+      "API Flow Visualizer",
+      "Map API requests to services and databases using sequence diagrams.",
+      Activity,
+      "/tools/api-flow",
+      ToolCategory.System,
+      ["api", "flow", "sequence", "mermaid", "tracing", "mapping"]
+    ),
+    new Tool(
+      "microservices",
+      "Service Dependency Mapper",
+      "Visualize dependencies and interactions between microservices.",
+      Server,
+      "/tools/microservices",
+      ToolCategory.System,
+      ["microservices", "dependencies", "topology", "mesh", "architecture"]
+    ),
     new Tool(
       "env-manager",
       "Env Manager",

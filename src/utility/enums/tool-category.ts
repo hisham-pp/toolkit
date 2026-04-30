@@ -6,4 +6,5 @@ export enum ToolCategory {
   Security = "security",
   Utils = "utils",
   Diff = "diff",
+  System = "system",
 }
