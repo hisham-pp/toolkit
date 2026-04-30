@@ -450,6 +450,15 @@ export class ToolRegistry {
       "security",
       ["auth", "validation", "requirements", "enterprise"]
     ),
+    new Tool(
+      "psk-generator",
+      "PSK Generator",
+      "Generate secure Pre-Shared Keys for WPA/VPN/IPSec protocols.",
+      Key,
+      "/tools/psk-generator",
+      "security",
+      ["wpa2", "wpa3", "vpn", "ipsec", "encryption"]
+    ),
   ];
 
   static getAll() {
