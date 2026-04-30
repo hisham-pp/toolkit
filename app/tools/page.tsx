@@ -1,7 +1,7 @@
 import React from "react";
 import { Metadata } from "next";
 import Link from "next/link";
-import { TOOLS, ToolConfig } from "@/lib/tools-config";
+import { TOOLS, Tool } from "@/lib/tools-config";
 import { 
   Braces, 
   ChevronRight, 
@@ -38,7 +38,7 @@ export default function ToolsIndexPage() {
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(tool);
     return acc;
-  }, {} as Record<string, ToolConfig[]>);
+  }, {} as Record<string, Tool[]>);
 
   const categoryOrder = ["formatting", "converters", "encoding", "generation", "security", "utils"];
 

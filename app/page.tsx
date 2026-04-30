@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Search, Monitor, AppWindow } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { TOOLS, ToolConfig } from "@/lib/tools-config";
+import { TOOLS, Tool } from "@/lib/tools-config";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 

@@ -5,10 +5,10 @@ import Link from "next/link";
 import { ArrowLeft, Home, History, Trash2, Copy, Check, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { ToolConfig } from "@/lib/tools-config";
+import { Tool } from "@/lib/tools-config";
 
 interface ToolLayoutProps {
-  tool: ToolConfig;
+  tool: Tool;
   children: React.ReactNode;
 }
 

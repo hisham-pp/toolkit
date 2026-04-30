@@ -19,186 +19,178 @@ import {
 } from "lucide-react";
 import React from "react";
 
-export type ToolConfig = {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ElementType;
-  route: string;
-  category: "formatting" | "converters" | "encoding" | "generation" | "security" | "utils";
-  metaTitle: string;
-  metaDescription: string;
-};
+export type ToolCategory = "formatting" | "converters" | "encoding" | "generation" | "security" | "utils";
 
-export const TOOLS: ToolConfig[] = [
-  {
-    id: "json-formatter",
-    name: "JSON Formatter",
-    description: "Beautify and validate your JSON data with history support.",
-    icon: FileJson,
-    route: "/tools/json-formatter",
-    category: "formatting",
-    metaTitle: "JSON Formatter | DevHub",
-    metaDescription: "Beautify, minify, and validate JSON data instantly in your browser.",
-  },
-  {
-    id: "base64",
-    name: "Base64 Tool",
-    description: "Encode or decode strings to Base64 format.",
-    icon: Hash,
-    route: "/tools/base64",
-    category: "encoding",
-    metaTitle: "Base64 Tool | DevHub",
-    metaDescription: "Encode and decode strings to and from Base64 format securely.",
-  },
-  {
-    id: "url-encoder",
-    name: "URL Encoder",
-    description: "Encode or decode URL components safely.",
-    icon: Link2,
-    route: "/tools/url-encoder",
-    category: "encoding",
-    metaTitle: "URL Encoder | DevHub",
-    metaDescription: "Safely encode and decode URL components and parameters.",
-  },
-  {
-    id: "jwt-decoder",
-    name: "JWT Decoder",
-    description: "Decode and inspect JSON Web Tokens payloads.",
-    icon: Code2,
-    route: "/tools/jwt-decoder",
-    category: "security",
-    metaTitle: "JWT Decoder | DevHub",
-    metaDescription: "Inspect and decode JSON Web Tokens (JWT) headers and payloads.",
-  },
-  {
-    id: "uuid-generator",
-    name: "UUID Gen",
-    description: "Generate v4 UUIDs for your projects.",
-    icon: Fingerprint,
-    route: "/tools/uuid-generator",
-    category: "generation",
-    metaTitle: "UUID Generator | DevHub",
-    metaDescription: "Generate high-quality v4 UUIDs for your development and database needs.",
-  },
-  {
-    id: "http-status",
-    name: "HTTP Status",
-    description: "Explore HTTP status codes and their meanings.",
-    icon: Globe,
-    route: "/tools/http-status",
-    category: "utils",
-    metaTitle: "HTTP Status Explorer | DevHub",
-    metaDescription: "Browse and understand HTTP response status codes and their meanings.",
-  },
-  {
-    id: "csv-json",
-    name: "CSV to JSON",
-    description: "Convert CSV data to JSON objects and vice versa.",
-    icon: FileSpreadsheet,
-    route: "/tools/csv-json",
-    category: "converters",
-    metaTitle: "CSV to JSON Converter | DevHub",
-    metaDescription: "Convert CSV data to JSON array format and vice versa instantly.",
-  },
-  {
-    id: "yaml-json",
-    name: "YAML to JSON",
-    description: "Convert between YAML and JSON formats.",
-    icon: FileType,
-    route: "/tools/yaml-json",
-    category: "converters",
-    metaTitle: "YAML to JSON Converter | DevHub",
-    metaDescription: "Switch between YAML and JSON formats with preserved structure.",
-  },
-  {
-    id: "password-gen",
-    name: "Password Gen",
-    description: "Create secure, random passwords instantly.",
-    icon: Key,
-    route: "/tools/password-generator",
-    category: "security",
-    metaTitle: "Password Generator | DevHub",
-    metaDescription: "Generate secure, random passwords with customizable parameters.",
-  },
-  {
-    id: "lorem-ipsum",
-    name: "Lorem Ipsum",
-    description: "Generate placeholder text for your designs.",
-    icon: AlignLeft,
-    route: "/tools/lorem-ipsum",
-    category: "generation",
-    metaTitle: "Lorem Ipsum Generator | DevHub",
-    metaDescription: "Generate placeholder text in words, sentences, or paragraphs.",
-  },
-  {
-    id: "timezone",
-    name: "Timezone Tool",
-    description: "Convert and compare times across zones.",
-    icon: Clock,
-    route: "/tools/timezone-converter",
-    category: "utils",
-    metaTitle: "Timezone Converter | DevHub",
-    metaDescription: "Convert and compare times across different global time zones easily.",
-  },
-  {
-    id: "hash-gen",
-    name: "Hash Gen",
-    description: "Generate MD5, SHA256 hashes for any text.",
-    icon: ShieldCheck,
-    route: "/tools/hash-generator",
-    category: "security",
-    metaTitle: "Hash Generator | DevHub",
-    metaDescription: "Generate MD5, SHA1, SHA256, and SHA512 hashes for any text input.",
-  },
-  {
-    id: "bcrypt-gen",
-    name: "Bcrypt Gen",
-    description: "Securely hash passwords using Bcrypt algorithm.",
-    icon: ShieldCheck,
-    route: "/tools/bcrypt-generator",
-    category: "security",
-    metaTitle: "Bcrypt Generator | DevHub",
-    metaDescription: "Securely hash passwords using the Bcrypt algorithm with adjustable salt rounds.",
-  },
-  {
-    id: "bcrypt-comp",
-    name: "Bcrypt Check",
-    description: "Verify if a password matches a Bcrypt hash.",
-    icon: ShieldCheck,
-    route: "/tools/bcrypt-comparator",
-    category: "security",
-    metaTitle: "Bcrypt Checker | DevHub",
-    metaDescription: "Verify and compare plain text passwords against Bcrypt hashes.",
-  },
-  {
-    id: "sql-formatter",
-    name: "SQL Format",
-    description: "Format and beautify your SQL queries.",
-    icon: FileJson,
-    route: "/tools/sql-formatter",
-    category: "formatting",
-    metaTitle: "SQL Formatter | DevHub",
-    metaDescription: "Beautify and format SQL queries for better readability and structure.",
-  },
-  {
-    id: "regex-tester",
-    name: "Regex Test",
-    description: "Test and debug regular expressions.",
-    icon: Search,
-    route: "/tools/regex-tester",
-    category: "utils",
-    metaTitle: "Regex Tester | DevHub",
-    metaDescription: "Test and debug JavaScript regular expressions with real-time match highlighting.",
-  },
-  {
-    id: "markdown-preview",
-    name: "Markdown Pre",
-    description: "Write and preview markdown in real-time.",
-    icon: Eye,
-    route: "/tools/markdown-preview",
-    category: "formatting",
-    metaTitle: "Markdown Previewer | DevHub",
-    metaDescription: "Write and preview GitHub-flavored markdown with live sync.",
-  },
-];
+export class Tool {
+  constructor(
+    public id: string,
+    public name: string,
+    public description: string,
+    public icon: React.ElementType,
+    public route: string,
+    public category: ToolCategory
+  ) {}
+
+  get metaTitle() {
+    return `${this.name} | DevHub`;
+  }
+
+  get metaDescription() {
+    return this.description;
+  }
+}
+
+export class ToolRegistry {
+  private static tools: Tool[] = [
+    new Tool(
+      "json-formatter",
+      "JSON Formatter",
+      "Beautify and validate your JSON data with history support.",
+      FileJson,
+      "/tools/json-formatter",
+      "formatting"
+    ),
+    new Tool(
+      "base64",
+      "Base64 Tool",
+      "Encode or decode strings to Base64 format.",
+      Hash,
+      "/tools/base64",
+      "encoding"
+    ),
+    new Tool(
+      "url-encoder",
+      "URL Encoder",
+      "Encode or decode URL components safely.",
+      Link2,
+      "/tools/url-encoder",
+      "encoding"
+    ),
+    new Tool(
+      "jwt-decoder",
+      "JWT Decoder",
+      "Decode and inspect JSON Web Tokens payloads.",
+      Code2,
+      "/tools/jwt-decoder",
+      "security"
+    ),
+    new Tool(
+      "uuid-generator",
+      "UUID Generator",
+      "Generate v4 UUIDs for your projects.",
+      Fingerprint,
+      "/tools/uuid-generator",
+      "generation"
+    ),
+    new Tool(
+      "http-status",
+      "HTTP Status",
+      "Explore HTTP status codes and their meanings.",
+      Globe,
+      "/tools/http-status",
+      "utils"
+    ),
+    new Tool(
+      "csv-json",
+      "CSV to JSON",
+      "Convert CSV data to JSON objects and vice versa.",
+      FileSpreadsheet,
+      "/tools/csv-json",
+      "converters"
+    ),
+    new Tool(
+      "yaml-json",
+      "YAML to JSON",
+      "Convert between YAML and JSON formats.",
+      FileType,
+      "/tools/yaml-json",
+      "converters"
+    ),
+    new Tool(
+      "password-gen",
+      "Password Generator",
+      "Create secure, random passwords instantly.",
+      Key,
+      "/tools/password-generator",
+      "security"
+    ),
+    new Tool(
+      "lorem-ipsum",
+      "Lorem Ipsum",
+      "Generate placeholder text for your designs.",
+      AlignLeft,
+      "/tools/lorem-ipsum",
+      "generation"
+    ),
+    new Tool(
+      "timezone",
+      "Timezone Converter",
+      "Convert and compare times across zones.",
+      Clock,
+      "/tools/timezone-converter",
+      "utils"
+    ),
+    new Tool(
+      "hash-gen",
+      "Hash Generator",
+      "Generate MD5, SHA256 hashes for any text.",
+      ShieldCheck,
+      "/tools/hash-generator",
+      "security"
+    ),
+    new Tool(
+      "bcrypt-gen",
+      "Bcrypt Generator",
+      "Securely hash passwords using Bcrypt algorithm.",
+      ShieldCheck,
+      "/tools/bcrypt-generator",
+      "security"
+    ),
+    new Tool(
+      "bcrypt-comp",
+      "Bcrypt Checker",
+      "Verify if a password matches a Bcrypt hash.",
+      ShieldCheck,
+      "/tools/bcrypt-comparator",
+      "security"
+    ),
+    new Tool(
+      "sql-formatter",
+      "SQL Formatter",
+      "Format and beautify your SQL queries.",
+      FileJson,
+      "/tools/sql-formatter",
+      "formatting"
+    ),
+    new Tool(
+      "regex-tester",
+      "Regex Tester",
+      "Test and debug regular expressions.",
+      Search,
+      "/regex-tester",
+      "utils"
+    ),
+    new Tool(
+      "markdown-preview",
+      "Markdown Preview",
+      "Write and preview markdown in real-time.",
+      Eye,
+      "/markdown-preview",
+      "formatting"
+    ),
+  ];
+
+  static getAll() {
+    return this.tools;
+  }
+
+  static getById(id: string) {
+    return this.tools.find((t) => t.id === id);
+  }
+
+  static getByCategory(category: ToolCategory) {
+    return this.tools.filter((t) => t.category === category);
+  }
+}
+
+export const TOOLS = ToolRegistry.getAll();
