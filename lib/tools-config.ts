@@ -15,7 +15,11 @@ import {
   ShieldCheck, 
   Eye,
   Plus,
-  Search
+  Search,
+  Settings2,
+  ImagePlus,
+  Zap,
+  LayoutGrid
 } from "lucide-react";
 import React from "react";
 
@@ -42,6 +46,86 @@ export class Tool {
 
 export class ToolRegistry {
   private static tools: Tool[] = [
+    new Tool(
+      "env-manager",
+      "Env Manager",
+      "Format, obscure, and manage .env file variables securely.",
+      Settings2,
+      "/tools/env-manager",
+      "formatting"
+    ),
+    new Tool(
+      "base64-file",
+      "File to Base64",
+      "Convert images and files to Base64 data strings for embedding.",
+      ImagePlus,
+      "/tools/base64-file",
+      "encoding"
+    ),
+    new Tool(
+      "api-builder",
+      "API Builder",
+      "Mini Postman-style UI for testing REST API requests.",
+      Globe,
+      "/tools/api-builder",
+      "utils"
+    ),
+    new Tool(
+      "json-diff",
+      "JSON Diff",
+      "Compare two JSON payloads and see the differences.",
+      FileJson,
+      "/tools/json-diff",
+      "formatting"
+    ),
+    new Tool(
+      "text-diff",
+      "Text Diff",
+      "Compare two blocks of text side-by-side.",
+      AlignLeft,
+      "/tools/text-diff",
+      "utils"
+    ),
+    new Tool(
+      "gradient-gen",
+      "Gradient Gen",
+      "Visually design CSS/Tailwind gradients and copy code.",
+      Zap,
+      "/tools/gradient-generator",
+      "generation"
+    ),
+    new Tool(
+      "box-shadow",
+      "Box Shadow",
+      "Interactive CSS box-shadow generator and preview.",
+      LayoutGrid,
+      "/tools/box-shadow",
+      "generation"
+    ),
+    new Tool(
+      "cron-parser",
+      "Cron Parser",
+      "Decode cron expressions into human-readable text.",
+      Clock,
+      "/tools/cron-parser",
+      "utils"
+    ),
+    new Tool(
+      "password-strength",
+      "Strength Check",
+      "Analyze password strength and entropy.",
+      ShieldCheck,
+      "/tools/password-strength",
+      "security"
+    ),
+    new Tool(
+      "xml-json",
+      "XML to JSON",
+      "Convert between XML and JSON formats easily.",
+      FileType,
+      "/tools/xml-json",
+      "converters"
+    ),
     new Tool(
       "json-formatter",
       "JSON Formatter",
