@@ -153,8 +153,10 @@ export default function Home() {
                             <tool.icon className="w-8 h-8 text-zinc-500 group-hover:text-white transition-colors" />
                           </div>
                           
-                          <div className="text-center">
-                            <h4 className="font-black text-xs uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors truncate px-2">{tool.name}</h4>
+                          <div className="h-10 flex items-center justify-center text-center px-2">
+                            <h4 className="font-black text-xs uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                              {tool.name}
+                            </h4>
                           </div>
                         </div>
                       </Link>
