@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Terminal, Monitor, AppWindow } from "lucide-react";
+import { Search, Monitor, AppWindow } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { TOOLS, ToolConfig } from "@/lib/tools-config";
 import Link from "next/link";
@@ -30,7 +30,7 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto flex flex-col gap-8 bg-[#09090B]">
+    <main className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto flex flex-col gap-8 bg-[#09090B] text-zinc-400">
       {/* Header / Top Bar */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
