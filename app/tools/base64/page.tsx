@@ -12,7 +12,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -119,35 +119,24 @@ export default function Base64Converter() {
 
         {/* Workspace */}
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
-          <div className="flex flex-col gap-3 group">
-             <div className="flex items-center justify-between px-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Input</span>
-             </div>
-             <div className="flex-1 relative">
-                <Textarea
-                  className="w-full h-full bg-zinc-950 border-zinc-800 font-mono text-[11px] p-6 resize-none focus:border-primary/50 transition-all rounded-3xl"
-                  placeholder="Paste text or Base64 here..."
-                  value={input}
-                  onChange={(e) => detectAndSetInput(e.target.value)}
-                />
-             </div>
+          <div className="flex flex-col gap-3 group h-full">
+             <M3Textarea
+               label="Input"
+               className="flex-1 w-full h-full font-mono text-[11px] p-6 resize-none"
+               placeholder="Paste text or Base64 here..."
+               value={input}
+               onChange={(e) => detectAndSetInput(e.target.value)}
+             />
           </div>
 
-          <div className="flex flex-col gap-3 group">
-             <div className="flex items-center justify-between px-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Output Result</span>
-                <Button variant="ghost" size="sm" onClick={copy} className="h-6 px-2 text-[10px] uppercase font-bold text-zinc-500 hover:text-primary">
-                   <Copy className="w-3 h-3 mr-1" /> Copy
-                </Button>
-             </div>
-             <div className="flex-1 relative">
-                <Textarea
-                  readOnly
-                  className="w-full h-full bg-[#0F0F10] border-zinc-800 font-mono text-[11px] p-6 resize-none transition-all rounded-3xl text-zinc-300"
-                  value={output}
-                  placeholder="Output will appear here..."
-                />
-             </div>
+          <div className="flex flex-col gap-3 group h-full">
+             <M3Textarea
+               readOnly
+               label="Output Result"
+               className="flex-1 w-full h-full font-mono text-[11px] p-6 resize-none"
+               value={output}
+               placeholder="Output will appear here..."
+             />
           </div>
         </div>
       </div>

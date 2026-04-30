@@ -18,7 +18,7 @@ import {
   FileCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { marked } from "marked";
@@ -147,7 +147,7 @@ export default function MarkdownPreviewClient() {
                    <div className="text-[9px] font-mono text-zinc-700">{content.length} chars</div>
                 </div>
                 <div className="flex-1 relative bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden focus-within:border-primary/40 transition-colors shadow-inner flex flex-col">
-                   <Textarea 
+                   <M3Textarea 
                      className="flex-1 bg-transparent border-none font-mono text-[13px] p-10 resize-none leading-relaxed focus-visible:ring-0 custom-scrollbar overflow-auto text-zinc-300"
                      value={content}
                      onChange={(e) => setContent(e.target.value)}

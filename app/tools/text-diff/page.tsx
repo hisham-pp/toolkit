@@ -6,7 +6,7 @@ import { TOOLS } from "@/lib/tools-config";
 import { diffLines, diffWords, diffChars, Change } from "diff";
 import { Copy, Trash2, Split, Rows, Type, MousePointer2, AlignLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -137,24 +137,20 @@ export default function TextDiff() {
 
         {/* Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-1/3">
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Original Text</label>
-            <Textarea
-              className="flex-1 bg-zinc-950 border-zinc-800 font-mono text-xs resize-none"
-              placeholder="Paste original text here..."
-              value={text1}
-              onChange={(e) => setText1(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Changed Text</label>
-            <Textarea
-              className="flex-1 bg-zinc-950 border-zinc-800 font-mono text-xs resize-none"
-              placeholder="Paste changed text here..."
-              value={text2}
-              onChange={(e) => setText2(e.target.value)}
-            />
-          </div>
+          <M3Textarea
+            label="Original Text"
+            className="flex-1 font-mono text-xs resize-none"
+            placeholder="Paste original text here..."
+            value={text1}
+            onChange={(e) => setText1(e.target.value)}
+          />
+          <M3Textarea
+            label="Changed Text"
+            className="flex-1 font-mono text-xs resize-none"
+            placeholder="Paste changed text here..."
+            value={text2}
+            onChange={(e) => setText2(e.target.value)}
+          />
         </div>
 
         {/* Diff View */}

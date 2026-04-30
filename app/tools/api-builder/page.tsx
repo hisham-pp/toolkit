@@ -14,8 +14,7 @@ import {
   Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { M3Input, M3Textarea, M3Select } from "@/components/ui/m3-ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -134,34 +133,36 @@ export default function ApiBuilder() {
         <div className="xl:col-span-8 flex flex-col gap-6">
           <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-6 space-y-6">
             {/* URL Bar */}
-            <div className="flex gap-3">
-              <select 
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <M3Select 
+                label="Method"
                 value={method} 
                 onChange={(e) => setMethod(e.target.value as Method)}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 font-bold text-xs text-primary focus:outline-none focus:border-primary/50 transition-colors"
-              >
-                <option>GET</option>
-                <option>POST</option>
-                <option>PUT</option>
-                <option>DELETE</option>
-                <option>PATCH</option>
-              </select>
-              <div className="flex-1 relative">
-                <Input
-                  className="bg-zinc-950 border-zinc-800 h-12 pl-10 font-mono text-sm"
-                  placeholder="Enter request URL..."
+                options={[
+                  { label: "GET", value: "GET" },
+                  { label: "POST", value: "POST" },
+                  { label: "PUT", value: "PUT" },
+                  { label: "DELETE", value: "DELETE" },
+                  { label: "PATCH", value: "PATCH" },
+                ]}
+                className="w-full md:w-40"
+              />
+              <div className="flex-1 w-full">
+                <M3Input
+                  label="Endpoint URL"
+                  className="font-mono"
+                  placeholder="https://api.example.com/v1/..."
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                 />
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
               </div>
               <Button 
                 onClick={handleSend} 
                 disabled={loading}
-                className="h-12 px-8 bg-primary hover:bg-primary/90 text-white font-bold gap-2"
+                className="h-14 px-10 bg-primary hover:bg-primary/90 text-white font-black italic uppercase tracking-widest gap-3 rounded-2xl shadow-xl shadow-primary/20"
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Send
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                Execute
               </Button>
             </div>
 
@@ -182,26 +183,28 @@ export default function ApiBuilder() {
                   {headers.map((header, i) => (
                     <div key={i} className="grid grid-cols-12 gap-4 items-center">
                       <div className="col-span-4">
-                        <Input 
-                          className="bg-zinc-950 border-zinc-800 h-9 font-mono text-[10px]"
+                        <M3Input 
+                          className="h-10 font-mono text-[10px]"
                           value={header.key}
                           onChange={(e) => updateHeader(i, { key: e.target.value })}
+                          placeholder="Key"
                         />
                       </div>
                       <div className="col-span-7">
-                        <Input 
-                          className="bg-zinc-950 border-zinc-800 h-9 font-mono text-[10px]"
+                        <M3Input 
+                          className="h-10 font-mono text-[10px]"
                           value={header.value}
                           onChange={(e) => updateHeader(i, { value: e.target.value })}
+                          placeholder="Value"
                         />
                       </div>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => removeHeader(i)}
-                        className="col-span-1 h-9 px-0 hover:text-red-500"
+                        className="col-span-1 h-10 px-0 hover:text-red-500 hover:bg-red-500/5 rounded-xl"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
@@ -212,8 +215,8 @@ export default function ApiBuilder() {
               </TabsContent>
 
               <TabsContent value="body">
-                <Textarea
-                  className="min-h-[200px] bg-zinc-950 border-zinc-800 font-mono text-xs resize-none"
+                <M3Textarea
+                  className="min-h-[200px] font-mono text-[13px] resize-none p-6"
                   placeholder='{ "key": "value" }'
                   value={body}
                   onChange={(e) => setBody(e.target.value)}

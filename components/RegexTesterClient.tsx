@@ -11,8 +11,7 @@ import {
   Code2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { M3Input, M3Textarea } from "@/components/ui/m3-ui";
 import { cn } from "@/lib/utils";
 
 export default function RegexTesterClient() {
@@ -43,29 +42,25 @@ export default function RegexTesterClient() {
         {/* Input Controls */}
         <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-8 space-y-6 shadow-xl">
            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-              <div className="md:col-span-8 space-y-3">
-                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-2">Regular Expression</label>
-                 <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-primary transition-colors">/</div>
-                    <Input 
-                      className={cn(
-                        "bg-zinc-950 border-zinc-800 h-14 pl-8 pr-12 font-mono text-lg text-primary focus:border-primary/50 transition-all rounded-2xl",
-                        results.error && "border-red-500/50 text-red-500"
-                      )}
-                      placeholder="Enter regex pattern..."
-                      value={regex}
-                      onChange={(e) => setRegex(e.target.value)}
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-primary transition-colors">/</div>
-                 </div>
+              <div className="md:col-span-8">
+                 <M3Input 
+                   label="Regular Expression"
+                   className={cn(
+                     "font-mono text-lg text-primary",
+                     results.error && "border-red-500/50 text-red-500"
+                   )}
+                   placeholder="Enter regex pattern..."
+                   value={regex}
+                   onChange={(e) => setRegex(e.target.value)}
+                 />
               </div>
-              <div className="md:col-span-3 space-y-3">
-                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 ml-2">Flags</label>
-                 <Input 
-                    className="bg-zinc-950 border-zinc-800 h-14 font-mono text-lg text-zinc-400 focus:border-primary/50 transition-all rounded-2xl"
-                    placeholder="gim"
-                    value={flags}
-                    onChange={(e) => setFlags(e.target.value)}
+              <div className="md:col-span-3">
+                 <M3Input 
+                   label="Flags"
+                   className="font-mono text-lg text-zinc-400"
+                   placeholder="gim"
+                   value={flags}
+                   onChange={(e) => setFlags(e.target.value)}
                  />
               </div>
               <div className="md:col-span-1">
@@ -94,8 +89,9 @@ export default function RegexTesterClient() {
                  </h3>
                  <span className="text-[10px] text-zinc-600 font-mono italic">Matches: {results.matches.length}</span>
               </div>
-              <Textarea 
-                className="flex-1 bg-zinc-950 border-zinc-800 font-mono text-sm p-6 resize-none rounded-[2rem] leading-relaxed focus:border-primary/50 transition-all"
+              <M3Textarea 
+                label="Test String"
+                className="flex-1 font-mono text-[13px] p-6 resize-none leading-relaxed"
                 placeholder="Paste the text you want to test against here..."
                 value={testText}
                 onChange={(e) => setTestText(e.target.value)}

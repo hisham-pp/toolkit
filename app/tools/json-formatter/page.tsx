@@ -5,7 +5,7 @@ import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
 import { useToolHistory } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { M3Textarea } from "@/components/ui/m3-ui";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -101,15 +101,13 @@ export default function JsonFormatterPage() {
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 p-4 gap-4 bg-zinc-950/40 min-h-0">
               {/* Raw Input */}
               <div className="flex flex-col gap-2 min-h-0">
-                <label className="text-[10px] uppercase tracking-wider font-bold text-zinc-600 px-1">Raw Input</label>
-                <div className="flex-1 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/50 focus-within:border-primary/30 transition-colors">
-                  <Textarea
-                    placeholder="Paste your JSON here..."
-                    className="w-full h-full resize-none bg-transparent border-none focus-visible:ring-0 font-mono text-xs p-4 leading-relaxed text-indigo-300 placeholder:text-zinc-800"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                  />
-                </div>
+                <M3Textarea
+                  label="Raw JSON Input"
+                  placeholder="Paste your JSON here..."
+                  className="flex-1 w-full resize-none font-mono text-[13px] p-6 leading-relaxed text-indigo-300 placeholder:text-zinc-800"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                />
               </div>
 
               {/* Pretty Output */}

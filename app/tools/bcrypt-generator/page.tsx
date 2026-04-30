@@ -5,7 +5,7 @@ import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
 import { Copy, Check, RotateCcw, ShieldCheck, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { M3Input } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import bcrypt from "bcryptjs";
 
@@ -81,17 +81,15 @@ export default function BcryptGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Generator Section */}
         <div className="space-y-6">
-          <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-6 md:p-8 space-y-6">
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Password / Plain Text</label>
-              <Input
-                type="text"
-                placeholder="Enter text to hash..."
-                className="bg-zinc-950 border-zinc-800 h-12 font-mono text-primary"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-6 md:p-8 space-y-8">
+            <M3Input
+              label="Password / Plain Text"
+              type="text"
+              placeholder="Enter text to hash..."
+              className="font-mono text-primary"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">
