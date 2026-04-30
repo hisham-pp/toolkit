@@ -126,6 +126,22 @@ export const TOOLS: ToolConfig[] = [
     category: "security",
   },
   {
+    id: "bcrypt-gen",
+    name: "Bcrypt Gen",
+    description: "Securely hash passwords using Bcrypt algorithm.",
+    icon: ShieldCheck,
+    route: "/tools/bcrypt-generator",
+    category: "security",
+  },
+  {
+    id: "bcrypt-comp",
+    name: "Bcrypt Check",
+    description: "Verify if a password matches a Bcrypt hash.",
+    icon: ShieldCheck,
+    route: "/tools/bcrypt-comparator",
+    category: "security",
+  },
+  {
     id: "sql-formatter",
     name: "SQL Format",
     description: "Format and beautify your SQL queries.",
