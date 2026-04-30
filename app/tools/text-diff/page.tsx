@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
-import { diffLines, Change } from "diff";
-import { Copy, Trash2, Split, Rows } from "lucide-react";
+import { diffLines, diffWords, diffChars, Change } from "diff";
+import { Copy, Trash2, Split, Rows, Type, MousePointer2, AlignLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -15,17 +15,28 @@ export default function TextDiff() {
   const [text1, setText1] = useState("");
   const [text2, setText2] = useState("");
   const [viewMode, setViewMode] = useState<"side-by-side" | "unified">("side-by-side");
+  const [granularity, setGranularity] = useState<"lines" | "words" | "chars">("lines");
 
-  const diffs = diffLines(text1, text2);
+  const diffs = useMemo(() => {
+    if (granularity === "lines") return diffLines(text1, text2);
+    if (granularity === "words") return diffWords(text1, text2);
+    return diffChars(text1, text2);
+  }, [text1, text2, granularity]);
 
-  const stats = {
-    added: diffs.filter(d => d.added).length,
-    removed: diffs.filter(d => d.removed).length,
-  };
+  const stats = useMemo(() => {
+    return {
+      added: diffs.filter(d => d.added).length,
+      removed: diffs.filter(d => d.removed).length,
+    };
+  }, [diffs]);
 
   const copyResult = () => {
-    // Just a placeholder since the visual diff is hard to copy as text
-    toast.info("Visual diff is for viewing. Copy original texts if needed.");
+    if (!text2) {
+      toast.error("Nothing to copy");
+      return;
+    }
+    navigator.clipboard.writeText(text2);
+    toast.success("Changed text copied to clipboard");
   };
 
   const clear = () => {
@@ -37,36 +48,90 @@ export default function TextDiff() {
     <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Controls */}
-        <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
-          <div className="flex gap-2">
-            <Button 
-              variant={viewMode === "side-by-side" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setViewMode("side-by-side")}
-              className="gap-2"
-            >
-              <Split className="w-4 h-4" />
-              Side by Side
-            </Button>
-            <Button 
-              variant={viewMode === "unified" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setViewMode("unified")}
-              className="gap-2"
-            >
-              <Rows className="w-4 h-4" />
-              Unified
-            </Button>
+        <div className="flex flex-col md:flex-row items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-3xl gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+             <div className="flex bg-zinc-950 p-1.5 rounded-2xl border border-zinc-900 shadow-inner">
+               <Button 
+                 variant="ghost" 
+                 size="sm"
+                 onClick={() => setViewMode("side-by-side")}
+                 className={cn(
+                   "h-9 px-4 text-[10px] uppercase font-black tracking-widest gap-2 rounded-xl transition-all",
+                   viewMode === "side-by-side" ? "bg-primary/20 text-primary shadow-lg shadow-primary/5" : "text-zinc-500 hover:bg-zinc-800"
+                 )}
+               >
+                 <Split className="w-3.5 h-3.5" />
+                 <span className="hidden sm:inline">Side by Side</span>
+               </Button>
+               <Button 
+                 variant="ghost" 
+                 size="sm"
+                 onClick={() => setViewMode("unified")}
+                 className={cn(
+                   "h-9 px-4 text-[10px] uppercase font-black tracking-widest gap-2 rounded-xl transition-all",
+                   viewMode === "unified" ? "bg-primary/20 text-primary shadow-lg shadow-primary/5" : "text-zinc-500 hover:bg-zinc-800"
+                 )}
+               >
+                 <Rows className="w-3.5 h-3.5" />
+                 <span className="hidden sm:inline">Unified</span>
+               </Button>
+             </div>
+
+             <div className="flex bg-zinc-950 p-1.5 rounded-2xl border border-zinc-900 shadow-inner">
+               <Button 
+                 variant="ghost" 
+                 size="sm"
+                 onClick={() => setGranularity("lines")}
+                 className={cn(
+                   "h-9 px-4 text-[10px] uppercase font-black tracking-widest gap-2 rounded-xl transition-all",
+                   granularity === "lines" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:bg-zinc-800/50"
+                 )}
+               >
+                 <AlignLeft className="w-3.5 h-3.5" />
+                 Lines
+               </Button>
+               <Button 
+                 variant="ghost" 
+                 size="sm"
+                 onClick={() => setGranularity("words")}
+                 className={cn(
+                   "h-9 px-4 text-[10px] uppercase font-black tracking-widest gap-2 rounded-xl transition-all",
+                   granularity === "words" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:bg-zinc-800/50"
+                 )}
+               >
+                 <Type className="w-3.5 h-3.5" />
+                 Words
+               </Button>
+               <Button 
+                 variant="ghost" 
+                 size="sm"
+                 onClick={() => setGranularity("chars")}
+                 className={cn(
+                   "h-9 px-4 text-[10px] uppercase font-black tracking-widest gap-2 rounded-xl transition-all",
+                   granularity === "chars" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:bg-zinc-800/50"
+                 )}
+               >
+                 <MousePointer2 className="w-3.5 h-3.5" />
+                 Letters
+               </Button>
+             </div>
           </div>
-          <div className="flex items-center gap-6">
+          
+          <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-zinc-800 pt-4 md:pt-0">
             <div className="flex gap-4 text-[10px] font-mono uppercase font-bold tracking-widest">
-              <span className="text-green-500">+{stats.added} Added</span>
-              <span className="text-red-500">-{stats.removed} Removed</span>
+              <span className="text-green-500">+{stats.added}</span>
+              <span className="text-red-500">-{stats.removed}</span>
             </div>
-            <div className="w-[1px] h-6 bg-zinc-800" />
-            <Button variant="ghost" size="sm" onClick={clear} className="text-zinc-500 hover:text-red-400">
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <div className="w-[1px] h-6 bg-zinc-800 hidden md:block" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={copyResult} className="h-10 px-4 bg-zinc-950 border-zinc-800 text-[10px] uppercase font-black tracking-widest gap-2 rounded-xl hover:border-primary/50 transition-all">
+                <Copy className="w-3.5 h-3.5" />
+                Copy Changed
+              </Button>
+              <Button variant="ghost" size="sm" onClick={clear} className="h-10 w-10 p-0 text-zinc-600 hover:text-red-500 hover:bg-red-500/5 transition-all rounded-xl">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -98,34 +163,53 @@ export default function TextDiff() {
             <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Diff Preview</p>
           </div>
           
-          <div className="flex-1 overflow-auto p-6 font-mono text-xs leading-relaxed">
+          <div className="flex-1 overflow-auto p-8 font-mono text-[13px] leading-relaxed">
             {text1 || text2 ? (
               <div className={cn(
-                "grid gap-1",
-                viewMode === "side-by-side" ? "grid-cols-2" : "grid-cols-1"
+                "whitespace-pre-wrap rounded-2xl p-6 bg-zinc-950/20 border border-zinc-900/50",
+                viewMode === "side-by-side" && granularity === "lines" ? "grid grid-cols-2 gap-4" : "block"
               )}>
                 {diffs.map((part, index) => {
-                  const color = part.added ? "bg-green-500/10 text-green-500 border-green-500/20" : 
-                               part.removed ? "bg-red-500/10 text-red-500 border-red-500/20" : 
-                               "text-zinc-500";
-                  const prefix = part.added ? "+" : part.removed ? "-" : " ";
+                  const isAdded = part.added;
+                  const isRemoved = part.removed;
+                  const colorClass = isAdded ? "bg-green-500/20 text-green-400 decoration-green-500/30" : 
+                                     isRemoved ? "bg-red-500/20 text-red-400 line-through decoration-red-500/30" : 
+                                     "text-zinc-500";
                   
+                  if (granularity === "lines") {
+                    return (
+                      <div 
+                        key={index} 
+                        className={cn(
+                          "px-4 py-1 rounded border border-transparent transition-colors",
+                          isAdded ? "bg-green-500/10 border-green-500/20 text-green-400" : 
+                          isRemoved ? "bg-red-500/10 border-red-500/20 text-red-400" : "opacity-60",
+                          viewMode === "side-by-side" && !isAdded && !isRemoved ? "col-span-2" : ""
+                        )}
+                      >
+                         {part.value.split('\n').filter((l, i, arr) => l || i < arr.length - 1).map((line, i) => (
+                           <div key={i} className="flex gap-4 group">
+                              <span className="w-6 opacity-30 select-none text-right italic font-black">
+                                 {isAdded ? "+" : isRemoved ? "-" : "·"}
+                              </span>
+                              <span className="flex-1">{line || " "}</span>
+                           </div>
+                         ))}
+                      </div>
+                    );
+                  }
+
+                  // Word or Char level (inline)
                   return (
-                    <div 
-                      key={index} 
+                    <span 
+                      key={index}
                       className={cn(
-                        "p-1 border border-transparent rounded whitespace-pre-wrap",
-                        color,
-                        viewMode === "side-by-side" && !part.added && !part.removed ? "col-span-2" : ""
+                        "rounded-sm px-0.5 mx-px transition-all inline",
+                        colorClass
                       )}
                     >
-                      {part.value.split('\n').filter(l => l || !part.value.endsWith('\n')).map((line, i) => (
-                        <div key={i} className="flex gap-2">
-                           <span className="opacity-50 select-none w-4">{prefix}</span>
-                           <span>{line}</span>
-                        </div>
-                      ))}
-                    </div>
+                      {part.value}
+                    </span>
                   );
                 })}
               </div>
