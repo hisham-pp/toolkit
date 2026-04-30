@@ -59,7 +59,6 @@ async function fetchUser(id) {
 `;
 
 export default function MarkdownPreviewClient() {
-  const tool = TOOLS.find((t) => t.id === "markdown-preview")!;
   const [content, setContent] = useState(DEFAULT_MARKDOWN);
   const [view, setView] = useState<"split" | "editor" | "preview">("split");
 
@@ -89,8 +88,7 @@ export default function MarkdownPreviewClient() {
   const clear = () => setContent("");
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full gap-6">
+    <div className="flex flex-col h-full gap-6">
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row items-center justify-between bg-[#161618] p-3 border border-zinc-800 rounded-3xl shadow-lg gap-4">
            <div className="flex bg-zinc-950 p-1.5 rounded-2xl border border-zinc-900 w-full md:w-auto">
@@ -256,6 +254,6 @@ export default function MarkdownPreviewClient() {
         .prose td { padding: 1rem 1.5rem; border-bottom: 1px solid #18181b; }
         .prose tr:last-child td { border-bottom: none; }
       `}</style>
-    </ToolLayout>
+    </div>
   );
 }

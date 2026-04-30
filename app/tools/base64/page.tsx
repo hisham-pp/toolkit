@@ -1,15 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
 import { 
   ArrowLeftRight, 
   Trash2, 
-  Copy, 
   Binary, 
-  WholeWord,
-  AlertCircle
+  WholeWord
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Textarea } from "@/components/ui/m3-ui";
@@ -75,8 +72,7 @@ export default function Base64Converter() {
   };
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full gap-8">
+    <div className="flex flex-col h-full gap-8">
         {/* Swapper View */}
         <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
           <div className="flex items-center gap-8">
@@ -140,6 +136,5 @@ export default function Base64Converter() {
           </div>
         </div>
       </div>
-    </ToolLayout>
-  );
-}
+    );
+  }

@@ -172,10 +172,10 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
     singleValue: (base) => ({
       ...base,
       color: "white",
-      fontWeight: "800",
+      fontWeight: "700",
       textTransform: "uppercase",
       letterSpacing: "0.1em",
-      fontSize: "10px",
+      fontSize: "13px",
     }),
     placeholder: (base) => ({
       ...base,
@@ -206,10 +206,10 @@ const M3Select = ({ className, label, options, value, onChange, placeholder, dis
           : "transparent",
       color: state.isSelected ? "white" : "rgb(161 161 170)", // zinc-400
       padding: "1rem 1.25rem",
-      fontSize: "10px",
-      fontWeight: "800",
+      fontSize: "13px",
+      fontWeight: "600",
       textTransform: "uppercase",
-      letterSpacing: "0.15em",
+      letterSpacing: "0.05em",
       cursor: "pointer",
       borderBottom: "1px solid rgb(24 24 27 / 0.5)",
       transition: "all 0.2s ease",

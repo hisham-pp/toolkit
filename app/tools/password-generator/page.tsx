@@ -53,8 +53,7 @@ export default function PasswordGeneratorTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="max-w-4xl mx-auto space-y-10 pb-20 pt-6">
+    <div className="max-w-4xl mx-auto space-y-10 pb-20 pt-6">
         <div className="bg-[#161618] border border-zinc-800 rounded-[3.5rem] p-10 md:p-14 space-y-12 shadow-2xl relative overflow-hidden text-white">
           <div className="absolute top-0 right-0 p-14 opacity-5 rotate-12 transition-transform duration-700 hover:rotate-0">
             <Key className="w-64 h-64" />
@@ -161,6 +160,6 @@ export default function PasswordGeneratorTool() {
           border-radius: 10px;
         }
       `}</style>
-    </ToolLayout>
+    </div>
   );
 }

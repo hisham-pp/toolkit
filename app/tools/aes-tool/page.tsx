@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { TOOLS } from "@/lib/tools-config";
-import ToolLayout from "@/components/ToolLayout";
+import { 
+  Lock, 
+  Unlock, 
+  RotateCcw, 
+  ShieldAlert, 
+  ShieldCheck, 
+  Copy 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { M3Input, M3Textarea, M3Password } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import CryptoJS from "crypto-js";
@@ -52,8 +60,7 @@ export default function AesToolPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6">
+    <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
           {/* Controls */}
           <div className="lg:col-span-5 flex flex-col gap-6">
@@ -165,8 +172,6 @@ export default function AesToolPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
-  );
-}
+    </div>
   );
 }

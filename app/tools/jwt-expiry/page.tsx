@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Input, M3Textarea } from "@/components/ui/m3-ui";
-import ToolLayout from "@/components/ToolLayout";
 import { cn } from "@/lib/utils";
 
 export default function JwtExpirySimulator() {
@@ -71,8 +70,7 @@ export default function JwtExpirySimulator() {
   };
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full max-w-6xl mx-auto gap-10 pt-6">
+    <div className="flex flex-col h-full max-w-6xl mx-auto gap-10 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Token Input */}
           <div className="lg:col-span-12">
@@ -233,8 +231,5 @@ export default function JwtExpirySimulator() {
           </div>
         </div>
       </div>
-    </ToolLayout>
-  );
-}
-  );
-}
+    );
+  }

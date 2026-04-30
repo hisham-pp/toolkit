@@ -68,8 +68,7 @@ function validatePassword(pass) {
   `.trim();
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full max-w-6xl mx-auto gap-10 pt-6 pb-10">
+    <div className="flex flex-col h-full max-w-6xl mx-auto gap-10 pt-6 pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-1">
           {/* Policy Configuration */}
           <div className="lg:col-span-5 space-y-8">
@@ -224,8 +223,5 @@ function validatePassword(pass) {
           </div>
         </div>
       </div>
-    </ToolLayout>
-  );
-}
-  );
-}
+    );
+  }

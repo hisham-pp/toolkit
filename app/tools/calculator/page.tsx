@@ -24,10 +24,11 @@ export default function CalculatorPage() {
   const [equation, setEquation] = useState("");
   const [history, setHistory] = useState<{ eq: string, res: string }[]>([]);
   const [isNewInput, setIsNewInput] = useState(true);
-  
-  // Logic remains same...
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   
   const handleNumber = (n: string) => {
+    setActiveKey(n);
+    setTimeout(() => setActiveKey(null), 100);
     setDisplay(prev => {
       if (isNewInput) {
         setIsNewInput(false);
@@ -39,11 +40,15 @@ export default function CalculatorPage() {
   };
 
   const handleOperator = (op: string) => {
+    setActiveKey(op);
+    setTimeout(() => setActiveKey(null), 100);
     setEquation(display + " " + op + " ");
     setIsNewInput(true);
   };
 
   const calculate = () => {
+    setActiveKey("=");
+    setTimeout(() => setActiveKey(null), 100);
     try {
       const fullEq = equation + display;
       if (!fullEq.trim() || equation === "") return;
@@ -64,12 +69,16 @@ export default function CalculatorPage() {
   };
 
   const clear = () => {
+    setActiveKey("Escape");
+    setTimeout(() => setActiveKey(null), 100);
     setDisplay("0");
     setEquation("");
     setIsNewInput(true);
   };
 
   const backspace = () => {
+    setActiveKey("Backspace");
+    setTimeout(() => setActiveKey(null), 100);
     setDisplay(prev => {
       if (prev.length > 1) return prev.slice(0, -1);
       return "0";
@@ -100,34 +109,33 @@ export default function CalculatorPage() {
   }, [display, equation]);
 
   const buttons = [
-    { label: "AC", action: clear, type: "functional" },
-    { label: "C", action: backspace, type: "functional" },
-    { label: "%", action: () => handleOperator("/ 100"), type: "operator" },
-    { label: "÷", action: () => handleOperator("/"), type: "operator", icon: Divide },
+    { label: "AC", action: clear, type: "functional", key: "Escape" },
+    { label: "C", action: backspace, type: "functional", key: "Backspace" },
+    { label: "%", action: () => handleOperator("/ 100"), type: "operator", key: "%" },
+    { label: "÷", action: () => handleOperator("/"), type: "operator", icon: Divide, key: "/" },
     
-    { label: "7", action: () => handleNumber("7"), type: "number" },
-    { label: "8", action: () => handleNumber("8"), type: "number" },
-    { label: "9", action: () => handleNumber("9"), type: "number" },
-    { label: "×", action: () => handleOperator("*"), type: "operator", icon: X },
+    { label: "7", action: () => handleNumber("7"), type: "number", key: "7" },
+    { label: "8", action: () => handleNumber("8"), type: "number", key: "8" },
+    { label: "9", action: () => handleNumber("9"), type: "number", key: "9" },
+    { label: "×", action: () => handleOperator("*"), type: "operator", icon: X, key: "*" },
     
-    { label: "4", action: () => handleNumber("4"), type: "number" },
-    { label: "5", action: () => handleNumber("5"), type: "number" },
-    { label: "6", action: () => handleNumber("6"), type: "number" },
-    { label: "−", action: () => handleOperator("-"), type: "operator", icon: Minus },
+    { label: "4", action: () => handleNumber("4"), type: "number", key: "4" },
+    { label: "5", action: () => handleNumber("5"), type: "number", key: "5" },
+    { label: "6", action: () => handleNumber("6"), type: "number", key: "6" },
+    { label: "−", action: () => handleOperator("-"), type: "operator", icon: Minus, key: "-" },
     
-    { label: "1", action: () => handleNumber("1"), type: "number" },
-    { label: "2", action: () => handleNumber("2"), type: "number" },
-    { label: "3", action: () => handleNumber("3"), type: "number" },
-    { label: "+", action: () => handleOperator("+"), type: "operator", icon: Plus },
+    { label: "1", action: () => handleNumber("1"), type: "number", key: "1" },
+    { label: "2", action: () => handleNumber("2"), type: "number", key: "2" },
+    { label: "3", action: () => handleNumber("3"), type: "number", key: "3" },
+    { label: "+", action: () => handleOperator("+"), type: "operator", icon: Plus, key: "+" },
     
-    { label: "0", action: () => handleNumber("0"), type: "number", className: "col-span-2" },
-    { label: ".", action: () => handleNumber("."), type: "number" },
-    { label: "=", action: calculate, type: "equal", icon: Equal },
+    { label: "0", action: () => handleNumber("0"), type: "number", className: "col-span-2", key: "0" },
+    { label: ".", action: () => handleNumber("."), type: "number", key: "." },
+    { label: "=", action: calculate, type: "equal", icon: Equal, key: "=" },
   ];
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6">
+    <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-1">
           {/* Calculator Body */}
           <div className="lg:col-span-7 flex flex-col">
@@ -150,6 +158,7 @@ export default function CalculatorPage() {
                      onClick={btn.action}
                      className={cn(
                        "h-20 md:h-24 rounded-[1.8rem] flex items-center justify-center text-2xl font-black transition-all duration-300",
+                        activeKey === btn.key && "scale-95 brightness-125 ring-4 ring-primary/40",
                        btn.type === "number" && "bg-zinc-900/50 text-zinc-300 hover:bg-zinc-800 hover:scale-105 border border-zinc-800/50 hover:border-zinc-700 shadow-lg",
                        btn.type === "operator" && "bg-primary/10 text-primary hover:bg-primary hover:text-white hover:shadow-2xl hover:shadow-primary/20",
                        btn.type === "functional" && "bg-zinc-900 text-zinc-500 hover:text-white hover:bg-zinc-800",
@@ -204,6 +213,5 @@ export default function CalculatorPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
-  );
-}
+    );
+  }

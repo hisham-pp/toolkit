@@ -102,3 +102,31 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #444;
 }
+
+/* Tool specific styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 10px;
+}
+
+.prose h1 { margin-top: 0; font-weight: 900; font-style: italic; letter-spacing: -0.05em; color: #fff; }
+.prose h2 { font-weight: 800; border-bottom: 2px solid #27272a; padding-bottom: 0.5rem; margin-top: 3rem; }
+.prose p { color: #a1a1aa; line-height: 1.8; }
+.prose strong { color: #fff; font-weight: 800; }
+.prose a { color: #6366f1; font-weight: 700; text-decoration: none; border-bottom: 2px solid transparent; transition: border 0.2s; }
+.prose a:hover { border-bottom-color: #6366f1; }
+.prose ul, .prose ol { padding-left: 1.5rem; }
+.prose li { margin-bottom: 0.5rem; }
+.prose li::marker { color: #6366f1; font-weight: 900; }
+.prose hr { border-color: #27272a; margin: 4rem 0; }
+.prose thead { background: rgba(99, 102, 241, 0.05); }
+.prose th { color: #6366f1; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; padding: 1rem 1.5rem; border-bottom: 2px solid #27272a; }
+.prose td { padding: 1rem 1.5rem; border-bottom: 1px solid #18181b; }
+.prose tr:last-child td { border-bottom: none; }

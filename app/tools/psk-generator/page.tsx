@@ -96,8 +96,7 @@ export default function PskGeneratorPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6 pb-20">
+    <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-1">
           {/* Controls */}
           <div className="lg:col-span-5 flex flex-col gap-8">
@@ -240,6 +239,5 @@ export default function PskGeneratorPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
-  );
-}
+    );
+  }

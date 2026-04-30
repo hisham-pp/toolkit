@@ -15,7 +15,6 @@ import { M3Input, M3Textarea } from "@/components/ui/m3-ui";
 import { cn } from "@/lib/utils";
 
 export default function RegexTesterClient() {
-  const tool = TOOLS.find((t) => t.id === "regex-tester")!;
   const [regex, setRegex] = useState("(\\w+)-(\\d+)");
   const [flags, setFlags] = useState("g");
   const [testText, setTestText] = useState("Order-123, Item-456, User-789");
@@ -37,8 +36,7 @@ export default function RegexTesterClient() {
   };
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full gap-8">
+    <div className="flex flex-col h-full gap-8">
         {/* Input Controls */}
         <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-8 space-y-6 shadow-xl">
            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
@@ -142,6 +140,5 @@ export default function RegexTesterClient() {
            </div>
         </div>
       </div>
-    </ToolLayout>
-  );
-}
+    );
+  }

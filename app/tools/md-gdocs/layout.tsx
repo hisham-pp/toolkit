@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { ToolRegistry } from "@/lib/tools-config";
 import ToolLayout from "@/components/ToolLayout";
 
-const tool = ToolRegistry.getById("base64")!;
+const tool = ToolRegistry.getById("md-gdocs")!;
 
 export const metadata: Metadata = {
   title: tool.metaTitle,
