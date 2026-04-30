@@ -251,7 +251,7 @@ export class ToolRegistry {
       "Regex Tester",
       "Test and debug regular expressions.",
       Search,
-      "/regex-tester",
+      "/tools/regex-tester",
       "utils"
     ),
     new Tool(
@@ -259,7 +259,7 @@ export class ToolRegistry {
       "Markdown Preview",
       "Write and preview markdown in real-time.",
       Eye,
-      "/markdown-preview",
+      "/tools/markdown-preview",
       "formatting"
     ),
   ];

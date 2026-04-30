@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
@@ -52,6 +53,7 @@ export default function RootLayout({
           <TooltipProvider>
             {children}
             <Toaster position="top-right" richColors />
+            <Analytics />
           </TooltipProvider>
         </ThemeProvider>
       </body>
