@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Keyboard,
   Search,
@@ -67,7 +65,6 @@ const SHORTCUTS: Record<IDEType, Shortcut[]> = {
 };
 
 export default function ShortcutsPage() {
-  const tool = TOOLS.find(t => t.id === "shortcut-cheatsheet")!;
   const [activeIde, setActiveIde] = useState<IDEType>("vscode");
   const [search, setSearch] = useState("");
 
@@ -78,7 +75,6 @@ export default function ShortcutsPage() {
   );
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-4 shadow-2xl flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-[200px] relative">
@@ -178,6 +174,5 @@ export default function ShortcutsPage() {
             </div>
          </div>
       </div>
-    </ToolLayout>
   );
 }

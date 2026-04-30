@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Copy, Check, Hash, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +8,6 @@ import { toast } from "sonner";
 import CryptoJS from "crypto-js";
 
 export default function HashGeneratorTool() {
-  const tool = TOOLS.find((t) => t.id === "hash-gen")!;
   const [input, setInput] = useState("");
   const [hashes, setHashes] = useState({
     md5: "",
@@ -38,7 +35,6 @@ export default function HashGeneratorTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         <div className="space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">Input Text</h2>
@@ -76,6 +72,5 @@ export default function HashGeneratorTool() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

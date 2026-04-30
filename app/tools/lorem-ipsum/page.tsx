@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Copy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,7 +17,6 @@ const LOREM_WORDS = [
 ];
 
 export default function LoremIpsumTool() {
-  const tool = TOOLS.find((t) => t.id === "lorem-ipsum")!;
   const [output, setOutput] = useState("");
   const [paragraphs, setParagraphs] = useState(3);
   const [type, setType] = useState<"paragraphs" | "sentences" | "words">("paragraphs");
@@ -55,7 +52,6 @@ export default function LoremIpsumTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-8 space-y-6">
           <div className="flex flex-col md:flex-row gap-8">
@@ -108,6 +104,5 @@ export default function LoremIpsumTool() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

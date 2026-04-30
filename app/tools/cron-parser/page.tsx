@@ -1,15 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import cronstrue from "cronstrue";
 import { Clock, Info, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { M3Input } from "@/components/ui/m3-ui";
 import { cn } from "@/lib/utils";
 
 export default function CronParser() {
-  const tool = TOOLS.find((t) => t.id === "cron-parser")!;
   const [expression, setExpression] = useState("*/5 * * * *");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +36,6 @@ export default function CronParser() {
   ];
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-4xl mx-auto space-y-12 h-full flex flex-col justify-center">
         <div className="space-y-4 text-center">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center mb-6">
@@ -98,6 +94,5 @@ export default function CronParser() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

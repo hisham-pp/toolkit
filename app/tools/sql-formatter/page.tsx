@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Copy, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +8,6 @@ import { toast } from "sonner";
 import { format } from "sql-formatter";
 
 export default function SqlFormatterTool() {
-  const tool = TOOLS.find((t) => t.id === "sql-formatter")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
 
@@ -28,7 +25,6 @@ export default function SqlFormatterTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -62,6 +58,5 @@ export default function SqlFormatterTool() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

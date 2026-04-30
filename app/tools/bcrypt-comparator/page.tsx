@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { CheckCircle2, XCircle, ShieldCheck, History, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +16,6 @@ type ComparisonHistory = {
 };
 
 export default function BcryptComparator() {
-  const tool = TOOLS.find((t) => t.id === "bcrypt-comp")!;
   const [password, setPassword] = useState("");
   const [hash, setHash] = useState("");
   const [result, setResult] = useState<boolean | null>(null);
@@ -78,7 +75,6 @@ export default function BcryptComparator() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Comparator Form */}
         <div className="space-y-6">
@@ -175,6 +171,5 @@ export default function BcryptComparator() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Trash2, 
   Copy, 
@@ -27,7 +25,6 @@ interface EnvVar {
 }
 
 export default function EnvManager() {
-  const tool = TOOLS.find((t) => t.id === "env-manager")!;
   const [inputText, setInputText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showValues, setShowValues] = useState<Record<string, boolean>>({});
@@ -67,7 +64,6 @@ export default function EnvManager() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Input/Editor */}
         <div className="flex flex-col gap-6">
@@ -158,6 +154,5 @@ export default function EnvManager() {
            </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

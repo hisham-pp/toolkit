@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import ToolLayout from "@/components/ToolLayout";
 import { TOOLS } from "@/lib/tools-config";
 import { useToolHistory } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
@@ -66,7 +65,6 @@ export default function JsonFormatterPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-12rem)]">
         {/* Editor Area */}
         <div className="lg:col-span-9 flex flex-col gap-4 h-full">
@@ -209,6 +207,5 @@ export default function JsonFormatterPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

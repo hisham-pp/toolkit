@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { TOOLS } from "@/lib/tools-config";
-import ToolLayout from "@/components/ToolLayout";
+import { ArrowRightLeft, Copy, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { M3Input, M3Select } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,6 @@ const UNIT_LABELS: Record<string, string> = {
 };
 
 export default function WeightConverterPage() {
-  const tool = TOOLS.find(t => t.id === "weight-converter")!;
   const [value, setValue] = useState<string>("1");
   const [fromUnit, setFromUnit] = useState<string>("kg");
   const [toUnit, setToUnit] = useState<string>("lb");
@@ -61,8 +60,7 @@ export default function WeightConverterPage() {
   }));
 
   return (
-    <ToolLayout tool={tool}>
-      <div className="flex flex-col h-full max-w-6xl mx-auto gap-10 pt-6">
+    <div className="flex flex-col h-full max-w-6xl mx-auto gap-10 pt-6">
         <div className="bg-[#161618] border border-zinc-800 rounded-[3.5rem] p-10 md:p-14 space-y-12 shadow-2xl relative overflow-hidden text-white">
           {/* Background Decor */}
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2" />
@@ -139,8 +137,5 @@ export default function WeightConverterPage() {
            ))}
         </div>
       </div>
-    </ToolLayout>
-  );
-}
   );
 }

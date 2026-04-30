@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { HexColorPicker } from "react-colorful";
 import { colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
@@ -24,7 +22,6 @@ import { cn } from "@/lib/utils";
 extend([namesPlugin, a11yPlugin]);
 
 export default function ColorPickerTool() {
-  const tool = TOOLS.find((t) => t.id === "color-picker")!;
   const [color, setColor] = useState("#6366f1");
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -47,7 +44,7 @@ export default function ColorPickerTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
+    <>
       <div className="flex flex-col h-full gap-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Picker */}
@@ -195,6 +192,6 @@ export default function ColorPickerTool() {
           height: 20px;
         }
       `}</style>
-    </ToolLayout>
+    </>
   );
 }

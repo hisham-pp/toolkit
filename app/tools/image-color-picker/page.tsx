@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Upload, 
   Pipette, 
@@ -18,7 +16,6 @@ import { cn } from "@/lib/utils";
 import { colord } from "colord";
 
 export default function ImageColorPicker() {
-  const tool = TOOLS.find((t) => t.id === "image-color-picker")!;
   const [image, setImage] = useState<string | null>(null);
   const [pickedColor, setPickedColor] = useState<string>("#000000");
   const [history, setHistory] = useState<string[]>([]);
@@ -100,7 +97,7 @@ export default function ImageColorPicker() {
   };
 
   return (
-    <ToolLayout tool={tool}>
+    <>
       <div className="flex flex-col h-full gap-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Canvas Viewport */}
@@ -245,6 +242,6 @@ export default function ImageColorPicker() {
           border-radius: 10px;
         }
       `}</style>
-    </ToolLayout>
+    </>
   );
 }

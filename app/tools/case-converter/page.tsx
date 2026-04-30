@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Type, 
   Copy, 
@@ -20,7 +18,6 @@ import { cn } from "@/lib/utils";
 type CaseType = "camel" | "snake" | "kebab" | "pascal" | "constant" | "sentence" | "title" | "lower" | "upper";
 
 export default function CaseConverterPage() {
-  const tool = TOOLS.find(t => t.id === "case-converter")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [activeCase, setActiveCase] = useState<CaseType>("camel");
@@ -91,7 +88,6 @@ export default function CaseConverterPage() {
   ];
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-5xl mx-auto space-y-8 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Input Section */}
@@ -204,6 +200,5 @@ export default function CaseConverterPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

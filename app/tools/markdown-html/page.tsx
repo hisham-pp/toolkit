@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { marked } from "marked";
 import { 
   ArrowLeftRight, 
@@ -18,7 +16,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function MarkdownHtmlConverter() {
-  const tool = TOOLS.find((t) => t.id === "markdown-html")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [direction, setDirection] = useState<"md-to-html" | "html-to-md">("md-to-html");
@@ -93,7 +90,6 @@ export default function MarkdownHtmlConverter() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Swapper View */}
         <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
@@ -179,6 +175,5 @@ export default function MarkdownHtmlConverter() {
            </p>
         </div>
       </div>
-    </ToolLayout>
   );
 }

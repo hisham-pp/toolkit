@@ -1,13 +1,12 @@
 "use client";
 
-import ToolLayout from "@/components/ToolLayout";
+import { useEffect, useState } from "react";
 import { Copy, Check, RotateCcw, ShieldCheck, Key, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function PasswordGeneratorTool() {
-  const tool = TOOLS.find((t) => t.id === "password-gen")!;
   const [password, setPassword] = useState("");
   const [length, setLength] = useState(16);
   const [options, setOptions] = useState({
@@ -53,7 +52,8 @@ export default function PasswordGeneratorTool() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 pb-20 pt-6">
+    <>
+      <div className="max-w-4xl mx-auto space-y-10 pb-20 pt-6">
         <div className="bg-[#161618] border border-zinc-800 rounded-[3.5rem] p-10 md:p-14 space-y-12 shadow-2xl relative overflow-hidden text-white">
           <div className="absolute top-0 right-0 p-14 opacity-5 rotate-12 transition-transform duration-700 hover:rotate-0">
             <Key className="w-64 h-64" />
@@ -105,7 +105,7 @@ export default function PasswordGeneratorTool() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      {Object.entries(options).map(([key, value]) => (
+                      {(Object.entries(options) as [keyof typeof options, boolean][]).map(([key, value]) => (
                         <button
                           key={key}
                           onClick={() => setOptions({ ...options, [key]: !value })}
@@ -160,6 +160,6 @@ export default function PasswordGeneratorTool() {
           border-radius: 10px;
         }
       `}</style>
-    </div>
+    </>
   );
 }

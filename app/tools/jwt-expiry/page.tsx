@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Timer,
   AlertCircle,
@@ -17,7 +16,6 @@ import { M3Input, M3Textarea } from "@/components/ui/m3-ui";
 import { cn } from "@/lib/utils";
 
 export default function JwtExpirySimulator() {
-  const tool = TOOLS.find(t => t.id === "jwt-expiry")!;
   const [token, setToken] = useState("");
   const [expiry, setExpiry] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));

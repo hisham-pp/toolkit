@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Dice5,
   RefreshCw,
@@ -27,7 +25,6 @@ import { faker } from "@faker-js/faker";
 type DataType = "users" | "addresses" | "products" | "finance" | "internet";
 
 export default function DataGeneratorPage() {
-  const tool = TOOLS.find(t => t.id === "data-generator")!;
   const [count, setCount] = useState(10);
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [dataType, setDataType] = useState<DataType>("users");
@@ -125,7 +122,6 @@ export default function DataGeneratorPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Controls */}
@@ -274,6 +270,5 @@ export default function DataGeneratorPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

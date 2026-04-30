@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Lock, 
   Unlock, 
@@ -17,7 +16,6 @@ import CryptoJS from "crypto-js";
 import { cn } from "@/lib/utils";
 
 export default function AesToolPage() {
-  const tool = TOOLS.find(t => t.id === "aes-tool")!;
   const [data, setData] = useState("");
   const [password, setPassword] = useState("");
   const [result, setResult] = useState("");
@@ -172,6 +170,5 @@ export default function AesToolPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

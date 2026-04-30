@@ -1,13 +1,15 @@
-import { Metadata } from 'next';
-import { TOOLS } from '@/lib/tools-config';
+import { Metadata } from "next";
+import { ToolRegistry } from "@/lib/tools-config";
+import ToolLayout from "@/components/ToolLayout";
 
-const tool = TOOLS.find(t => t.id === 'http-status')!;
+const tool = ToolRegistry.getById("http-status")!;
 
 export const metadata: Metadata = {
   title: tool.metaTitle,
   description: tool.metaDescription,
+  keywords: tool.keywords,
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <ToolLayout tool={tool}>{children}</ToolLayout>;
 }

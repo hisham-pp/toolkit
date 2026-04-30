@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Copy, Check, RotateCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function UUIDGeneratorTool() {
-  const tool = TOOLS.find((t) => t.id === "uuid-generator")!;
   const [uuids, setUuids] = useState<string[]>([]);
   const [count, setCount] = useState(5);
 
@@ -28,7 +25,6 @@ export default function UUIDGeneratorTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="bg-[#161618] border border-zinc-800 rounded-2xl p-8 space-y-6">
           <div className="space-y-4">
@@ -79,6 +75,5 @@ export default function UUIDGeneratorTool() {
           </div>
         )}
       </div>
-    </ToolLayout>
   );
 }

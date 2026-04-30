@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   ArrowLeftRight, 
   Trash2, 
@@ -14,7 +13,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function Base64Converter() {
-  const tool = TOOLS.find((t) => t.id === "base64")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [direction, setDirection] = useState<"encode" | "decode">("encode");

@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import zxcvbn from "zxcvbn";
 import { 
   ShieldCheck, 
@@ -18,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export default function PasswordStrength() {
-  const tool = TOOLS.find((t) => t.id === "password-strength")!;
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -38,7 +35,6 @@ export default function PasswordStrength() {
   const activeScore = result ? scoreInfo[result.score] : null;
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Input Section */}
         <div className="space-y-6">
@@ -174,6 +170,5 @@ export default function PasswordStrength() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

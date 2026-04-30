@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Paintbrush, 
   Trash2, 
@@ -25,7 +23,6 @@ interface ColorStop {
 }
 
 export default function GradientGenerator() {
-  const tool = TOOLS.find((t) => t.id === "gradient-generator")!;
   const [stops, setStops] = useState<ColorStop[]>([
     { color: "#6366f1", position: 0 },
     { color: "#a855f7", position: 100 }
@@ -76,7 +73,6 @@ export default function GradientGenerator() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Settings Side */}
@@ -203,6 +199,5 @@ export default function GradientGenerator() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

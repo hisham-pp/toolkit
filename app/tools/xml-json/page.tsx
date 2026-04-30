@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
 import { 
   ArrowLeftRight, 
@@ -18,7 +16,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function XmlJsonConverter() {
-  const tool = TOOLS.find((t) => t.id === "xml-json")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [direction, setDirection] = useState<"xml-to-json" | "json-to-xml">("xml-to-json");
@@ -92,7 +89,6 @@ export default function XmlJsonConverter() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Swapper View */}
         <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
@@ -178,6 +174,5 @@ export default function XmlJsonConverter() {
            </p>
         </div>
       </div>
-    </ToolLayout>
   );
 }

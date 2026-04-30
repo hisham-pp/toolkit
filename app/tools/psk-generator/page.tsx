@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Key, 
   Copy, 
@@ -18,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { M3Input, M3Select } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import ToolLayout from "@/components/ToolLayout";
 
 const PSK_PRESETS = [
   { label: "WPA2 (64 Character Hex)", length: 64, type: "hex" },
@@ -29,7 +27,6 @@ const PSK_PRESETS = [
 ];
 
 export default function PskGeneratorPage() {
-  const tool = TOOLS.find(t => t.id === "psk-generator")!;
   const [length, setLength] = useState(32);
   const [type, setType] = useState("hex");
   const [key, setKey] = useState("");

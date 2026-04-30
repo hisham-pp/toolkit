@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import Papa from "papaparse";
 import { 
   ArrowLeftRight, 
@@ -18,7 +16,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function CsvJsonConverter() {
-  const tool = TOOLS.find((t) => t.id === "csv-json")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [direction, setDirection] = useState<"csv-to-json" | "json-to-csv">("csv-to-json");
@@ -91,7 +88,6 @@ export default function CsvJsonConverter() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Swapper View */}
         <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
@@ -178,6 +174,5 @@ export default function CsvJsonConverter() {
            </p>
         </div>
       </div>
-    </ToolLayout>
   );
 }

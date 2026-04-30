@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { diffLines, diffWords, diffChars, Change } from "diff";
 import { Copy, Trash2, Split, Rows, Type, MousePointer2, AlignLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +9,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function TextDiff() {
-  const tool = TOOLS.find((t) => t.id === "text-diff")!;
   const [text1, setText1] = useState("");
   const [text2, setText2] = useState("");
   const [viewMode, setViewMode] = useState<"side-by-side" | "unified">("side-by-side");
@@ -45,7 +42,6 @@ export default function TextDiff() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Controls */}
         <div className="flex flex-col md:flex-row items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-3xl gap-4">
@@ -217,6 +213,5 @@ export default function TextDiff() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

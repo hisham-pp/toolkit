@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Delete, 
   RotateCcw, 
@@ -15,11 +14,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import ToolLayout from "@/components/ToolLayout";
 import { motion } from "motion/react";
 
 export default function CalculatorPage() {
-  const tool = TOOLS.find(t => t.id === "calculator")!;
   const [display, setDisplay] = useState("0");
   const [equation, setEquation] = useState("");
   const [history, setHistory] = useState<{ eq: string, res: string }[]>([]);

@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TOOLS } from "@/lib/tools-config";
-import ToolLayout from "@/components/ToolLayout";
+import { Copy, Key, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { M3Input, M3Textarea, M3Select, M3Password } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import CryptoJS from "crypto-js";
 
 export default function HmacGeneratorPage() {
-  const tool = TOOLS.find(t => t.id === "hmac-generator")!;
   const [input, setInput] = useState("");
   const [secret, setSecret] = useState("");
   const [algo, setAlgo] = useState("SHA256");
@@ -43,7 +42,6 @@ export default function HmacGeneratorPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-10">
           <div className="bg-[#161618] border border-zinc-800 rounded-[3rem] p-10 md:p-12 space-y-10 shadow-2xl overflow-hidden relative">
@@ -124,6 +122,5 @@ export default function HmacGeneratorPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

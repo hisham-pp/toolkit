@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Search, Clock, Globe, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { format, addHours } from "date-fns";
@@ -22,7 +20,6 @@ const COMMON_ZONES = [
 ];
 
 export default function TimezoneTool() {
-  const tool = TOOLS.find((t) => t.id === "timezone")!;
   const [baseTime, setBaseTime] = useState(new Date());
   const [search, setSearch] = useState("");
 
@@ -37,7 +34,6 @@ export default function TimezoneTool() {
   );
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="bg-[#161618] border border-zinc-800 rounded-3xl p-8 space-y-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -86,6 +82,5 @@ export default function TimezoneTool() {
           ))}
         </div>
       </div>
-    </ToolLayout>
   );
 }

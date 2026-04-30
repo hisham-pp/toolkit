@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Copy, 
   RotateCcw, 
@@ -17,7 +15,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function BoxShadow() {
-  const tool = TOOLS.find((t) => t.id === "box-shadow")!;
   const [x, setX] = useState(0);
   const [y, setY] = useState(10);
   const [blur, setBlur] = useState(25);
@@ -57,7 +54,6 @@ export default function BoxShadow() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Preview Section */}
         <div className="flex flex-col gap-6">
@@ -178,6 +174,5 @@ export default function BoxShadow() {
            </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

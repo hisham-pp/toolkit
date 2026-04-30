@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   ArrowLeftRight, 
   Trash2, 
@@ -17,7 +15,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function UrlEncoderConverter() {
-  const tool = TOOLS.find((t) => t.id === "url-encoder")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [direction, setDirection] = useState<"encode" | "decode">("encode");
@@ -73,7 +70,6 @@ export default function UrlEncoderConverter() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Swapper View */}
         <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
@@ -138,6 +134,5 @@ export default function UrlEncoderConverter() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   CopyCheck, 
   Trash2, 
@@ -18,7 +16,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function DuplicateFinderPage() {
-  const tool = TOOLS.find(t => t.id === "json-duplicates")!;
   const [input, setInput] = useState("");
   const [uniques, setUniques] = useState<any[]>([]);
   const [duplicates, setDuplicates] = useState<any[]>([]);
@@ -65,7 +62,6 @@ export default function DuplicateFinderPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
            <div className="lg:col-span-12">
@@ -156,6 +152,5 @@ export default function DuplicateFinderPage() {
            </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

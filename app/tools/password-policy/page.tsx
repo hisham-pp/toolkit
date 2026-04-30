@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { TOOLS } from "@/lib/tools-config";
-import ToolLayout from "@/components/ToolLayout";
+import { Code2, Fingerprint, RotateCcw, Settings2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { M3Input, M3Select, M3Password } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,6 @@ interface Rule {
 }
 
 export default function PasswordPolicyBuilder() {
-  const tool = TOOLS.find(t => t.id === "password-policy")!;
   const [minLength, setMinLength] = useState(8);
   const [requireUpper, setRequireUpper] = useState(true);
   const [requireLower, setRequireLower] = useState(true);

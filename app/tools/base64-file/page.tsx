@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Upload, 
   Copy, 
@@ -26,7 +24,6 @@ interface FileInfo {
 }
 
 export default function Base64FileConverter() {
-  const tool = TOOLS.find((t) => t.id === "base64-file")!;
   const [file, setFile] = useState<FileInfo | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +68,6 @@ export default function Base64FileConverter() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
           {/* Uploader Section */}
@@ -181,6 +177,5 @@ export default function Base64FileConverter() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

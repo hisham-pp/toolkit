@@ -88,6 +88,7 @@ export default function MarkdownPreviewClient() {
   const clear = () => setContent("");
 
   return (
+    <>
     <div className="flex flex-col h-full gap-6">
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row items-center justify-between bg-[#161618] p-3 border border-zinc-800 rounded-3xl shadow-lg gap-4">
@@ -254,6 +255,6 @@ export default function MarkdownPreviewClient() {
         .prose td { padding: 1rem 1.5rem; border-bottom: 1px solid #18181b; }
         .prose tr:last-child td { border-bottom: none; }
       `}</style>
-    </div>
+    </>
   );
 }

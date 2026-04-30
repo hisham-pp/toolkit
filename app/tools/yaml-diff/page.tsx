@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import ReactDiffViewer from "react-diff-viewer-continued";
 import yaml from "js-yaml";
 import { 
@@ -43,7 +41,6 @@ features:
   logging: "debug"`;
 
 export default function YamlDiff() {
-  const tool = TOOLS.find((t) => t.id === "yaml-diff")!;
   const [oldYaml, setOldYaml] = useState(DEFAULT_OLD);
   const [newYaml, setNewYaml] = useState(DEFAULT_NEW);
 
@@ -76,7 +73,6 @@ export default function YamlDiff() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-6">
         <div className="flex items-center justify-between bg-[#161618] p-3 border border-zinc-800 rounded-2xl shadow-xl">
            <div className="flex items-center gap-6 ml-4">
@@ -180,6 +176,5 @@ export default function YamlDiff() {
           </div>
         )}
       </div>
-    </ToolLayout>
   );
 }

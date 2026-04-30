@@ -1,15 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Copy, Check, RotateCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export default function JWTDecoderTool() {
-  const tool = TOOLS.find((t) => t.id === "jwt-decoder")!;
   const [input, setInput] = useState("");
   const [header, setHeader] = useState("");
   const [payload, setPayload] = useState("");
@@ -40,7 +37,6 @@ export default function JWTDecoderTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -92,6 +88,5 @@ export default function JWTDecoderTool() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

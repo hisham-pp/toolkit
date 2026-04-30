@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Search, Globe, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -30,7 +28,6 @@ const HTTP_STATUS_CODES = [
 ];
 
 export default function HttpStatusTool() {
-  const tool = TOOLS.find((t) => t.id === "http-status")!;
   const [search, setSearch] = useState("");
 
   const filtered = HTTP_STATUS_CODES.filter(s => 
@@ -47,7 +44,6 @@ export default function HttpStatusTool() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -83,6 +79,5 @@ export default function HttpStatusTool() {
           )}
         </div>
       </div>
-    </ToolLayout>
   );
 }

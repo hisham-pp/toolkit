@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import ReactDiffViewer from "react-diff-viewer-continued";
 import { 
   Split, 
@@ -34,7 +32,6 @@ const result = calculateTotal(100, 0.2, 10);
 console.log("Final Amount:", result);`;
 
 export default function CodeDiff() {
-  const tool = TOOLS.find((t) => t.id === "code-diff")!;
   const [oldCode, setOldCode] = useState(DEFAULT_OLD);
   const [newCode, setNewCode] = useState(DEFAULT_NEW);
   const [splitView, setSplitView] = useState(true);
@@ -50,7 +47,6 @@ export default function CodeDiff() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-6">
         {/* Toolbar */}
         <div className="flex items-center justify-between bg-[#161618] p-3 border border-zinc-800 rounded-2xl shadow-xl">
@@ -146,6 +142,5 @@ export default function CodeDiff() {
            </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

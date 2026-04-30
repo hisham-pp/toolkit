@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Film, 
   Trash2, 
@@ -23,7 +21,6 @@ import { cn } from "@/lib/utils";
 type AnimType = "fade" | "slide" | "scale" | "rotate" | "bounce" | "shake";
 
 export default function AnimationGenerator() {
-  const tool = TOOLS.find((t) => t.id === "animation-generator")!;
   const [type, setType] = useState<AnimType>("fade");
   const [duration, setDuration] = useState(0.5);
   const [delay, setDelay] = useState(0);
@@ -87,7 +84,7 @@ export default function AnimationGenerator() {
   };
 
   return (
-    <ToolLayout tool={tool}>
+    <>
       <div className="flex flex-col h-full gap-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Controls */}
@@ -219,6 +216,6 @@ export default function AnimationGenerator() {
           border-radius: 10px;
         }
       `}</style>
-    </ToolLayout>
+    </>
   );
 }

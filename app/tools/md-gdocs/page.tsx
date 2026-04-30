@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { TOOLS } from "@/lib/tools-config";
-import ToolLayout from "@/components/ToolLayout";
+import { Check, ExternalLink, FileText, Info, Layout, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { marked } from "marked";
 import { cn } from "@/lib/utils";
 
 export default function MdToGDocsPage() {
-  const tool = TOOLS.find(t => t.id === "md-gdocs")!;
   const [markdown, setMarkdown] = useState("");
   const [copied, setCopied] = useState(false);
 

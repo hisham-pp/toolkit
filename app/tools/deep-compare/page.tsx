@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Scaling,
   ArrowRightLeft,
@@ -26,7 +24,6 @@ interface DiffResult {
 }
 
 export default function DeepComparePage() {
-  const tool = TOOLS.find(t => t.id === "deep-compare")!;
   const [json1, setJson1] = useState("");
   const [json2, setJson2] = useState("");
   const [diffs, setDiffs] = useState<DiffResult[]>([]);
@@ -71,7 +68,6 @@ export default function DeepComparePage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 space-y-6 shadow-2xl">
@@ -182,6 +178,5 @@ export default function DeepComparePage() {
            </div>
          )}
       </div>
-    </ToolLayout>
   );
 }

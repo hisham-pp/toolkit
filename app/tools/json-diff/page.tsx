@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { diffJson } from "diff";
 import { Trash2, FileJson, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 export default function JsonDiff() {
-  const tool = TOOLS.find((t) => t.id === "json-diff")!;
   const [json1, setJson1] = useState("");
   const [json2, setJson2] = useState("");
   const [error1, setError1] = useState<string | null>(null);
@@ -53,7 +50,6 @@ export default function JsonDiff() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Controls */}
         <div className="flex items-center justify-between bg-[#161618] p-4 border border-zinc-800 rounded-2xl">
@@ -134,6 +130,5 @@ export default function JsonDiff() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

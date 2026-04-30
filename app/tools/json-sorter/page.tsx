@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   ListFilter,
   SortAsc,
@@ -21,7 +19,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function JsonSorterPage() {
-  const tool = TOOLS.find(t => t.id === "json-sorter")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -64,7 +61,6 @@ export default function JsonSorterPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            {/* Input */}
@@ -134,6 +130,5 @@ export default function JsonSorterPage() {
            </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

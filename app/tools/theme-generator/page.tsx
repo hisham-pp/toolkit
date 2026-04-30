@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
 import namesPlugin from "colord/plugins/names";
@@ -29,7 +27,6 @@ extend([mixPlugin, namesPlugin]);
 type PaletteType = "analogous" | "monochromatic" | "triadic" | "complementary" | "tetradic";
 
 export default function ThemeGenerator() {
-  const tool = TOOLS.find((t) => t.id === "theme-generator")!;
   const [baseColor, setBaseColor] = useState("#6366f1");
   const [colorCount, setColorCount] = useState(5);
   const [paletteType, setPaletteType] = useState<PaletteType>("analogous");
@@ -88,7 +85,6 @@ export default function ThemeGenerator() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Controls */}
         <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 shadow-xl flex flex-col md:flex-row gap-8 items-end">
@@ -232,6 +228,5 @@ export default function ThemeGenerator() {
            </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

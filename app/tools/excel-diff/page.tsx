@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   FileSpreadsheet, 
   Trash2, 
@@ -35,7 +33,6 @@ interface DiffResult {
 }
 
 export default function ExcelDiff() {
-  const tool = TOOLS.find((t) => t.id === "excel-diff")!;
   const [fileA, setFileA] = useState<File | null>(null);
   const [fileB, setFileB] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -89,7 +86,6 @@ export default function ExcelDiff() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="flex flex-col h-full gap-8">
         {/* Comparison Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -226,7 +222,6 @@ export default function ExcelDiff() {
            </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }
 

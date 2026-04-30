@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Minimize2, 
   Maximize2,
@@ -19,7 +17,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function JsonFlattenerPage() {
-  const tool = TOOLS.find(t => t.id === "json-flattener")!;
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [delimiter, setDelimiter] = useState(".");
@@ -90,7 +87,6 @@ export default function JsonFlattenerPage() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Section */}
@@ -168,6 +164,5 @@ export default function JsonFlattenerPage() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

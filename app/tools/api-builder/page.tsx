@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { 
   Send, 
   Plus, 
@@ -38,7 +36,6 @@ interface RequestHistory {
 }
 
 export default function ApiBuilder() {
-  const tool = TOOLS.find((t) => t.id === "api-builder")!;
   const [url, setUrl] = useState("https://jsonplaceholder.typicode.com/posts/1");
   const [method, setMethod] = useState<Method>("GET");
   const [headers, setHeaders] = useState<Header[]>([
@@ -128,7 +125,6 @@ export default function ApiBuilder() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 h-full">
         {/* Main Request Panel */}
         <div className="xl:col-span-8 flex flex-col gap-6">
@@ -330,6 +326,5 @@ export default function ApiBuilder() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }

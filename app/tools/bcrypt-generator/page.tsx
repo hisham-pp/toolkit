@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ToolLayout from "@/components/ToolLayout";
-import { TOOLS } from "@/lib/tools-config";
 import { Copy, Check, RotateCcw, ShieldCheck, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Input, M3Password } from "@/components/ui/m3-ui";
@@ -18,7 +16,6 @@ type HashHistory = {
 };
 
 export default function BcryptGenerator() {
-  const tool = TOOLS.find((t) => t.id === "bcrypt-gen")!;
   const [password, setPassword] = useState("");
   const [rounds, setRounds] = useState(10);
   const [hash, setHash] = useState("");
@@ -77,7 +74,6 @@ export default function BcryptGenerator() {
   };
 
   return (
-    <ToolLayout tool={tool}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Generator Section */}
         <div className="space-y-6">
@@ -166,6 +162,5 @@ export default function BcryptGenerator() {
           </div>
         </div>
       </div>
-    </ToolLayout>
   );
 }
