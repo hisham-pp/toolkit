@@ -98,8 +98,8 @@ export default function YamlJsonConverter() {
                )}
             </div>
             
-            <Button variant="ghost" size="sm" onClick={swap} className="hover:bg-zinc-800 rounded-full h-8 w-8 p-0 text-zinc-500">
-               <ArrowLeftRight className="w-4 h-4" />
+            <Button variant="ghost" onClick={swap} className="hover:bg-zinc-800 rounded-full h-10 w-10 p-0 text-zinc-500">
+               <ArrowLeftRight className="w-5 h-5" />
             </Button>
 
             <div className={cn(
