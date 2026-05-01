@@ -13,7 +13,10 @@ import {
   Clock3,
   RefreshCw,
   MoreVertical,
-  X
+  X,
+  Download,
+  Upload,
+  Link2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Input } from "@/components/ui/m3-ui";
@@ -38,6 +41,7 @@ export default function AuthenticatorPage() {
   const [newSecret, setNewSecret] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
+  const [importUri, setImportUri] = useState("");
 
   // Load data from localStorage
   useEffect(() => {
@@ -82,8 +86,6 @@ export default function AuthenticatorPage() {
     }
 
     try {
-      // Validate secret (optional, but good to check if it's base32)
-      // We'll just try to generate a code to see if it's valid
       generateTOTP(newSecret);
     } catch (e) {
       toast.error("Invalid secret key format (Base32 expected)");
@@ -108,6 +110,85 @@ export default function AuthenticatorPage() {
     setNewSecret("");
     setIsAdding(false);
     toast.success("Account added successfully");
+  };
+
+  const handleUriImport = () => {
+    if (!importUri.trim()) return;
+
+    try {
+      const url = new URL(importUri);
+      if (url.protocol !== "otpauth:") throw new Error("Invalid protocol");
+      
+      const type = url.host; // totp
+      const path = decodeURIComponent(url.pathname.substring(1)); // Issuer:Account
+      const secret = url.searchParams.get("secret");
+      const issuerParam = url.searchParams.get("issuer");
+
+      if (!secret) throw new Error("Missing secret");
+
+      let issuer = "Other";
+      let account = "No Name";
+
+      if (path.includes(":")) {
+        [issuer, account] = path.split(":");
+      } else {
+        account = path;
+        issuer = issuerParam || "Other";
+      }
+
+      setNewIssuer(issuer);
+      setNewAccount(account);
+      setNewSecret(secret);
+      setImportUri("");
+      toast.success("Details extracted from URI");
+    } catch (e) {
+      toast.error("Invalid OTPAuth URI");
+    }
+  };
+
+  const exportData = () => {
+    if (authenticators.length === 0) {
+      toast.error("No accounts to export");
+      return;
+    }
+    
+    const data = localStorage.getItem(AUTHENTICATOR_DATA_KEY);
+    if (!data) return;
+
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `authenticator-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    toast.success("Backup downloaded (Encrypted)");
+  };
+
+  const importData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const decrypted = deobfuscate(content);
+        if (!decrypted) throw new Error("Invalid backup file");
+        
+        const data = JSON.parse(decrypted);
+        if (!Array.isArray(data)) throw new Error("Invalid data format");
+
+        if (confirm(`Import ${data.length} accounts? This will overwrite your current list.`)) {
+          setAuthenticators(data);
+          saveAuthenticators(data);
+          toast.success("Backup restored successfully");
+        }
+      } catch (e) {
+        toast.error("Failed to import backup");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // Reset input
   };
 
   const handleDelete = (id: string) => {
@@ -145,6 +226,32 @@ export default function AuthenticatorPage() {
         </div>
         
         <div className="flex gap-4 w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={exportData}
+              variant="outline"
+              className="h-12 px-4 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white transition-all gap-2"
+              title="Export Backup"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+            <div className="relative">
+              <input 
+                type="file" 
+                accept=".json" 
+                onChange={importData} 
+                className="absolute inset-0 opacity-0 cursor-pointer" 
+                title="Import Backup"
+              />
+              <Button 
+                variant="outline"
+                className="h-12 px-4 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white transition-all gap-2"
+              >
+                <Upload className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
           <Button 
             onClick={() => setIsAdding(true)}
             className="flex-1 md:flex-none h-12 px-6 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold uppercase tracking-widest gap-2 shadow-lg shadow-primary/20"
@@ -155,17 +262,9 @@ export default function AuthenticatorPage() {
           <div className="flex items-center gap-3 px-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl h-12">
             <div className="relative w-5 h-5">
               <svg className="w-5 h-5 -rotate-90">
+                <circle cx="10" cy="10" r="8" className="fill-none stroke-zinc-800" strokeWidth="2" />
                 <circle
-                  cx="10"
-                  cy="10"
-                  r="8"
-                  className="fill-none stroke-zinc-800"
-                  strokeWidth="2"
-                />
-                <circle
-                  cx="10"
-                  cy="10"
-                  r="8"
+                  cx="10" cy="10" r="8"
                   className="fill-none stroke-primary transition-all duration-1000 ease-linear"
                   strokeWidth="2"
                   strokeDasharray={2 * Math.PI * 8}
@@ -191,10 +290,35 @@ export default function AuthenticatorPage() {
 
             <div className="space-y-2">
               <h2 className="text-xl font-black uppercase tracking-widest text-white">Add New Account</h2>
-              <p className="text-xs text-zinc-500 font-medium">Enter your 2FA details below</p>
+              <p className="text-xs text-zinc-500 font-medium">Extract from URI or enter manually</p>
             </div>
 
             <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Import via URL</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors pointer-events-none group-focus-within:text-primary">
+                    <Link2 className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="otpauth://totp/..."
+                    className="flex h-12 w-full rounded-2xl border border-zinc-800 bg-zinc-950/50 pl-12 pr-12 py-2 text-[10px] transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:border-primary/50"
+                    value={importUri}
+                    onChange={(e) => setImportUri(e.target.value)}
+                    onPaste={() => setTimeout(handleUriImport, 50)}
+                  />
+                  <button 
+                    onClick={handleUriImport}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-zinc-600 hover:text-primary transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-[1px] bg-zinc-800 w-full" />
+
               <M3Input 
                 label="Issuer"
                 placeholder="Google, GitHub, AWS..."
