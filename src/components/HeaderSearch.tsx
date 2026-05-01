@@ -16,7 +16,7 @@ export default function HeaderSearch() {
     : TOOLS.filter(tool => 
         tool.name.toLowerCase().includes(query.toLowerCase()) ||
         tool.description.toLowerCase().includes(query.toLowerCase()) ||
-        tool.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+        tool.keywords?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
       ).slice(0, 8);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function HeaderSearch() {
               filteredTools.map((tool) => (
                 <Link
                   key={tool.id}
-                  href={tool.path}
+                  href={tool.route}
                   onClick={() => {
                     setIsOpen(false);
                     setQuery("");
