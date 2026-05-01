@@ -7,21 +7,27 @@ const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 /**
  * Decodes a secret to a hex string. 
- * Automatically detects if the secret is already Hex or Base32.
+ * Prioritizes Base32 as it is the standard for TOTP.
  */
 export function decodeSecret(secret: string): string {
   const cleanSecret = secret.toUpperCase().replace(/=+$/, "").replace(/[-\s]/g, "");
   if (!cleanSecret) return "";
 
-  // Detect if it's Hex (contains characters like 0, 1, 8, 9 which aren't in Base32)
-  const isHex = /^[0-9A-F]+$/.test(cleanSecret) && 
-                (/[0189]/.test(cleanSecret) || cleanSecret.length % 2 === 0);
+  // Check if it's definitely NOT Base32 (contains 0, 1, 8, 9)
+  const containsNonBase32Hex = /[0189]/.test(cleanSecret);
+  const isHexOnly = /^[0-9A-F]+$/.test(cleanSecret);
+  const isBase32 = /^[A-Z2-7]+$/.test(cleanSecret);
 
-  if (isHex) {
+  // If it's valid hex and either contains non-base32 chars or isn't valid base32
+  if (isHexOnly && (containsNonBase32Hex || !isBase32)) {
     return cleanSecret.toLowerCase();
   }
 
   // Fallback to Base32 decoding
+  if (!isBase32) {
+    throw new Error("Invalid secret: Not a valid Base32 or Hex string");
+  }
+
   let bits = "";
   let hex = "";
 
@@ -54,7 +60,8 @@ export function generateTOTP(secret: string, period = 30, digits = 6): string {
     const counter = Math.floor(epoch / period);
     
     // Convert counter to 8-byte hex string (Big Endian)
-    const timeHex = counter.toString(16).padStart(16, "0");
+    // We use BigInt to handle potentially large values, though not strictly necessary for current epochs
+    const timeHex = BigInt(counter).toString(16).padStart(16, "0");
     
     // Compute HMAC-SHA1
     const hmac = CryptoJS.HmacSHA1(
@@ -71,6 +78,10 @@ export function generateTOTP(secret: string, period = 30, digits = 6): string {
     const otp = (binCode % Math.pow(10, digits)).toString();
     return otp.padStart(digits, "0");
   } catch (error) {
+    // If it's our validation error, rethrow it
+    if (error instanceof Error && error.message.includes("Invalid secret")) {
+      throw error;
+    }
     console.error("TOTP Generation Error:", error);
     return "000000";
   }

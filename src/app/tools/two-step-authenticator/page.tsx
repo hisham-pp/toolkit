@@ -43,6 +43,7 @@ export default function AuthenticatorPage() {
   const [newSecret, setNewSecret] = useState("");
   const [newDigits, setNewDigits] = useState(6);
   const [newPeriod, setNewPeriod] = useState(30);
+  const [isAdvanced, setIsAdvanced] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
   const [importUri, setImportUri] = useState("");
@@ -97,9 +98,10 @@ export default function AuthenticatorPage() {
     }
 
     try {
+      // Validate secret by trying to generate a code
       generateTOTP(newSecret, newPeriod, newDigits);
-    } catch (e) {
-      toast.error("Invalid secret key format (Base32 expected)");
+    } catch (e: any) {
+      toast.error(e.message || "Invalid secret key format");
       return;
     }
 
@@ -124,6 +126,7 @@ export default function AuthenticatorPage() {
     setNewDigits(6);
     setNewPeriod(30);
     setIsAdding(false);
+    setIsAdvanced(false);
     toast.success("Account added successfully");
   };
 
@@ -150,8 +153,9 @@ export default function AuthenticatorPage() {
         issuer = parts[0].trim();
         account = parts.slice(1).join(":").trim();
       } else {
-        account = path.trim();
-        issuer = issuerParam || "Other";
+        const pathSegments = path.split("/");
+        account = pathSegments[pathSegments.length - 1].trim();
+        issuer = issuerParam || (pathSegments.length > 1 ? pathSegments[0] : "Other");
       }
 
       setNewIssuer(issuer);
@@ -360,6 +364,42 @@ export default function AuthenticatorPage() {
                 onChange={(e) => setNewSecret(e.target.value)}
                 icon={<Key className="w-4 h-4" />}
               />
+
+              <div className="space-y-4">
+                <button 
+                  onClick={() => setIsAdvanced(!isAdvanced)}
+                  className="text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:text-primary/80 transition-colors flex items-center gap-2"
+                >
+                  {isAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
+                </button>
+
+                {isAdvanced && (
+                  <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Digits</label>
+                      <select 
+                        value={newDigits}
+                        onChange={(e) => setNewDigits(parseInt(e.target.value))}
+                        className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      >
+                        <option value={6}>6 Digits</option>
+                        <option value={8}>8 Digits</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Period</label>
+                      <select 
+                        value={newPeriod}
+                        onChange={(e) => setNewPeriod(parseInt(e.target.value))}
+                        className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      >
+                        <option value={30}>30 Seconds</option>
+                        <option value={60}>60 Seconds</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-4">
@@ -393,7 +433,12 @@ export default function AuthenticatorPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAuthenticators.map((auth) => {
-            const code = generateTOTP(auth.secret, auth.period, auth.digits);
+            let code = "000000";
+            try {
+              code = generateTOTP(auth.secret, auth.period, auth.digits);
+            } catch (e) {
+              code = "ERROR";
+            }
             const authTimeLeft = auth.period - (Math.floor(Date.now() / 1000) % auth.period);
             const isExpiring = authTimeLeft < 5;
 
