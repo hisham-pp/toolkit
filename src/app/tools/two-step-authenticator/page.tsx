@@ -16,7 +16,14 @@ import {
   X,
   Download,
   Upload,
-  Link2
+  Link2,
+  Github,
+  Chrome,
+  Mail,
+  Cloud,
+  MessageSquare,
+  Facebook,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Input } from "@/components/ui/m3-ui";
@@ -37,9 +44,23 @@ interface Authenticator {
   createdAt: number;
 }
 
+const SERVICE_PRESETS = [
+  { name: "Custom", algorithm: "SHA1", digits: 6, period: 30, encoding: "auto", icon: ShieldCheck },
+  { name: "GitHub", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Github },
+  { name: "Google", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Chrome },
+  { name: "Microsoft", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Mail },
+  { name: "AWS", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Cloud },
+  { name: "Discord", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: MessageSquare },
+  { name: "Facebook", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Facebook },
+  { name: "GitLab", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
+  { name: "Cloudflare", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
+  { name: "DigitalOcean", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Cloud },
+];
+
 export default function AuthenticatorPage() {
   const [authenticators, setAuthenticators] = useState<Authenticator[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [selectedService, setSelectedService] = useState(SERVICE_PRESETS[0]);
   const [newIssuer, setNewIssuer] = useState("");
   const [newAccount, setNewAccount] = useState("");
   const [newSecret, setNewSecret] = useState("");
@@ -51,6 +72,18 @@ export default function AuthenticatorPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
   const [importUri, setImportUri] = useState("");
+
+  const handleServiceChange = (serviceName: string) => {
+    const preset = SERVICE_PRESETS.find(p => p.name === serviceName) || SERVICE_PRESETS[0];
+    setSelectedService(preset);
+    if (preset.name !== "Custom") {
+      setNewIssuer(preset.name);
+      setNewDigits(preset.digits);
+      setNewPeriod(preset.period);
+      setNewAlgorithm(preset.algorithm);
+      setNewEncoding(preset.encoding as any);
+    }
+  };
 
   // Load data from localStorage
   useEffect(() => {
@@ -135,6 +168,7 @@ export default function AuthenticatorPage() {
     setNewPeriod(30);
     setNewAlgorithm("SHA1");
     setNewEncoding("auto");
+    setSelectedService(SERVICE_PRESETS[0]);
     setIsAdding(false);
     setIsAdvanced(false);
     toast.success("Account added successfully");
@@ -332,6 +366,21 @@ export default function AuthenticatorPage() {
 
             <div className="space-y-6">
               <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Service Preset</label>
+                <select 
+                  value={selectedService.name}
+                  onChange={(e) => handleServiceChange(e.target.value)}
+                  className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  {SERVICE_PRESETS.map(s => (
+                    <option key={s.name} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="h-[1px] bg-zinc-800 w-full" />
+
+              <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Import via URL</label>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors pointer-events-none group-focus-within:text-primary">
@@ -490,19 +539,28 @@ export default function AuthenticatorPage() {
                 )}
               >
                 <div className="flex items-start justify-between mb-6">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{auth.issuer}</h3>
-                      <div className="flex gap-1">
-                        {auth.algorithm && auth.algorithm !== "SHA1" && (
-                          <span className="text-[8px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-md font-bold uppercase">{auth.algorithm}</span>
-                        )}
-                        {auth.encoding && auth.encoding !== "auto" && (
-                          <span className="text-[8px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-md font-bold uppercase">{auth.encoding}</span>
-                        )}
-                      </div>
+                  <div className="flex gap-4 items-center">
+                    <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-primary shadow-inner">
+                      {(() => {
+                        const preset = SERVICE_PRESETS.find(p => p.name.toLowerCase() === auth.issuer.toLowerCase());
+                        const Icon = preset?.icon || ShieldCheck;
+                        return <Icon className="w-5 h-5" />;
+                      })()}
                     </div>
-                    <p className="text-sm font-bold text-zinc-300 truncate max-w-[180px]">{auth.account}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{auth.issuer}</h3>
+                        <div className="flex gap-1">
+                          {auth.algorithm && auth.algorithm !== "SHA1" && (
+                            <span className="text-[8px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-md font-bold uppercase">{auth.algorithm}</span>
+                          )}
+                          {auth.encoding && auth.encoding !== "auto" && (
+                            <span className="text-[8px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-md font-bold uppercase">{auth.encoding}</span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-zinc-300 truncate max-w-[150px]">{auth.account}</p>
+                    </div>
                   </div>
                   <button 
                     onClick={() => handleDelete(auth.id)}
