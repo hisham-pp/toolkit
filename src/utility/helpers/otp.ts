@@ -10,21 +10,24 @@ const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
  * TOTP secrets are typically Base32 encoded.
  */
 export function base32ToHex(base32: string): string {
-  const cleanBase32 = base32.toUpperCase().replace(/=+$/, "").replace(/\s/g, "");
+  // Normalize: uppercase and remove standard padding
+  const cleanBase32 = base32.toUpperCase().replace(/=+$/, "");
   if (!cleanBase32) return "";
   
   let bits = "";
   let hex = "";
 
   for (let i = 0; i < cleanBase32.length; i++) {
-    const val = BASE32_ALPHABET.indexOf(cleanBase32.charAt(i));
-    if (val === -1) {
-      console.error(`Invalid Base32 character at index ${i}: ${cleanBase32.charAt(i)}`);
-      throw new Error("Invalid Base32 character");
-    }
+    const char = cleanBase32.charAt(i);
+    const val = BASE32_ALPHABET.indexOf(char);
+    
+    // If character is not in alphabet, just skip it (handles hyphens, spaces, etc.)
+    if (val === -1) continue;
+    
     bits += val.toString(2).padStart(5, "0");
   }
 
+  // Convert bits to hex (8 bits = 2 hex chars)
   for (let i = 0; i + 8 <= bits.length; i += 8) {
     const chunk = bits.substring(i, i + 8);
     hex += parseInt(chunk, 2).toString(16).padStart(2, "0");
