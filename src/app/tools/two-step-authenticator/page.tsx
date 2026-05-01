@@ -93,7 +93,7 @@ export default function AuthenticatorPage() {
     }
 
     const newAuth: Authenticator = {
-      id: crypto.randomUUID(),
+      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
       issuer: newIssuer.trim() || "Other",
       account: newAccount.trim() || "No Name",
       secret: newSecret.trim().toUpperCase().replace(/\s/g, ""),

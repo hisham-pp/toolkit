@@ -11,12 +11,17 @@ const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
  */
 export function base32ToHex(base32: string): string {
   const cleanBase32 = base32.toUpperCase().replace(/=+$/, "").replace(/\s/g, "");
+  if (!cleanBase32) return "";
+  
   let bits = "";
   let hex = "";
 
   for (let i = 0; i < cleanBase32.length; i++) {
     const val = BASE32_ALPHABET.indexOf(cleanBase32.charAt(i));
-    if (val === -1) throw new Error("Invalid Base32 character");
+    if (val === -1) {
+      console.error(`Invalid Base32 character at index ${i}: ${cleanBase32.charAt(i)}`);
+      throw new Error("Invalid Base32 character");
+    }
     bits += val.toString(2).padStart(5, "0");
   }
 
@@ -30,18 +35,19 @@ export function base32ToHex(base32: string): string {
 
 /**
  * Generates a TOTP code for a given secret.
- * @param secret Base32 encoded secret
- * @param period Time period in seconds (default 30)
- * @param digits Number of digits (default 6)
  */
 export function generateTOTP(secret: string, period = 30, digits = 6): string {
+  if (!secret) return "000000";
+  
   try {
     const secretHex = base32ToHex(secret);
+    if (!secretHex) return "000000";
+
     const epoch = Math.floor(Date.now() / 1000);
-    const time = Math.floor(epoch / period);
+    const counter = Math.floor(epoch / period);
     
-    // Convert time to 8-byte hex string
-    let timeHex = time.toString(16).padStart(16, "0");
+    // Convert counter to 8-byte hex string (Big Endian)
+    const timeHex = counter.toString(16).padStart(16, "0");
     
     // Compute HMAC-SHA1
     const hmac = CryptoJS.HmacSHA1(
@@ -53,9 +59,10 @@ export function generateTOTP(secret: string, period = 30, digits = 6): string {
     
     // Dynamic Truncation
     const offset = parseInt(hmacHex.substring(hmacHex.length - 1), 16);
-    const otp = (parseInt(hmacHex.substring(offset * 2, offset * 2 + 8), 16) & 0x7fffffff) + "";
+    const binCode = parseInt(hmacHex.substring(offset * 2, offset * 2 + 8), 16) & 0x7fffffff;
     
-    return otp.substring(otp.length - digits).padStart(digits, "0");
+    const otp = (binCode % Math.pow(10, digits)).toString();
+    return otp.padStart(digits, "0");
   } catch (error) {
     console.error("TOTP Generation Error:", error);
     return "000000";
