@@ -394,10 +394,16 @@ export default function AuthenticatorPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAuthenticators.map((auth) => {
             const code = generateTOTP(auth.secret, auth.period, auth.digits);
+            const authTimeLeft = auth.period - (Math.floor(Date.now() / 1000) % auth.period);
+            const isExpiring = authTimeLeft < 5;
+
             return (
               <div 
                 key={auth.id}
-                className="bg-[#161618] border border-zinc-800 rounded-[2rem] p-6 hover:border-primary/30 transition-all group relative overflow-hidden shadow-xl"
+                className={cn(
+                  "bg-[#161618] border border-zinc-800 rounded-[2rem] p-6 transition-all group relative overflow-hidden shadow-xl",
+                  isExpiring ? "border-amber-500/20" : "hover:border-primary/30"
+                )}
               >
                 <div className="flex items-start justify-between mb-6">
                   <div className="space-y-1">
@@ -413,9 +419,15 @@ export default function AuthenticatorPage() {
                 </div>
 
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden">
-                    <span className="text-3xl font-black tracking-[0.2em] text-white font-mono">
-                      {code.substring(0, 3)} {code.substring(3)}
+                  <div className={cn(
+                    "flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden transition-all",
+                    isExpiring && "animate-pulse"
+                  )}>
+                    <span className={cn(
+                      "text-3xl font-black tracking-[0.2em] font-mono transition-colors",
+                      isExpiring ? "text-amber-500" : "text-white"
+                    )}>
+                      {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
                     </span>
                     <div className="absolute inset-0 bg-primary opacity-0 group-hover/code:opacity-5 transition-opacity" />
                   </div>
@@ -433,9 +445,9 @@ export default function AuthenticatorPage() {
                   <div 
                     className={cn(
                       "h-full transition-all duration-1000 ease-linear",
-                      timeLeft > 5 ? "bg-primary" : "bg-amber-500"
+                      isExpiring ? "bg-amber-500" : "bg-primary"
                     )}
-                    style={{ width: `${(timeLeft / 30) * 100}%` }}
+                    style={{ width: `${(authTimeLeft / auth.period) * 100}%` }}
                   />
                 </div>
               </div>
