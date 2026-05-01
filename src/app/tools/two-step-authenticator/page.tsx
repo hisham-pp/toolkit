@@ -30,6 +30,8 @@ interface Authenticator {
   issuer: string;
   account: string;
   secret: string;
+  digits: number;
+  period: number;
   createdAt: number;
 }
 
@@ -39,6 +41,8 @@ export default function AuthenticatorPage() {
   const [newIssuer, setNewIssuer] = useState("");
   const [newAccount, setNewAccount] = useState("");
   const [newSecret, setNewSecret] = useState("");
+  const [newDigits, setNewDigits] = useState(6);
+  const [newPeriod, setNewPeriod] = useState(30);
   const [searchQuery, setSearchQuery] = useState("");
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
   const [importUri, setImportUri] = useState("");
@@ -50,7 +54,14 @@ export default function AuthenticatorPage() {
       try {
         const decrypted = deobfuscate(saved);
         if (decrypted) {
-          setAuthenticators(JSON.parse(decrypted));
+          const parsed = JSON.parse(decrypted);
+          // Migrating old data if necessary
+          const migrated = parsed.map((a: any) => ({
+            ...a,
+            digits: a.digits || 6,
+            period: a.period || 30
+          }));
+          setAuthenticators(migrated);
         }
       } catch (e) {
         console.error("Failed to load authenticators", e);
@@ -86,7 +97,7 @@ export default function AuthenticatorPage() {
     }
 
     try {
-      generateTOTP(newSecret);
+      generateTOTP(newSecret, newPeriod, newDigits);
     } catch (e) {
       toast.error("Invalid secret key format (Base32 expected)");
       return;
@@ -97,6 +108,8 @@ export default function AuthenticatorPage() {
       issuer: newIssuer.trim() || "Other",
       account: newAccount.trim() || "No Name",
       secret: newSecret.trim().toUpperCase().replace(/\s/g, ""),
+      digits: newDigits,
+      period: newPeriod,
       createdAt: Date.now()
     };
 
@@ -108,6 +121,8 @@ export default function AuthenticatorPage() {
     setNewIssuer("");
     setNewAccount("");
     setNewSecret("");
+    setNewDigits(6);
+    setNewPeriod(30);
     setIsAdding(false);
     toast.success("Account added successfully");
   };
@@ -119,10 +134,11 @@ export default function AuthenticatorPage() {
       const url = new URL(importUri);
       if (url.protocol !== "otpauth:") throw new Error("Invalid protocol");
       
-      const type = url.host; // totp
       const path = decodeURIComponent(url.pathname.substring(1)); // Issuer:Account
       const secret = url.searchParams.get("secret");
       const issuerParam = url.searchParams.get("issuer");
+      const digits = parseInt(url.searchParams.get("digits") || "6");
+      const period = parseInt(url.searchParams.get("period") || "30");
 
       if (!secret) throw new Error("Missing secret");
 
@@ -130,15 +146,19 @@ export default function AuthenticatorPage() {
       let account = "No Name";
 
       if (path.includes(":")) {
-        [issuer, account] = path.split(":");
+        const parts = path.split(":");
+        issuer = parts[0].trim();
+        account = parts.slice(1).join(":").trim();
       } else {
-        account = path;
+        account = path.trim();
         issuer = issuerParam || "Other";
       }
 
       setNewIssuer(issuer);
       setNewAccount(account);
       setNewSecret(secret);
+      setNewDigits(digits);
+      setNewPeriod(period);
       setImportUri("");
       toast.success("Details extracted from URI");
     } catch (e) {
@@ -373,7 +393,7 @@ export default function AuthenticatorPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAuthenticators.map((auth) => {
-            const code = generateTOTP(auth.secret);
+            const code = generateTOTP(auth.secret, auth.period, auth.digits);
             return (
               <div 
                 key={auth.id}
