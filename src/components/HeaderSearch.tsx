@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Command, ArrowRight } from "lucide-react";
 import { TOOLS } from "@/utility/constants/tools";
 import Link from "next/link";
@@ -11,13 +11,16 @@ export default function HeaderSearch() {
   const [query, setQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const filteredTools = query.trim() === "" 
-    ? [] 
-    : TOOLS.filter(tool => 
-        tool.name.toLowerCase().includes(query.toLowerCase()) ||
-        tool.description.toLowerCase().includes(query.toLowerCase()) ||
-        tool.keywords?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
-      ).slice(0, 8);
+  const filteredTools = useMemo(() => {
+    if (query.trim() === "") return [];
+    
+    const lowerQuery = query.toLowerCase();
+    return TOOLS.filter(tool => 
+      tool.name.toLowerCase().includes(lowerQuery) ||
+      tool.description.toLowerCase().includes(lowerQuery) ||
+      tool.keywords?.some(tag => tag.toLowerCase().includes(lowerQuery))
+    ).slice(0, 8);
+  }, [query]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
