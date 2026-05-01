@@ -17,15 +17,14 @@ import {
   Download,
   Upload,
   Link2,
-  Github,
-  Chrome,
+  Monitor,
+  Globe,
   Mail,
   Cloud,
   MessageSquare,
-  Facebook,
-  Globe,
   Triangle,
-  Filter
+  Filter,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Input, M3Select } from "@/components/ui/m3-ui";
@@ -48,13 +47,13 @@ interface Authenticator {
 
 const SERVICE_PRESETS = [
   { name: "Custom", algorithm: "SHA1", digits: 6, period: 30, encoding: "auto", icon: ShieldCheck },
-  { name: "GitHub", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Github },
-  { name: "Google", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Chrome },
+  { name: "GitHub", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Monitor },
+  { name: "Google", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
   { name: "Vercel", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Triangle },
   { name: "Microsoft", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Mail },
   { name: "AWS", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Cloud },
   { name: "Discord", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: MessageSquare },
-  { name: "Facebook", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Facebook },
+  { name: "Facebook", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
   { name: "GitLab", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
   { name: "Cloudflare", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
   { name: "DigitalOcean", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Cloud },
@@ -578,55 +577,6 @@ export default function AuthenticatorPage() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div className={cn(
-                    "flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden transition-all",
-                    isExpiring && "animate-pulse"
-                  )}>
-                    <span className={cn(
-                      "text-3xl font-black tracking-[0.2em] font-mono transition-colors",
-                      isExpiring ? "text-amber-500" : "text-white"
-                    )}>
-                      {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
-                    </span>
-                    <div className="absolute inset-0 bg-primary opacity-0 group-hover/code:opacity-5 transition-opacity" />
-                  </div>
-                  
-                  <button 
-                    onClick={() => copyCode(code)}
-                    className="h-14 w-14 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-primary hover:border-primary/50 transition-all shadow-inner"
-                  >
-                    <Copy className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Individual Progress Bar */}
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-zinc-900">
-                  <div 
-                    className={cn(
-                      "h-full transition-all duration-1000 ease-linear",
-                      isExpiring ? "bg-amber-500" : "bg-primary"
-                    )}
-                    style={{ width: `${(authTimeLeft / auth.period) * 100}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Footer Info */}
-      <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-[2rem] flex items-center justify-center gap-4">
-        <ShieldCheck className="w-4 h-4 text-primary" />
-        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest text-center">
-          End-to-End Encryption • Local Storage Only • Open Source Logic
-        </p>
-      </div>
-    </div>
-  );
-}
 
                 <div className="flex items-center justify-between gap-4">
                   <div className={cn(
