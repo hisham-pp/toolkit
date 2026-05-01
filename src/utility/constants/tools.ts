@@ -551,6 +551,15 @@ export class ToolRegistry {
       ["hotkeys", "keyboard", "productivity", "cheat-sheet"]
     ),
     new Tool(
+      "two-step-authenticator",
+      "Authenticator",
+      "Secure 2FA code generator with local encrypted storage.",
+      ShieldCheck,
+      "/tools/two-step-authenticator",
+      ToolCategory.Security,
+      ["2fa", "mfa", "totp", "otp", "security", "authenticator"]
+    ),
+    new Tool(
       "json-sorter",
       "JSON Sorter",
       "Sort and visualize JSON object keys and array elements.",

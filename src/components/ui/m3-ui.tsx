@@ -11,10 +11,11 @@ import { ChevronDown, Eye, EyeOff, Lock } from "lucide-react";
 export interface M3InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  icon?: React.ReactNode;
 }
 
 const M3Input = React.forwardRef<HTMLInputElement, M3InputProps>(
-  ({ className, type, label, error, ...props }, ref) => {
+  ({ className, type, label, error, icon, ...props }, ref) => {
     return (
       <div className="w-full space-y-2">
         {label && (
@@ -23,6 +24,11 @@ const M3Input = React.forwardRef<HTMLInputElement, M3InputProps>(
           </label>
         )}
         <div className="relative group">
+          {icon && (
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors pointer-events-none group-focus-within:text-primary">
+              {icon}
+            </div>
+          )}
           <input
             type={type}
             className={cn(
@@ -32,6 +38,7 @@ const M3Input = React.forwardRef<HTMLInputElement, M3InputProps>(
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/50",
               "disabled:cursor-not-allowed disabled:opacity-50",
               "group-hover:border-zinc-700 font-medium",
+              icon && "pl-12",
               error && "border-red-500/50 focus-visible:ring-red-500/20",
               className
             )}
