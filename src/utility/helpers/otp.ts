@@ -6,28 +6,32 @@ import CryptoJS from "crypto-js";
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 /**
- * Decodes a Base32 string to a hex string.
- * TOTP secrets are typically Base32 encoded.
+ * Decodes a secret to a hex string. 
+ * Automatically detects if the secret is already Hex or Base32.
  */
-export function base32ToHex(base32: string): string {
-  // Normalize: uppercase and remove standard padding
-  const cleanBase32 = base32.toUpperCase().replace(/=+$/, "");
-  if (!cleanBase32) return "";
-  
+export function decodeSecret(secret: string): string {
+  const cleanSecret = secret.toUpperCase().replace(/=+$/, "").replace(/[-\s]/g, "");
+  if (!cleanSecret) return "";
+
+  // Detect if it's Hex (contains characters like 0, 1, 8, 9 which aren't in Base32)
+  const isHex = /^[0-9A-F]+$/.test(cleanSecret) && 
+                (/[0189]/.test(cleanSecret) || cleanSecret.length % 2 === 0);
+
+  if (isHex) {
+    return cleanSecret.toLowerCase();
+  }
+
+  // Fallback to Base32 decoding
   let bits = "";
   let hex = "";
 
-  for (let i = 0; i < cleanBase32.length; i++) {
-    const char = cleanBase32.charAt(i);
+  for (let i = 0; i < cleanSecret.length; i++) {
+    const char = cleanSecret.charAt(i);
     const val = BASE32_ALPHABET.indexOf(char);
-    
-    // If character is not in alphabet, just skip it (handles hyphens, spaces, etc.)
     if (val === -1) continue;
-    
     bits += val.toString(2).padStart(5, "0");
   }
 
-  // Convert bits to hex (8 bits = 2 hex chars)
   for (let i = 0; i + 8 <= bits.length; i += 8) {
     const chunk = bits.substring(i, i + 8);
     hex += parseInt(chunk, 2).toString(16).padStart(2, "0");
@@ -43,7 +47,7 @@ export function generateTOTP(secret: string, period = 30, digits = 6): string {
   if (!secret) return "000000";
   
   try {
-    const secretHex = base32ToHex(secret);
+    const secretHex = decodeSecret(secret);
     if (!secretHex) return "000000";
 
     const epoch = Math.floor(Date.now() / 1000);
