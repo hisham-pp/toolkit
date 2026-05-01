@@ -560,6 +560,15 @@ export class ToolRegistry {
       ["2fa", "mfa", "totp", "otp", "security", "authenticator"]
     ),
     new Tool(
+      "text-analyzer",
+      "Text Analyzer",
+      "Real-time character, word, sentence, and paragraph counter with advanced filters.",
+      Type,
+      "/tools/text-analyzer",
+      ToolCategory.Utils,
+      ["text", "counter", "words", "characters", "sentences", "paragraphs", "analysis"]
+    ),
+    new Tool(
       "json-sorter",
       "JSON Sorter",
       "Sort and visualize JSON object keys and array elements.",
