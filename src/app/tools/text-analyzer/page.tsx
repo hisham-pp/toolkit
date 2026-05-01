@@ -20,22 +20,49 @@ export default function TextAnalyzerPage() {
   const [text, setText] = useState("");
   const [includeSpaces, setIncludeSpaces] = useState(true);
   const [includePunctuation, setIncludePunctuation] = useState(true);
+  
+  // Advanced Options
+  const [excludeNumbers, setExcludeNumbers] = useState(false);
+  const [excludeLowercase, setExcludeLowercase] = useState(false);
+  const [excludeUppercase, setExcludeUppercase] = useState(false);
+  const [customPunctuation, setCustomPunctuation] = useState(".,/#!$%^&*;:{}=\\-_`~()");
+  const [excludedWords, setExcludedWords] = useState("");
 
   const stats = useMemo(() => {
     const trimmedText = text.trim();
     
     // Character logic
-    let charCount = text.length;
+    let processedCharText = text;
+    
     if (!includeSpaces) {
-      charCount = text.replace(/\s/g, "").length;
+      processedCharText = processedCharText.replace(/\s/g, "");
     }
+    
     if (!includePunctuation) {
-      charCount = (includeSpaces ? text : text.replace(/\s/g, ""))
-        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").length;
+      // Escape special regex characters in custom punctuation
+      const escapedPunc = customPunctuation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      processedCharText = processedCharText.replace(new RegExp(`[${escapedPunc}]`, 'g'), "");
+    }
+
+    if (excludeNumbers) {
+      processedCharText = processedCharText.replace(/[0-9]/g, "");
+    }
+
+    if (excludeLowercase) {
+      processedCharText = processedCharText.replace(/[a-z]/g, "");
+    }
+
+    if (excludeUppercase) {
+      processedCharText = processedCharText.replace(/[A-Z]/g, "");
     }
 
     // Word logic
-    const wordCount = trimmedText ? trimmedText.split(/\s+/).filter(w => w.length > 0).length : 0;
+    let words = trimmedText ? trimmedText.split(/\s+/).filter(w => w.length > 0) : [];
+    
+    if (excludedWords.trim()) {
+      const stopWords = excludedWords.split(/[,|\s]+/).map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
+      words = words.filter(w => !stopWords.includes(w.toLowerCase()));
+    }
 
     // Sentence logic
     const sentenceCount = trimmedText ? text.split(/[.!?]+/).filter(s => s.trim().length > 0).length : 0;
@@ -44,12 +71,12 @@ export default function TextAnalyzerPage() {
     const paragraphCount = trimmedText ? text.split(/\n+/).filter(p => p.trim().length > 0).length : 0;
 
     return {
-      characters: charCount,
-      words: wordCount,
+      characters: processedCharText.length,
+      words: words.length,
       sentences: sentenceCount,
       paragraphs: paragraphCount,
     };
-  }, [text, includeSpaces, includePunctuation]);
+  }, [text, includeSpaces, includePunctuation, excludeNumbers, excludeLowercase, excludeUppercase, customPunctuation, excludedWords]);
 
   const clear = () => {
     setText("");
@@ -62,6 +89,32 @@ export default function TextAnalyzerPage() {
     { label: "Sentences", value: stats.sentences, icon: <Quote className="w-5 h-5" />, color: "text-green-500", bg: "bg-green-500/10" },
     { label: "Paragraphs", value: stats.paragraphs, icon: <AlignLeft className="w-5 h-5" />, color: "text-amber-500", bg: "bg-amber-500/10" },
   ];
+
+  const ToggleButton = ({ active, onClick, label, icon: Icon }: any) => (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
+        active 
+          ? "bg-primary/5 border-primary/30 text-white" 
+          : "bg-zinc-950/50 border-zinc-800 text-zinc-500"
+      )}
+    >
+      <div className="flex items-center gap-3">
+        {active ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <AlertCircle className="w-4 h-4 text-zinc-700" />}
+        <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+      </div>
+      <div className={cn(
+        "w-10 h-5 rounded-full relative transition-colors",
+        active ? "bg-primary" : "bg-zinc-800"
+      )}>
+        <div className={cn(
+          "absolute top-1 w-3 h-3 rounded-full bg-white transition-all",
+          active ? "right-1" : "left-1"
+        )} />
+      </div>
+    </button>
+  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
@@ -95,15 +148,58 @@ export default function TextAnalyzerPage() {
               className="min-h-[400px] font-medium text-lg leading-relaxed placeholder:text-zinc-700"
             />
           </div>
+
+          {/* Advanced Options Section */}
+          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 space-y-8 shadow-2xl">
+             <div className="flex items-center gap-3 px-2">
+                <Settings2 className="w-5 h-5 text-primary" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Advanced Analysis Options</h3>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                   <div className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Character Filters</h4>
+                      <ToggleButton active={excludeNumbers} onClick={() => setExcludeNumbers(!excludeNumbers)} label="Exclude Numbers (0-9)" />
+                      <ToggleButton active={excludeLowercase} onClick={() => setExcludeLowercase(!excludeLowercase)} label="Exclude Lowercase (a-z)" />
+                      <ToggleButton active={excludeUppercase} onClick={() => setExcludeUppercase(!excludeUppercase)} label="Exclude Uppercase (A-Z)" />
+                   </div>
+                </div>
+
+                <div className="space-y-6">
+                   <div className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Custom Exclusions</h4>
+                      <div className="space-y-2">
+                         <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 ml-1">Edit Punctuation Set</label>
+                         <input 
+                            type="text" 
+                            value={customPunctuation}
+                            onChange={(e) => setCustomPunctuation(e.target.value)}
+                            className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                         />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 ml-1">Exclude Specific Words (comma separated)</label>
+                         <textarea 
+                            value={excludedWords}
+                            onChange={(e) => setExcludedWords(e.target.value)}
+                            placeholder="e.g. the, and, or..."
+                            className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/50 min-h-[80px] resize-none"
+                         />
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
         </div>
 
-        {/* Sidebar Controls & Stats */}
+        {/* Sidebar Stats */}
         <div className="lg:col-span-4 space-y-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
             {statCards.map((card) => (
-              <div key={card.label} className="bg-[#161618] border border-zinc-800 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center gap-4 text-center">
-                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner", card.bg)}>
+              <div key={card.label} className="bg-[#161618] border border-zinc-800 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center gap-4 text-center group hover:border-primary/30 transition-all">
+                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner transition-transform group-hover:scale-110", card.bg)}>
                   <div className={card.color}>{card.icon}</div>
                 </div>
                 <div className="space-y-1">
@@ -114,69 +210,24 @@ export default function TextAnalyzerPage() {
             ))}
           </div>
 
-          {/* Settings Panel */}
+          {/* Quick Analysis Panel */}
           <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 space-y-8 shadow-2xl">
             <div className="flex items-center gap-3 px-2">
               <Settings2 className="w-4 h-4 text-primary" />
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Analysis Options</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Quick Filters</h3>
             </div>
 
             <div className="space-y-4">
-              <button 
-                onClick={() => setIncludeSpaces(!includeSpaces)}
-                className={cn(
-                  "w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
-                  includeSpaces 
-                    ? "bg-primary/5 border-primary/30 text-white" 
-                    : "bg-zinc-950/50 border-zinc-800 text-zinc-500"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  {includeSpaces ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <AlertCircle className="w-4 h-4 text-zinc-700" />}
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Include Spaces</span>
-                </div>
-                <div className={cn(
-                  "w-10 h-5 rounded-full relative transition-colors",
-                  includeSpaces ? "bg-primary" : "bg-zinc-800"
-                )}>
-                  <div className={cn(
-                    "absolute top-1 w-3 h-3 rounded-full bg-white transition-all",
-                    includeSpaces ? "right-1" : "left-1"
-                  )} />
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setIncludePunctuation(!includePunctuation)}
-                className={cn(
-                  "w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
-                  includePunctuation 
-                    ? "bg-primary/5 border-primary/30 text-white" 
-                    : "bg-zinc-950/50 border-zinc-800 text-zinc-500"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  {includePunctuation ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <AlertCircle className="w-4 h-4 text-zinc-700" />}
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Include Punctuation</span>
-                </div>
-                <div className={cn(
-                  "w-10 h-5 rounded-full relative transition-colors",
-                  includePunctuation ? "bg-primary" : "bg-zinc-800"
-                )}>
-                  <div className={cn(
-                    "absolute top-1 w-3 h-3 rounded-full bg-white transition-all",
-                    includePunctuation ? "right-1" : "left-1"
-                  )} />
-                </div>
-              </button>
+              <ToggleButton active={includeSpaces} onClick={() => setIncludeSpaces(!includeSpaces)} label="Include Spaces" />
+              <ToggleButton active={includePunctuation} onClick={() => setIncludePunctuation(!includePunctuation)} label="Include Punctuation" />
             </div>
 
             <div className="bg-zinc-900/30 border border-zinc-800/50 p-6 rounded-3xl space-y-3">
                <div className="flex items-center gap-3 text-zinc-500 font-black uppercase tracking-widest text-[9px]">
-                  <AlertCircle className="w-3 h-3" /> Punctuation Set
+                  <AlertCircle className="w-3 h-3" /> Note
                </div>
                <p className="text-[10px] text-zinc-600 leading-relaxed font-medium italic">
-                 Includes: . , / # ! $ % ^ & * ; : { "{" } { "}" } = - _ ` ~ ( )
+                 Character count updates in real-time based on your selected filters and advanced exclusions.
                </p>
             </div>
           </div>
