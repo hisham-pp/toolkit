@@ -23,10 +23,12 @@ import {
   Cloud,
   MessageSquare,
   Facebook,
-  Globe
+  Globe,
+  Triangle,
+  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { M3Input } from "@/components/ui/m3-ui";
+import { M3Input, M3Select } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/utility/helpers/utils";
 import { generateTOTP, obfuscate, deobfuscate } from "@/utility/helpers/otp";
@@ -48,6 +50,7 @@ const SERVICE_PRESETS = [
   { name: "Custom", algorithm: "SHA1", digits: 6, period: 30, encoding: "auto", icon: ShieldCheck },
   { name: "GitHub", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Github },
   { name: "Google", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Chrome },
+  { name: "Vercel", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Triangle },
   { name: "Microsoft", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Mail },
   { name: "AWS", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Cloud },
   { name: "Discord", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: MessageSquare },
@@ -70,6 +73,7 @@ export default function AuthenticatorPage() {
   const [newEncoding, setNewEncoding] = useState<"auto" | "base32" | "hex">("auto");
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("All");
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
   const [importUri, setImportUri] = useState("");
 
@@ -276,24 +280,42 @@ export default function AuthenticatorPage() {
     toast.success("Code copied to clipboard");
   };
 
-  const filteredAuthenticators = authenticators.filter(a => 
-    a.issuer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    a.account.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredAuthenticators = authenticators.filter(a => {
+    const matchesSearch = a.issuer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         a.account.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = serviceFilter === "All" || a.issuer.toLowerCase() === serviceFilter.toLowerCase();
+    return matchesSearch && matchesFilter;
+  });
+
+  const uniqueIssuers = Array.from(new Set(authenticators.map(a => a.issuer))).sort();
 
   return (
     <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6">
       {/* Header Controls */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <input 
-            type="text"
-            placeholder="Search accounts..."
-            className="w-full bg-[#161618] border border-zinc-800 rounded-2xl py-3 pl-12 pr-4 text-sm text-zinc-300 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
+          <div className="relative flex-1 md:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <input 
+              type="text"
+              placeholder="Search accounts..."
+              className="w-full h-12 bg-[#161618] border border-zinc-800 rounded-2xl py-3 pl-12 pr-4 text-sm text-zinc-300 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <div className="w-full md:w-56">
+            <M3Select
+              value={serviceFilter}
+              onChange={setServiceFilter}
+              options={[
+                { label: "All Services", value: "All" },
+                ...uniqueIssuers.map(issuer => ({ label: issuer, value: issuer }))
+              ]}
+              placeholder="Filter by Service"
+            />
+          </div>
         </div>
         
         <div className="flex gap-4 w-full md:w-auto">
@@ -351,7 +373,7 @@ export default function AuthenticatorPage() {
       {/* Add Form Overlay */}
       {isAdding && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
             <button 
               onClick={() => setIsAdding(false)}
               className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
@@ -365,18 +387,12 @@ export default function AuthenticatorPage() {
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Service Preset</label>
-                <select 
-                  value={selectedService.name}
-                  onChange={(e) => handleServiceChange(e.target.value)}
-                  className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
-                >
-                  {SERVICE_PRESETS.map(s => (
-                    <option key={s.name} value={s.name}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
+              <M3Select
+                label="Service Preset"
+                value={selectedService.name}
+                onChange={handleServiceChange}
+                options={SERVICE_PRESETS.map(s => ({ label: s.name, value: s.name }))}
+              />
 
               <div className="h-[1px] bg-zinc-800 w-full" />
 
@@ -411,9 +427,10 @@ export default function AuthenticatorPage() {
                 value={newIssuer}
                 onChange={(e) => setNewIssuer(e.target.value)}
                 icon={<Building2 className="w-4 h-4" />}
+                disabled={selectedService.name !== "Custom"}
               />
               <M3Input 
-                label="Account Name"
+                label="Account Name (e.g. Email)"
                 placeholder="email@example.com"
                 value={newAccount}
                 onChange={(e) => setNewAccount(e.target.value)}
@@ -438,53 +455,45 @@ export default function AuthenticatorPage() {
                 {isAdvanced && (
                   <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Digits</label>
-                        <select 
-                          value={newDigits}
-                          onChange={(e) => setNewDigits(parseInt(e.target.value))}
-                          className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
-                        >
-                          <option value={6}>6 Digits</option>
-                          <option value={8}>8 Digits</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Period</label>
-                        <select 
-                          value={newPeriod}
-                          onChange={(e) => setNewPeriod(parseInt(e.target.value))}
-                          className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
-                        >
-                          <option value={30}>30 Seconds</option>
-                          <option value={60}>60 Seconds</option>
-                        </select>
-                      </div>
+                      <M3Select
+                        label="Digits"
+                        value={newDigits.toString()}
+                        onChange={(v) => setNewDigits(parseInt(v))}
+                        options={[
+                          { label: "6 Digits", value: "6" },
+                          { label: "8 Digits", value: "8" }
+                        ]}
+                      />
+                      <M3Select
+                        label="Period"
+                        value={newPeriod.toString()}
+                        onChange={(v) => setNewPeriod(parseInt(v))}
+                        options={[
+                          { label: "30 Seconds", value: "30" },
+                          { label: "60 Seconds", value: "60" }
+                        ]}
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Algorithm</label>
-                      <select 
-                        value={newAlgorithm}
-                        onChange={(e) => setNewAlgorithm(e.target.value)}
-                        className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
-                      >
-                        <option value="SHA1">SHA-1 (Default)</option>
-                        <option value="SHA256">SHA-256</option>
-                        <option value="SHA512">SHA-512</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Secret Encoding</label>
-                      <select 
-                        value={newEncoding}
-                        onChange={(e) => setNewEncoding(e.target.value as any)}
-                        className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
-                      >
-                        <option value="auto">Auto-detect (Recommended)</option>
-                        <option value="base32">Base32</option>
-                        <option value="hex">Hex</option>
-                      </select>
-                    </div>
+                    <M3Select
+                      label="Algorithm"
+                      value={newAlgorithm}
+                      onChange={setNewAlgorithm}
+                      options={[
+                        { label: "SHA-1 (Default)", value: "SHA1" },
+                        { label: "SHA-256", value: "SHA256" },
+                        { label: "SHA-512", value: "SHA512" }
+                      ]}
+                    />
+                    <M3Select
+                      label="Secret Encoding"
+                      value={newEncoding}
+                      onChange={(v) => setNewEncoding(v as any)}
+                      options={[
+                        { label: "Auto-detect (Recommended)", value: "auto" },
+                        { label: "Base32", value: "base32" },
+                        { label: "Hex", value: "hex" }
+                      ]}
+                    />
                   </div>
                 )}
               </div>
@@ -569,6 +578,55 @@ export default function AuthenticatorPage() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className={cn(
+                    "flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden transition-all",
+                    isExpiring && "animate-pulse"
+                  )}>
+                    <span className={cn(
+                      "text-3xl font-black tracking-[0.2em] font-mono transition-colors",
+                      isExpiring ? "text-amber-500" : "text-white"
+                    )}>
+                      {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
+                    </span>
+                    <div className="absolute inset-0 bg-primary opacity-0 group-hover/code:opacity-5 transition-opacity" />
+                  </div>
+                  
+                  <button 
+                    onClick={() => copyCode(code)}
+                    className="h-14 w-14 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-primary hover:border-primary/50 transition-all shadow-inner"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Individual Progress Bar */}
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-zinc-900">
+                  <div 
+                    className={cn(
+                      "h-full transition-all duration-1000 ease-linear",
+                      isExpiring ? "bg-amber-500" : "bg-primary"
+                    )}
+                    style={{ width: `${(authTimeLeft / auth.period) * 100}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Footer Info */}
+      <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-[2rem] flex items-center justify-center gap-4">
+        <ShieldCheck className="w-4 h-4 text-primary" />
+        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest text-center">
+          End-to-End Encryption • Local Storage Only • Open Source Logic
+        </p>
+      </div>
+    </div>
+  );
+}
 
                 <div className="flex items-center justify-between gap-4">
                   <div className={cn(
