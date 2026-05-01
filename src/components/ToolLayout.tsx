@@ -1,6 +1,7 @@
 import React from "react";
 import { Tool } from "@/utility/constants/tools";
 import ToolBackButton from "@/components/ToolBackButton";
+import HeaderSearch from "@/components/HeaderSearch";
 
 interface ToolLayoutProps {
   tool: Tool;
@@ -12,8 +13,8 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
     <div className="min-h-screen bg-[#09090B] text-zinc-400 flex flex-col font-sans">
       {/* Tool Header */}
       <header className="border-b border-zinc-700/50 bg-[#09090B]/80 backdrop-blur-md sticky top-0 z-50 w-full">
-        <div className="w-full px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="w-full px-6 h-16 flex items-center justify-between gap-8">
+          <div className="flex items-center gap-4 shrink-0">
             <ToolBackButton />
             <div className="h-6 w-[1px] bg-zinc-800 mx-1" />
             <div className="flex items-center gap-3">
@@ -30,7 +31,10 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
+          {/* Global Search */}
+          <HeaderSearch />
+
+          <div className="flex items-center gap-6 shrink-0">
              <div className="hidden lg:flex items-center gap-6 pr-4">
                 <div className="flex flex-col items-end">
                    <span className="text-[9px] font-black uppercase text-zinc-600 tracking-widest leading-none mb-1">Processing Mode</span>
