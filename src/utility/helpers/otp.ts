@@ -6,38 +6,45 @@ import CryptoJS from "crypto-js";
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 /**
- * Decodes a secret to a hex string. 
- * Prioritizes Base32 as it is the standard for TOTP.
+ * Decodes a secret string based on the specified encoding.
  */
-export function decodeSecret(secret: string): string {
+export function decodeSecret(secret: string, encoding: "auto" | "base32" | "hex" = "auto"): string {
   const cleanSecret = secret.toUpperCase().replace(/=+$/, "").replace(/[-\s]/g, "");
   if (!cleanSecret) return "";
 
-  // Check if it's definitely NOT Base32 (contains 0, 1, 8, 9)
-  const containsNonBase32Hex = /[0189]/.test(cleanSecret);
-  const isHexOnly = /^[0-9A-F]+$/.test(cleanSecret);
-  const isBase32 = /^[A-Z2-7]+$/.test(cleanSecret);
+  let mode = encoding;
+  if (mode === "auto") {
+    const containsNonBase32Hex = /[0189]/.test(cleanSecret);
+    const isHexOnly = /^[0-9A-F]+$/.test(cleanSecret);
+    const isBase32 = /^[A-Z2-7]+$/.test(cleanSecret);
 
-  // If it's valid hex and either contains non-base32 chars or isn't valid base32
-  if (isHexOnly && (containsNonBase32Hex || !isBase32)) {
+    if (isHexOnly && (containsNonBase32Hex || !isBase32)) {
+      mode = "hex";
+    } else {
+      mode = "base32";
+    }
+  }
+
+  if (mode === "hex") {
+    if (!/^[0-9A-F]+$/.test(cleanSecret)) {
+      throw new Error("Invalid secret: Not a valid Hex string");
+    }
     return cleanSecret.toLowerCase();
   }
 
-  // Fallback to Base32 decoding
-  if (!isBase32) {
-    throw new Error("Invalid secret: Not a valid Base32 or Hex string");
+  // Base32 decoding
+  if (!/^[A-Z2-7]+$/.test(cleanSecret)) {
+    throw new Error("Invalid secret: Not a valid Base32 string");
   }
 
   let bits = "";
-  let hex = "";
-
   for (let i = 0; i < cleanSecret.length; i++) {
-    const char = cleanSecret.charAt(i);
-    const val = BASE32_ALPHABET.indexOf(char);
+    const val = BASE32_ALPHABET.indexOf(cleanSecret[i]);
     if (val === -1) continue;
     bits += val.toString(2).padStart(5, "0");
   }
 
+  let hex = "";
   for (let i = 0; i + 8 <= bits.length; i += 8) {
     const chunk = bits.substring(i, i + 8);
     hex += parseInt(chunk, 2).toString(16).padStart(2, "0");
@@ -49,25 +56,37 @@ export function decodeSecret(secret: string): string {
 /**
  * Generates a TOTP code for a given secret.
  */
-export function generateTOTP(secret: string, period = 30, digits = 6): string {
-  if (!secret) return "000000";
+export function generateTOTP(
+  secret: string, 
+  period = 30, 
+  digits = 6, 
+  timestamp: number = Math.floor(Date.now() / 1000),
+  algorithm = "SHA1",
+  encoding: "auto" | "base32" | "hex" = "auto"
+): string {
+  if (!secret) return "0".repeat(digits);
   
   try {
-    const secretHex = decodeSecret(secret);
-    if (!secretHex) return "000000";
+    const secretHex = decodeSecret(secret, encoding);
+    if (!secretHex) return "0".repeat(digits);
 
-    const epoch = Math.floor(Date.now() / 1000);
-    const counter = Math.floor(epoch / period);
+    const counter = Math.floor(timestamp / period);
     
     // Convert counter to 8-byte hex string (Big Endian)
-    // We use BigInt to handle potentially large values, though not strictly necessary for current epochs
     const timeHex = BigInt(counter).toString(16).padStart(16, "0");
     
-    // Compute HMAC-SHA1
-    const hmac = CryptoJS.HmacSHA1(
-      CryptoJS.enc.Hex.parse(timeHex),
-      CryptoJS.enc.Hex.parse(secretHex)
-    );
+    const message = CryptoJS.enc.Hex.parse(timeHex);
+    const key = CryptoJS.enc.Hex.parse(secretHex);
+
+    let hmac;
+    const alg = algorithm.toUpperCase();
+    if (alg === "SHA256") {
+      hmac = CryptoJS.HmacSHA256(message, key);
+    } else if (alg === "SHA512") {
+      hmac = CryptoJS.HmacSHA512(message, key);
+    } else {
+      hmac = CryptoJS.HmacSHA1(message, key);
+    }
     
     const hmacHex = hmac.toString(CryptoJS.enc.Hex);
     
@@ -79,11 +98,11 @@ export function generateTOTP(secret: string, period = 30, digits = 6): string {
     return otp.padStart(digits, "0");
   } catch (error) {
     // If it's our validation error, rethrow it
-    if (error instanceof Error && error.message.includes("Invalid secret")) {
+    if (error instanceof Error && (error.message.includes("Invalid secret") || error.message.includes("encoding"))) {
       throw error;
     }
     console.error("TOTP Generation Error:", error);
-    return "000000";
+    return "0".repeat(digits);
   }
 }
 

@@ -32,6 +32,8 @@ interface Authenticator {
   secret: string;
   digits: number;
   period: number;
+  algorithm?: string;
+  encoding?: "auto" | "base32" | "hex";
   createdAt: number;
 }
 
@@ -43,6 +45,8 @@ export default function AuthenticatorPage() {
   const [newSecret, setNewSecret] = useState("");
   const [newDigits, setNewDigits] = useState(6);
   const [newPeriod, setNewPeriod] = useState(30);
+  const [newAlgorithm, setNewAlgorithm] = useState("SHA1");
+  const [newEncoding, setNewEncoding] = useState<"auto" | "base32" | "hex">("auto");
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
@@ -60,7 +64,9 @@ export default function AuthenticatorPage() {
           const migrated = parsed.map((a: any) => ({
             ...a,
             digits: a.digits || 6,
-            period: a.period || 30
+            period: a.period || 30,
+            algorithm: a.algorithm || "SHA1",
+            encoding: a.encoding || "auto"
           }));
           setAuthenticators(migrated);
         }
@@ -99,7 +105,7 @@ export default function AuthenticatorPage() {
 
     try {
       // Validate secret by trying to generate a code
-      generateTOTP(newSecret, newPeriod, newDigits);
+      generateTOTP(newSecret, newPeriod, newDigits, undefined, newAlgorithm, newEncoding);
     } catch (e: any) {
       toast.error(e.message || "Invalid secret key format");
       return;
@@ -112,6 +118,8 @@ export default function AuthenticatorPage() {
       secret: newSecret.trim().toUpperCase().replace(/\s/g, ""),
       digits: newDigits,
       period: newPeriod,
+      algorithm: newAlgorithm,
+      encoding: newEncoding,
       createdAt: Date.now()
     };
 
@@ -125,6 +133,8 @@ export default function AuthenticatorPage() {
     setNewSecret("");
     setNewDigits(6);
     setNewPeriod(30);
+    setNewAlgorithm("SHA1");
+    setNewEncoding("auto");
     setIsAdding(false);
     setIsAdvanced(false);
     toast.success("Account added successfully");
@@ -142,6 +152,7 @@ export default function AuthenticatorPage() {
       const issuerParam = url.searchParams.get("issuer");
       const digits = parseInt(url.searchParams.get("digits") || "6");
       const period = parseInt(url.searchParams.get("period") || "30");
+      const algorithm = url.searchParams.get("algorithm")?.toUpperCase() || "SHA1";
 
       if (!secret) throw new Error("Missing secret");
 
@@ -163,6 +174,8 @@ export default function AuthenticatorPage() {
       setNewSecret(secret);
       setNewDigits(digits);
       setNewPeriod(period);
+      setNewAlgorithm(algorithm);
+      setNewEncoding("auto");
       setImportUri("");
       toast.success("Details extracted from URI");
     } catch (e) {
@@ -374,27 +387,53 @@ export default function AuthenticatorPage() {
                 </button>
 
                 {isAdvanced && (
-                  <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
+                  <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Digits</label>
+                        <select 
+                          value={newDigits}
+                          onChange={(e) => setNewDigits(parseInt(e.target.value))}
+                          className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
+                        >
+                          <option value={6}>6 Digits</option>
+                          <option value={8}>8 Digits</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Period</label>
+                        <select 
+                          value={newPeriod}
+                          onChange={(e) => setNewPeriod(parseInt(e.target.value))}
+                          className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
+                        >
+                          <option value={30}>30 Seconds</option>
+                          <option value={60}>60 Seconds</option>
+                        </select>
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Digits</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Algorithm</label>
                       <select 
-                        value={newDigits}
-                        onChange={(e) => setNewDigits(parseInt(e.target.value))}
+                        value={newAlgorithm}
+                        onChange={(e) => setNewAlgorithm(e.target.value)}
                         className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
                       >
-                        <option value={6}>6 Digits</option>
-                        <option value={8}>8 Digits</option>
+                        <option value="SHA1">SHA-1 (Default)</option>
+                        <option value="SHA256">SHA-256</option>
+                        <option value="SHA512">SHA-512</option>
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Period</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Secret Encoding</label>
                       <select 
-                        value={newPeriod}
-                        onChange={(e) => setNewPeriod(parseInt(e.target.value))}
+                        value={newEncoding}
+                        onChange={(e) => setNewEncoding(e.target.value as any)}
                         className="w-full h-12 bg-zinc-950/50 border border-zinc-800 rounded-2xl px-4 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
                       >
-                        <option value={30}>30 Seconds</option>
-                        <option value={60}>60 Seconds</option>
+                        <option value="auto">Auto-detect (Recommended)</option>
+                        <option value="base32">Base32</option>
+                        <option value="hex">Hex</option>
                       </select>
                     </div>
                   </div>
@@ -435,7 +474,7 @@ export default function AuthenticatorPage() {
           {filteredAuthenticators.map((auth) => {
             let code = "000000";
             try {
-              code = generateTOTP(auth.secret, auth.period, auth.digits);
+              code = generateTOTP(auth.secret, auth.period, auth.digits, undefined, auth.algorithm, auth.encoding);
             } catch (e) {
               code = "ERROR";
             }
@@ -452,7 +491,17 @@ export default function AuthenticatorPage() {
               >
                 <div className="flex items-start justify-between mb-6">
                   <div className="space-y-1">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{auth.issuer}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{auth.issuer}</h3>
+                      <div className="flex gap-1">
+                        {auth.algorithm && auth.algorithm !== "SHA1" && (
+                          <span className="text-[8px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-md font-bold uppercase">{auth.algorithm}</span>
+                        )}
+                        {auth.encoding && auth.encoding !== "auto" && (
+                          <span className="text-[8px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-md font-bold uppercase">{auth.encoding}</span>
+                        )}
+                      </div>
+                    </div>
                     <p className="text-sm font-bold text-zinc-300 truncate max-w-[180px]">{auth.account}</p>
                   </div>
                   <button 
