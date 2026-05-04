@@ -134,8 +134,19 @@ export default function ImageGeneratorPage() {
     const ref = containerRefs.current[id];
     if (!ref) return;
 
+    // Small delay to ensure any dynamic icons are fully settled in the DOM clone
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
-      const dataUrl = await toPng(ref, { quality: 1.0 });
+      const imgData = generatedImages.find(i => i.id === id);
+      const dataUrl = await toPng(ref, { 
+        quality: 1.0,
+        pixelRatio: 1, // Keep it exactly at the requested size
+        skipAutoScale: true,
+        cacheBust: true,
+        backgroundColor: imgData?.bgColor || "transparent",
+      });
+      
       const link = document.createElement("a");
       link.download = `${name.replace(/[:\s]/g, "-")}.png`;
       link.href = dataUrl;
@@ -355,10 +366,10 @@ export default function ImageGeneratorPage() {
                   key={img.id}
                   className="group relative animate-in fade-in zoom-in duration-300 flex flex-col items-center"
                 >
-                  {/* Invisible container for high-quality export */}
+                  {/* Invisible container for high-quality export - Moved off-screen instead of opacity-0 */}
                   <div 
                     ref={el => { containerRefs.current[img.id] = el }}
-                    className="absolute opacity-0 pointer-events-none"
+                    className="fixed -left-[9999px] -top-[9999px] pointer-events-none"
                     style={{
                       width: `${img.size}px`,
                       height: `${img.size}px`,
@@ -374,14 +385,18 @@ export default function ImageGeneratorPage() {
                     {img.mode === "icon" ? (
                       <Icon 
                         icon={img.content} 
-                        style={{ color: img.color, width: "100%", height: "100%" }} 
+                        width="100%"
+                        height="100%"
+                        style={{ color: img.color }} 
                       />
                     ) : (
                       <span style={{ 
                         color: img.color, 
                         fontSize: `${img.fontSize}px`, 
-                        fontWeight: "black",
-                        fontFamily: "var(--font-sans)"
+                        fontWeight: "900",
+                        lineHeight: 1,
+                        fontFamily: "var(--font-sans)",
+                        display: "block"
                       }}>
                         {img.content}
                       </span>
