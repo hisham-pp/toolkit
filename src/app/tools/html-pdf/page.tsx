@@ -7,12 +7,13 @@ import {
   FileCode,
   AlertCircle,
   Eye,
-  Code
+  Code,
+  Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
-import { generatePdfFromHtml } from "@/utility/helpers/pdf";
+import { generatePdfFromHtml, printElement } from "@/utility/helpers/pdf";
 import { cn } from "@/utility/helpers/utils";
 
 export default function HtmlToPdf() {
@@ -20,6 +21,14 @@ export default function HtmlToPdf() {
   const previewRef = useRef<HTMLDivElement>(null);
 
   const clear = () => setContent("");
+
+  const handlePrint = () => {
+    if (!content.trim() || !previewRef.current) {
+      toast.error("Please enter some HTML first");
+      return;
+    }
+    printElement(previewRef.current);
+  };
 
   const downloadPdf = async () => {
     if (!content.trim()) {
@@ -49,6 +58,9 @@ export default function HtmlToPdf() {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={clear} className="h-10 px-3 text-zinc-600 hover:text-red-500">
             <Trash2 className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint} className="h-10 px-6 bg-zinc-900 border-zinc-800 text-[10px] font-black uppercase tracking-widest gap-2 rounded-2xl hover:border-primary/30 transition-all text-zinc-400">
+            <Printer className="w-4 h-4" /> Print
           </Button>
           <Button onClick={downloadPdf} className="h-10 px-8 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest gap-2 rounded-2xl shadow-xl shadow-primary/20 text-[10px]">
             <FileDown className="w-4 h-4" /> Export PDF

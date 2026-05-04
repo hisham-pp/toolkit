@@ -98,3 +98,50 @@ export function generatePdfFromText(text: string, fileName: string) {
   pdf.text(splitText, 10, 10);
   pdf.save(`${fileName}.pdf`);
 }
+
+export function printElement(element: HTMLElement) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    alert("Please allow pop-ups to print");
+    return;
+  }
+
+  // Copy all styles from the main document
+  const styles = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
+    .map(style => style.outerHTML)
+    .join("");
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print</title>
+        ${styles}
+        <style>
+          body { 
+            background: white !important; 
+            color: black !important;
+            padding: 2rem !important;
+          }
+          /* Ensure the printed content takes full width */
+          .print-content { width: 100% !important; }
+          @page { margin: 1cm; }
+        </style>
+      </head>
+      <body>
+        <div class="print-content">
+          ${element.innerHTML}
+        </div>
+        <script>
+          // Wait for all images/fonts to load
+          window.onload = () => {
+            setTimeout(() => {
+              window.print();
+              window.close();
+            }, 500);
+          };
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
