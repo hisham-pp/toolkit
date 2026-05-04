@@ -179,6 +179,10 @@ export default function MarkdownToPdf() {
           border-collapse: collapse !important;
           width: 100% !important;
           margin-bottom: 1.5rem !important;
+          page-break-inside: avoid !important;
+        }
+        :global(.pdf-preview-root .my-6) {
+          page-break-inside: avoid !important;
         }
         :global(.pdf-preview-root th) {
           background-color: #f4f4f5 !important;

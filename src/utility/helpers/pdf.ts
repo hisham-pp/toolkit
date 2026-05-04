@@ -79,45 +79,34 @@ function fixModernColors(clonedDoc: Document) {
 }
 
 export async function generatePdfFromHtml(htmlElement: HTMLElement, fileName: string) {
-  const canvas = await html2canvas(htmlElement, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: "#ffffff",
-    onclone: (clonedDoc) => {
-      fixModernColors(clonedDoc);
-    }
-  });
-  
-  const imgData = canvas.toDataURL("image/png");
-  
-  // A4 dimensions in px at 72 DPI (approximate)
+  // A4 dimensions in pt
   const pdfWidth = 595.28;
   const pdfHeight = 841.89;
-  
-  // Calculate scaling to fit width with margins (40px on each side)
   const margin = 40;
-  const contentWidth = pdfWidth - (margin * 2);
-  const ratio = contentWidth / canvas.width;
-  const imgHeight = canvas.height * ratio;
-  
+
   const pdf = new jsPDF("p", "pt", "a4");
-  
-  let heightLeft = imgHeight;
-  let position = margin; // Start with top margin
 
-  pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
-  heightLeft -= (pdfHeight - margin * 2);
-
-  // Add extra pages if needed
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight + margin;
-    pdf.addPage();
-    pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
-    heightLeft -= (pdfHeight - margin * 2);
-  }
-  
-  pdf.save(`${fileName}.pdf`);
+  // We use pdf.html() which handles paging much better than manual canvas slicing.
+  // It uses html2canvas internally.
+  await pdf.html(htmlElement, {
+    callback: (pdf) => {
+      pdf.save(`${fileName}.pdf`);
+    },
+    x: margin,
+    y: margin,
+    width: pdfWidth - (margin * 2), // Target width in PDF
+    windowWidth: 1000, // Virtual window width for rendering (helps with responsiveness)
+    autoPaging: "text",
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      onclone: (clonedDoc) => {
+        fixModernColors(clonedDoc);
+      }
+    }
+  });
 }
 
 export function generatePdfFromText(text: string, fileName: string) {
