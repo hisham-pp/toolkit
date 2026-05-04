@@ -4,6 +4,8 @@ import React, { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { 
   Trash2, 
   FileDown, 
@@ -88,7 +90,36 @@ export default function MarkdownToPdf() {
                 "prose prose-zinc max-w-none"
               )}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                components={{
+                  code({ node, inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    return !inline && match ? (
+                      <div className="my-6 rounded-xl overflow-hidden border border-zinc-200">
+                        <SyntaxHighlighter
+                          style={oneLight}
+                          language={match[1]}
+                          PreTag="div"
+                          customStyle={{
+                            margin: 0,
+                            padding: "1.5rem",
+                            fontSize: "0.85rem",
+                            background: "#f8f9fa",
+                          }}
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, "")}
+                        </SyntaxHighlighter>
+                      </div>
+                    ) : (
+                      <code className={cn("bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-900 font-bold text-[0.9em]", className)} {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
                 {content || "_Preview will appear here..._"}
               </ReactMarkdown>
             </div>
@@ -111,10 +142,6 @@ export default function MarkdownToPdf() {
           background-color: #ffffff !important;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-        :global(.pdf-preview-root *) {
-          color: #18181b !important;
-          border-color: #e4e4e7 !important;
-        }
         :global(.pdf-preview-root h1) {
           color: #000000 !important;
           font-style: normal !important;
@@ -127,6 +154,10 @@ export default function MarkdownToPdf() {
           color: #000000 !important;
           border-bottom: 1px solid #e4e4e7 !important;
           margin-top: 2rem !important;
+        }
+        :global(.pdf-preview-root h3) {
+          color: #000000 !important;
+          font-weight: 700 !important;
         }
         :global(.pdf-preview-root p) {
           color: #27272a !important;
@@ -143,6 +174,23 @@ export default function MarkdownToPdf() {
           border-left-color: #18181b !important;
           color: #3f3f46 !important;
           background: #f4f4f5 !important;
+        }
+        :global(.pdf-preview-root table) {
+          border-collapse: collapse !important;
+          width: 100% !important;
+          margin-bottom: 1.5rem !important;
+        }
+        :global(.pdf-preview-root th) {
+          background-color: #f4f4f5 !important;
+          color: #000 !important;
+          font-weight: 700 !important;
+          padding: 8px !important;
+          border: 1px solid #e4e4e7 !important;
+        }
+        :global(.pdf-preview-root td) {
+          padding: 8px !important;
+          border: 1px solid #e4e4e7 !important;
+          color: #27272a !important;
         }
       `}</style>
 
