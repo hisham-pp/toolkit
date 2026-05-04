@@ -13,6 +13,7 @@
     "@base-ui/react": "^1.4.1",
     "@faker-js/faker": "^10.4.0",
     "@google/genai": "^1.51.0",
+    "@iconify/react": "^6.0.2",
     "@tailwindcss/postcss": "^4.2.4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/diff": "^7.0.2",

@@ -164,6 +164,15 @@ export class ToolRegistry {
       ["letter", "word", "line", "comparison"]
     ),
     new Tool(
+      "image-generator",
+      "Image Generator",
+      "Generate custom images from icons or text with various styles.",
+      ImagePlus,
+      "/tools/image-generator",
+      ToolCategory.Generation,
+      ["icon", "image", "generator", "text", "asset", "creation"]
+    ),
+    new Tool(
       "box-shadow",
       "Box Shadow",
       "Interactive CSS box-shadow generator and preview.",
