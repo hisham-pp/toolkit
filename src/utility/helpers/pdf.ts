@@ -12,69 +12,65 @@ extend([namesPlugin, labPlugin, lchPlugin]);
  * We convert oklch, lab, etc., to RGB strings because html2canvas's parser crashes on them.
  */
 function fixModernColors(clonedDoc: Document) {
-  // 1. Process all elements and their inline/computed styles
+  const colorRegex = /(oklch|oklab|lab|lch)\([^)]+\)/g;
+
+  // 1. Process all stylesheets
+  // html2canvas parses document.styleSheets. We need to clean them.
+  const styleSheets = Array.from(clonedDoc.styleSheets);
+  styleSheets.forEach((sheet) => {
+    try {
+      const rules = Array.from(sheet.cssRules);
+      for (let i = rules.length - 1; i >= 0; i--) {
+        const rule = rules[i];
+        if (colorRegex.test(rule.cssText)) {
+          try {
+            const fixedRule = rule.cssText.replace(colorRegex, (match) => {
+              try { return colord(match).toRgbString(); } catch { return "inherit"; }
+            });
+            sheet.deleteRule(i);
+            sheet.insertRule(fixedRule, i);
+          } catch (e) {
+            // If we can't fix the rule, delete it to prevent the parser from crashing
+            sheet.deleteRule(i);
+          }
+        }
+      }
+    } catch (e) {
+      // Handle cross-origin or other stylesheet access issues
+    }
+  });
+
+  // 2. Process all style tags
+  const styleTags = clonedDoc.querySelectorAll("style");
+  styleTags.forEach(tag => {
+    if (colorRegex.test(tag.innerHTML)) {
+      tag.innerHTML = tag.innerHTML.replace(colorRegex, (match) => {
+        try { return colord(match).toRgbString(); } catch { return "inherit"; }
+      });
+    }
+  });
+
+  // 3. Process all elements (inline styles and attributes)
   const allElements = clonedDoc.querySelectorAll("*");
   allElements.forEach((el) => {
     if (!(el instanceof HTMLElement)) return;
     
-    // We check the most common properties that cause issues
-    const colorProps = [
-      "color", 
-      "backgroundColor", 
-      "borderColor", 
-      "borderTopColor", 
-      "borderBottomColor", 
-      "borderLeftColor", 
-      "borderRightColor", 
-      "fill", 
-      "stroke",
-      "outlineColor",
-      "boxShadow",
-      "textShadow"
-    ];
-    
-    // Use getComputedStyle to get the resolved values (which might already be RGB in some browsers,
-    // but html2canvas often reads the raw string from somewhere else or gets confused)
-    const style = window.getComputedStyle(el);
-    
-    colorProps.forEach((prop) => {
-      const value = (style as any)[prop];
-      if (value && (value.includes("oklch") || value.includes("oklab") || value.includes("lab") || value.includes("lch"))) {
-        try {
-          const converted = colord(value).toRgbString();
-          el.style.setProperty(prop.replace(/([A-Z])/g, "-$1").toLowerCase(), converted, "important");
-        } catch (e) {
-          // If it's a complex value like boxShadow, we might need a more complex regex replacement
-          if (prop === "boxShadow" || prop === "textShadow") {
-            const fixed = value.replace(/(oklch|oklab|lab|lch)\([^)]+\)/g, (match: string) => {
-              try { return colord(match).toRgbString(); } catch { return "transparent"; }
-            });
-            el.style.setProperty(prop.replace(/([A-Z])/g, "-$1").toLowerCase(), fixed, "important");
-          }
-        }
+    // Check style attribute
+    const styleAttr = el.getAttribute("style");
+    if (styleAttr && colorRegex.test(styleAttr)) {
+      const fixedStyle = styleAttr.replace(colorRegex, (match) => {
+        try { return colord(match).toRgbString(); } catch { return "inherit"; }
+      });
+      el.setAttribute("style", fixedStyle);
+    }
+
+    // Fix specific SVG attributes
+    ["fill", "stroke"].forEach(attr => {
+      const val = el.getAttribute(attr);
+      if (val && colorRegex.test(val)) {
+        try { el.setAttribute(attr, colord(val).toRgbString()); } catch { el.removeAttribute(attr); }
       }
     });
-  });
-
-  // 2. Process all style tags to replace problematic functions in raw CSS
-  // This is a safety net because html2canvas sometimes parses style tags directly
-  const styleTags = clonedDoc.querySelectorAll("style");
-  styleTags.forEach(tag => {
-    try {
-      let css = tag.innerHTML;
-      if (css.includes("oklch") || css.includes("oklab") || css.includes("lab") || css.includes("lch")) {
-        const fixedCss = css.replace(/(oklch|oklab|lab|lch)\([^)]+\)/g, (match) => {
-          try {
-            return colord(match).toRgbString();
-          } catch (e) {
-            return "inherit"; 
-          }
-        });
-        tag.innerHTML = fixedCss;
-      }
-    } catch (e) {
-      console.warn("Could not fix style tag:", e);
-    }
   });
 }
 
