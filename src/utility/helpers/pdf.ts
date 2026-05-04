@@ -1,67 +1,46 @@
 import jsPDF from "jspdf";
+import { toCanvas } from "html-to-image";
 
 export async function generatePdfFromHtml(htmlElement: HTMLElement, fileName: string) {
-  // We use the server-side API to generate the PDF because client-side
-  // libraries like html2canvas fail on modern CSS (oklch, lab, etc.)
+  // We use html-to-image because it uses SVG foreignObject, which allows the browser's 
+  // native rendering engine to handle modern CSS like oklch, lab, etc., perfectly.
   try {
-    const response = await fetch("/api/pdf", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <style>
-                body {
-                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                  margin: 0;
-                  padding: 0;
-                  color: #18181b;
-                  background: #ffffff;
-                }
-                .pdf-content {
-                  width: 100%;
-                }
-                /* Professional document styles */
-                h1, h2, h3, h4, h5, h6 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; }
-                p { margin-bottom: 1em; line-height: 1.6; }
-                code { background: #f4f4f5; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
-                pre { background: #f4f4f5; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
-                blockquote { border-left: 4px solid #e4e4e7; padding-left: 1em; color: #71717a; font-style: italic; margin-bottom: 1em; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
-                th, td { border: 1px solid #e4e4e7; padding: 8px; text-align: left; }
-                th { background: #f8f8f8; font-weight: bold; }
-              </style>
-            </head>
-            <body>
-              <div class="pdf-content">
-                ${htmlElement.innerHTML}
-              </div>
-            </body>
-          </html>
-        `,
-        fileName
-      }),
+    const canvas = await toCanvas(htmlElement, {
+      pixelRatio: 2,
+      backgroundColor: "#ffffff",
+      style: {
+        transform: "scale(1)",
+        transformOrigin: "top left",
+      }
     });
+    
+    const imgData = canvas.toDataURL("image/jpeg", 0.95);
+    
+    // A4 dimensions in pt
+    const pdfWidth = 595.28;
+    const pdfHeight = 841.89;
+    const margin = 40;
+    
+    const contentWidth = pdfWidth - (margin * 2);
+    const ratio = contentWidth / canvas.width;
+    const imgHeight = canvas.height * ratio;
+    
+    const pdf = new jsPDF("p", "pt", "a4");
+    
+    let heightLeft = imgHeight;
+    let position = margin;
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to generate PDF");
+    pdf.addImage(imgData, "JPEG", margin, position, contentWidth, imgHeight);
+    heightLeft -= (pdfHeight - margin * 2);
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + margin;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", margin, position, contentWidth, imgHeight);
+      heightLeft -= (pdfHeight - margin * 2);
     }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileName}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    
+    pdf.save(`${fileName}.pdf`);
   } catch (error) {
     console.error("PDF Generation Error:", error);
     throw error;
