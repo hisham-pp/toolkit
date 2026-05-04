@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { 
   Trash2, 
   FileDown, 
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { generatePdfFromHtml } from "@/utility/helpers/pdf";
+import { cn } from "@/utility/helpers/utils";
 
 export default function MarkdownToPdf() {
   const [content, setContent] = useState("");
@@ -63,9 +65,9 @@ export default function MarkdownToPdf() {
             <Type className="w-3 h-3 text-zinc-500" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Source Markdown</span>
           </div>
-          <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded-[2rem] overflow-hidden focus-within:border-primary/40 transition-colors">
+          <div className="flex-1 relative bg-zinc-950 border border-zinc-800 rounded-[2rem] overflow-hidden focus-within:border-primary/40 transition-colors shadow-inner flex flex-col">
             <M3Textarea 
-              className="w-full h-full bg-transparent border-none font-mono text-sm p-8 resize-none focus-visible:ring-0 text-zinc-300"
+              className="flex-1 bg-transparent border-none font-mono text-sm p-8 resize-none focus-visible:ring-0 text-zinc-300 custom-scrollbar"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="# Enter markdown here..."
@@ -78,9 +80,15 @@ export default function MarkdownToPdf() {
             <Eye className="w-3 h-3 text-primary" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-primary italic">Live Preview</span>
           </div>
-          <div className="flex-1 bg-white border border-zinc-800 rounded-[2rem] overflow-auto p-10 shadow-2xl">
-            <div ref={previewRef} className="prose prose-zinc max-w-none prose-p:my-2 prose-headings:mb-4 prose-headings:mt-6 prose-headings:text-black prose-p:text-zinc-800 prose-li:text-zinc-800 prose-strong:text-black">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          <div className="flex-1 bg-white border border-zinc-800 rounded-[2rem] overflow-auto shadow-2xl custom-scrollbar-light">
+            <div 
+              ref={previewRef} 
+              className={cn(
+                "pdf-preview-root min-h-full p-12 bg-white",
+                "prose prose-zinc max-w-none"
+              )}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                 {content || "_Preview will appear here..._"}
               </ReactMarkdown>
             </div>
@@ -96,6 +104,60 @@ export default function MarkdownToPdf() {
           PDF is generated locally in your browser. Styles in the preview (white background) reflect how the document will look in the exported PDF.
         </p>
       </div>
+
+      <style jsx>{`
+        .pdf-preview-root {
+          color: #18181b !important;
+          background-color: #ffffff !important;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        :global(.pdf-preview-root *) {
+          color: #18181b !important;
+          border-color: #e4e4e7 !important;
+        }
+        :global(.pdf-preview-root h1) {
+          color: #000000 !important;
+          font-style: normal !important;
+          border-bottom: 2px solid #000 !important;
+          padding-bottom: 0.5rem !important;
+          margin-bottom: 1.5rem !important;
+          font-weight: 800 !important;
+        }
+        :global(.pdf-preview-root h2) {
+          color: #000000 !important;
+          border-bottom: 1px solid #e4e4e7 !important;
+          margin-top: 2rem !important;
+        }
+        :global(.pdf-preview-root p) {
+          color: #27272a !important;
+          line-height: 1.6 !important;
+        }
+        :global(.pdf-preview-root strong) {
+          color: #000000 !important;
+          font-weight: 700 !important;
+        }
+        :global(.pdf-preview-root ul li::marker) {
+          color: #18181b !important;
+        }
+        :global(.pdf-preview-root blockquote) {
+          border-left-color: #18181b !important;
+          color: #3f3f46 !important;
+          background: #f4f4f5 !important;
+        }
+      `}</style>
+
+      <style jsx global>{`
+        .custom-scrollbar-light::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar-light::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar-light::-webkit-scrollbar-thumb {
+          background: #e4e4e7;
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 }

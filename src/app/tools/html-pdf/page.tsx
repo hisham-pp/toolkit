@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { generatePdfFromHtml } from "@/utility/helpers/pdf";
+import { cn } from "@/utility/helpers/utils";
 
 export default function HtmlToPdf() {
   const [content, setContent] = useState("");
@@ -61,9 +62,9 @@ export default function HtmlToPdf() {
             <Code className="w-3 h-3 text-zinc-500" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Source HTML</span>
           </div>
-          <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded-[2rem] overflow-hidden focus-within:border-primary/40 transition-colors">
+          <div className="flex-1 relative bg-zinc-950 border border-zinc-800 rounded-[2rem] overflow-hidden focus-within:border-primary/40 transition-colors shadow-inner flex flex-col">
             <M3Textarea 
-              className="w-full h-full bg-transparent border-none font-mono text-sm p-8 resize-none focus-visible:ring-0 text-zinc-300"
+              className="flex-1 bg-transparent border-none font-mono text-sm p-8 resize-none focus-visible:ring-0 text-zinc-300 custom-scrollbar"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="<h1>Hello World</h1><p>Enter HTML here...</p>"
@@ -76,10 +77,12 @@ export default function HtmlToPdf() {
             <Eye className="w-3 h-3 text-primary" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-primary italic">Live Preview</span>
           </div>
-          <div className="flex-1 bg-white border border-zinc-800 rounded-[2rem] overflow-auto p-10 shadow-2xl">
+          <div className="flex-1 bg-white border border-zinc-800 rounded-[2rem] overflow-auto shadow-2xl custom-scrollbar-light">
             <div 
               ref={previewRef} 
-              className="text-black overflow-hidden"
+              className={cn(
+                "html-preview-root min-h-full p-12 bg-white text-black overflow-hidden"
+              )}
               dangerouslySetInnerHTML={{ __html: content || "<p style='color: #888; font-style: italic;'>Preview will appear here...</p>" }}
             />
           </div>
@@ -94,6 +97,37 @@ export default function HtmlToPdf() {
           PDF is generated locally in your browser. Ensure your HTML is valid for best results. External assets like images might not load if they don't support CORS.
         </p>
       </div>
+
+      <style jsx>{`
+        .html-preview-root {
+          color: #18181b !important;
+          background-color: #ffffff !important;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        /* Resets for common elements inside the preview */
+        :global(.html-preview-root h1), :global(.html-preview-root h2), :global(.html-preview-root h3) {
+          color: #000000 !important;
+          font-weight: 800 !important;
+          margin-bottom: 1rem !important;
+        }
+        :global(.html-preview-root p) {
+          color: #27272a !important;
+          margin-bottom: 1rem !important;
+        }
+      `}</style>
+
+      <style jsx global>{`
+        .custom-scrollbar-light::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar-light::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar-light::-webkit-scrollbar-thumb {
+          background: #e4e4e7;
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 }
