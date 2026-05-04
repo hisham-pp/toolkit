@@ -340,9 +340,9 @@ export default function ImageGeneratorPage() {
             )}
           </div>
 
-          <div className="flex-1 min-h-[500px] bg-[#0c0c0e] border border-zinc-900 rounded-[3rem] p-10 flex flex-wrap gap-8 content-start overflow-auto">
+          <div className="flex-1 min-h-[500px] bg-[#0c0c0e] border border-zinc-900 rounded-[3rem] p-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-10 content-start overflow-auto">
             {generatedImages.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center opacity-10 py-20 grayscale gap-6">
+              <div className="col-span-full flex flex-col items-center justify-center opacity-10 py-20 grayscale gap-6">
                 <ImageIcon className="w-32 h-32" />
                 <div className="text-center space-y-2">
                   <p className="text-2xl font-black uppercase tracking-[0.3em] italic leading-tight">No Assets in Queue</p>
@@ -353,7 +353,7 @@ export default function ImageGeneratorPage() {
               generatedImages.map((img) => (
                 <div 
                   key={img.id}
-                  className="group relative animate-in fade-in zoom-in duration-300"
+                  className="group relative animate-in fade-in zoom-in duration-300 flex flex-col items-center"
                 >
                   {/* Invisible container for high-quality export */}
                   <div 
@@ -389,13 +389,13 @@ export default function ImageGeneratorPage() {
                   </div>
 
                   {/* Visual Preview Card */}
-                  <div className="w-48 space-y-3">
+                  <div className="w-full max-w-[200px] space-y-4">
                     <div 
-                      className="aspect-square bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-center overflow-hidden shadow-xl group-hover:border-primary/50 transition-all"
+                      className="aspect-square bg-zinc-950 border border-zinc-800 rounded-3xl flex items-center justify-center overflow-hidden shadow-2xl group-hover:border-primary/50 transition-all group-hover:scale-[1.02] duration-500"
                       style={{ 
                         backgroundColor: img.bgColor,
-                        borderRadius: `${(img.borderRadius / img.size) * 192}px`, // Scaled for preview
-                        padding: `${(img.padding / img.size) * 192}px` 
+                        borderRadius: `${(img.borderRadius / img.size) * 200}px`, 
+                        padding: `${(img.padding / img.size) * 200}px` 
                       }}
                     >
                       {img.mode === "icon" ? (
@@ -406,7 +406,7 @@ export default function ImageGeneratorPage() {
                       ) : (
                         <span style={{ 
                           color: img.color, 
-                          fontSize: `${(img.fontSize / img.size) * 192}px`,
+                          fontSize: `${(img.fontSize / img.size) * 200}px`,
                           fontWeight: "black" 
                         }}>
                           {img.content}
@@ -414,27 +414,27 @@ export default function ImageGeneratorPage() {
                       )}
                     </div>
                     <div className="flex items-center justify-between px-1">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase text-zinc-400 truncate w-24">{img.content}</span>
-                        <span className="text-[8px] font-mono text-zinc-600">{img.size}x{img.size}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-black uppercase text-zinc-300 tracking-wider truncate w-28">{img.content}</span>
+                        <span className="text-[9px] font-mono font-bold text-zinc-600">{img.size}×{img.size}</span>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 shrink-0">
                         <Tooltip>
                           <TooltipTrigger>
                             <button 
                               onClick={() => downloadImage(img.id, `gen-${img.content}`)}
-                              className="p-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-primary hover:border-primary/50 transition-all"
+                              className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-500 hover:text-primary hover:border-primary/50 transition-all shadow-lg"
                             >
-                              <Download className="w-3 h-3" />
+                              <Download className="w-3.5 h-3.5" />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent className="text-[10px] bg-zinc-950 border-zinc-800">Download PNG</TooltipContent>
                         </Tooltip>
                         <button 
                           onClick={() => removeImage(img.id)}
-                          className="p-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-red-500 hover:border-red-500/50 transition-all"
+                          className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-500 hover:text-red-500 hover:border-red-500/50 transition-all shadow-lg"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>

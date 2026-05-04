@@ -172,7 +172,7 @@ export default function ToolsDirectory() {
                   </div>
                 )}
               </div>
-            </div>asChild
+            </div>
           </div>
         </header>
 
