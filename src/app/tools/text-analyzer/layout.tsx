@@ -1,22 +1,15 @@
-import React from "react";
-import ToolLayout from "@/components/ToolLayout";
+import { Metadata } from "next";
 import { ToolRegistry } from "@/utility/constants/tools";
-import { notFound } from "next/navigation";
+import ToolLayout from "@/components/ToolLayout";
 
-export default function TextAnalyzerLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const tool = ToolRegistry.getById("text-analyzer");
+const tool = ToolRegistry.getById("text-analyzer")!;
 
-  if (!tool) {
-    return notFound();
-  }
+export const metadata: Metadata = {
+  title: tool.metaTitle,
+  description: tool.metaDescription,
+  keywords: tool.keywords,
+};
 
-  return (
-    <ToolLayout tool={tool}>
-      {children}
-    </ToolLayout>
-  );
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <ToolLayout tool={tool}>{children}</ToolLayout>;
 }
