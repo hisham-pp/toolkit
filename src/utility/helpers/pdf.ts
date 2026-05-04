@@ -6,6 +6,25 @@ export async function generatePdfFromHtml(htmlElement: HTMLElement, fileName: st
     scale: 2,
     useCORS: true,
     logging: false,
+    onclone: (clonedDoc) => {
+      // html2canvas fails on modern CSS color functions like oklch or lab.
+      // We try to strip these from the cloned document's stylesheets.
+      const styleSheets = Array.from(clonedDoc.styleSheets);
+      for (const sheet of styleSheets) {
+        try {
+          const rules = Array.from(sheet.cssRules);
+          for (let i = rules.length - 1; i >= 0; i--) {
+            const rule = rules[i];
+            if (rule.cssText.includes("oklch(") || rule.cssText.includes("lab(") || rule.cssText.includes("oklab(")) {
+              sheet.deleteRule(i);
+            }
+          }
+        } catch (e) {
+          // Cross-origin stylesheets may throw errors, we ignore them
+          console.warn("Could not process stylesheet for PDF generation:", e);
+        }
+      }
+    }
   });
   
   const imgData = canvas.toDataURL("image/png");
