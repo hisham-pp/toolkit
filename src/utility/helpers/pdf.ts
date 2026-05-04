@@ -30,7 +30,7 @@ export async function generatePdfFromHtml(htmlElement: HTMLElement, fileName: st
     htmlElement.style.height = originalHeight;
     htmlElement.style.overflow = originalOverflow;
     htmlElement.style.maxHeight = originalMaxHeight;
-...
+
     // A4 dimensions in pt
     const pdfWidth = 595.28;
     const pdfHeight = 841.89;
