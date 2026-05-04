@@ -1,4 +1,6 @@
 import CryptoJS from "crypto-js";
+import { OTPAlgorithm } from "../enums/otp-algorithm";
+import { OTPEncoding } from "../enums/otp-encoding";
 
 /**
  * Base32 character set (RFC 4648)
@@ -8,24 +10,24 @@ const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 /**
  * Decodes a secret string based on the specified encoding.
  */
-export function decodeSecret(secret: string, encoding: "auto" | "base32" | "hex" = "auto"): string {
+export function decodeSecret(secret: string, encoding: OTPEncoding = OTPEncoding.Auto): string {
   const cleanSecret = secret.toUpperCase().replace(/=+$/, "").replace(/[-\s]/g, "");
   if (!cleanSecret) return "";
 
   let mode = encoding;
-  if (mode === "auto") {
+  if (mode === OTPEncoding.Auto) {
     const containsNonBase32Hex = /[0189]/.test(cleanSecret);
     const isHexOnly = /^[0-9A-F]+$/.test(cleanSecret);
     const isBase32 = /^[A-Z2-7]+$/.test(cleanSecret);
 
     if (isHexOnly && (containsNonBase32Hex || !isBase32)) {
-      mode = "hex";
+      mode = OTPEncoding.Hex;
     } else {
-      mode = "base32";
+      mode = OTPEncoding.Base32;
     }
   }
 
-  if (mode === "hex") {
+  if (mode === OTPEncoding.Hex) {
     if (!/^[0-9A-F]+$/.test(cleanSecret)) {
       throw new Error("Invalid secret: Not a valid Hex string");
     }
@@ -61,8 +63,8 @@ export function generateTOTP(
   period = 30, 
   digits = 6, 
   timestamp: number = Math.floor(Date.now() / 1000),
-  algorithm = "SHA1",
-  encoding: "auto" | "base32" | "hex" = "auto"
+  algorithm: OTPAlgorithm = OTPAlgorithm.SHA1,
+  encoding: OTPEncoding = OTPEncoding.Auto
 ): string {
   if (!secret) return "0".repeat(digits);
   
@@ -79,10 +81,9 @@ export function generateTOTP(
     const key = CryptoJS.enc.Hex.parse(secretHex);
 
     let hmac;
-    const alg = algorithm.toUpperCase();
-    if (alg === "SHA256") {
+    if (algorithm === OTPAlgorithm.SHA256) {
       hmac = CryptoJS.HmacSHA256(message, key);
-    } else if (alg === "SHA512") {
+    } else if (algorithm === OTPAlgorithm.SHA512) {
       hmac = CryptoJS.HmacSHA512(message, key);
     } else {
       hmac = CryptoJS.HmacSHA1(message, key);

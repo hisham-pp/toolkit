@@ -568,6 +568,33 @@ export class ToolRegistry {
       ToolCategory.Utils,
       ["text", "counter", "words", "characters", "sentences", "paragraphs", "analysis"]
     ),
+    new_tool(
+      "md-pdf",
+      "MD to PDF",
+      "Convert Markdown documents into high-quality PDF files.",
+      FileType,
+      "/tools/md-pdf",
+      ToolCategory.Converters,
+      ["convert", "export", "document", "md", "markdown", "pdf"]
+    ),
+    new_tool(
+      "html-pdf",
+      "HTML to PDF",
+      "Convert HTML code or snippets into portable PDF documents.",
+      FileCode,
+      "/tools/html-pdf",
+      ToolCategory.Converters,
+      ["web", "export", "rendering", "html", "pdf"]
+    ),
+    new_tool(
+      "text-pdf",
+      "Text to PDF",
+      "Convert plain text files or snippets into simple PDF documents.",
+      AlignLeft,
+      "/tools/text-pdf",
+      ToolCategory.Converters,
+      ["plain-text", "export", "note", "txt", "pdf"]
+    ),
     new Tool(
       "json-sorter",
       "JSON Sorter",
@@ -590,6 +617,10 @@ export class ToolRegistry {
   static getByCategory(category: ToolCategory) {
     return this.tools.filter((t) => t.category === category);
   }
+}
+
+function new_tool(id: string, name: string, description: string, icon: any, path: string, category: ToolCategory, keywords: string[]) {
+  return new Tool(id, name, description, icon, path, category, keywords);
 }
 
 export const TOOLS = ToolRegistry.getAll();

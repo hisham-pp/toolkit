@@ -32,32 +32,10 @@ import { toast } from "sonner";
 import { cn } from "@/utility/helpers/utils";
 import { generateTOTP, obfuscate, deobfuscate } from "@/utility/helpers/otp";
 import { AUTHENTICATOR_DATA_KEY } from "@/utility/constants/storage-keys";
-
-interface Authenticator {
-  id: string;
-  issuer: string;
-  account: string;
-  secret: string;
-  digits: number;
-  period: number;
-  algorithm?: string;
-  encoding?: "auto" | "base32" | "hex";
-  createdAt: number;
-}
-
-const SERVICE_PRESETS = [
-  { name: "Custom", algorithm: "SHA1", digits: 6, period: 30, encoding: "auto", icon: ShieldCheck },
-  { name: "GitHub", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Monitor },
-  { name: "Google", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
-  { name: "Vercel", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Triangle },
-  { name: "Microsoft", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Mail },
-  { name: "AWS", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Cloud },
-  { name: "Discord", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: MessageSquare },
-  { name: "Facebook", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
-  { name: "GitLab", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
-  { name: "Cloudflare", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Globe },
-  { name: "DigitalOcean", algorithm: "SHA1", digits: 6, period: 30, encoding: "base32", icon: Cloud },
-];
+import { OTPAlgorithm } from "@/utility/enums/otp-algorithm";
+import { OTPEncoding } from "@/utility/enums/otp-encoding";
+import { Authenticator } from "@/utility/types/authenticator";
+import { SERVICE_PRESETS } from "@/utility/constants/authenticator-presets";
 
 export default function AuthenticatorPage() {
   const [authenticators, setAuthenticators] = useState<Authenticator[]>([]);
@@ -68,8 +46,8 @@ export default function AuthenticatorPage() {
   const [newSecret, setNewSecret] = useState("");
   const [newDigits, setNewDigits] = useState(6);
   const [newPeriod, setNewPeriod] = useState(30);
-  const [newAlgorithm, setNewAlgorithm] = useState("SHA1");
-  const [newEncoding, setNewEncoding] = useState<"auto" | "base32" | "hex">("auto");
+  const [newAlgorithm, setNewAlgorithm] = useState<OTPAlgorithm>(OTPAlgorithm.SHA1);
+  const [newEncoding, setNewEncoding] = useState<OTPEncoding>(OTPEncoding.Auto);
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceFilter, setServiceFilter] = useState("All");
@@ -84,7 +62,7 @@ export default function AuthenticatorPage() {
       setNewDigits(preset.digits);
       setNewPeriod(preset.period);
       setNewAlgorithm(preset.algorithm);
-      setNewEncoding(preset.encoding as any);
+      setNewEncoding(preset.encoding);
     }
   };
 
@@ -101,8 +79,8 @@ export default function AuthenticatorPage() {
             ...a,
             digits: a.digits || 6,
             period: a.period || 30,
-            algorithm: a.algorithm || "SHA1",
-            encoding: a.encoding || "auto"
+            algorithm: (a.algorithm as OTPAlgorithm) || OTPAlgorithm.SHA1,
+            encoding: (a.encoding as OTPEncoding) || OTPEncoding.Auto
           }));
           setAuthenticators(migrated);
         }
@@ -169,8 +147,8 @@ export default function AuthenticatorPage() {
     setNewSecret("");
     setNewDigits(6);
     setNewPeriod(30);
-    setNewAlgorithm("SHA1");
-    setNewEncoding("auto");
+    setNewAlgorithm(OTPAlgorithm.SHA1);
+    setNewEncoding(OTPEncoding.Auto);
     setSelectedService(SERVICE_PRESETS[0]);
     setIsAdding(false);
     setIsAdvanced(false);
@@ -189,7 +167,10 @@ export default function AuthenticatorPage() {
       const issuerParam = url.searchParams.get("issuer");
       const digits = parseInt(url.searchParams.get("digits") || "6");
       const period = parseInt(url.searchParams.get("period") || "30");
-      const algorithm = url.searchParams.get("algorithm")?.toUpperCase() || "SHA1";
+      const algorithmStr = url.searchParams.get("algorithm")?.toUpperCase();
+      let algorithm = OTPAlgorithm.SHA1;
+      if (algorithmStr === "SHA256") algorithm = OTPAlgorithm.SHA256;
+      if (algorithmStr === "SHA512") algorithm = OTPAlgorithm.SHA512;
 
       if (!secret) throw new Error("Missing secret");
 
@@ -212,7 +193,7 @@ export default function AuthenticatorPage() {
       setNewDigits(digits);
       setNewPeriod(period);
       setNewAlgorithm(algorithm);
-      setNewEncoding("auto");
+      setNewEncoding(OTPEncoding.Auto);
       setImportUri("");
       toast.success("Details extracted from URI");
     } catch (e) {
@@ -476,21 +457,21 @@ export default function AuthenticatorPage() {
                     <M3Select
                       label="Algorithm"
                       value={newAlgorithm}
-                      onChange={setNewAlgorithm}
+                      onChange={(v) => setNewAlgorithm(v as OTPAlgorithm)}
                       options={[
-                        { label: "SHA-1 (Default)", value: "SHA1" },
-                        { label: "SHA-256", value: "SHA256" },
-                        { label: "SHA-512", value: "SHA512" }
+                        { label: "SHA-1 (Default)", value: OTPAlgorithm.SHA1 },
+                        { label: "SHA-256", value: OTPAlgorithm.SHA256 },
+                        { label: "SHA-512", value: OTPAlgorithm.SHA512 }
                       ]}
                     />
                     <M3Select
                       label="Secret Encoding"
                       value={newEncoding}
-                      onChange={(v) => setNewEncoding(v as any)}
+                      onChange={(v) => setNewEncoding(v as OTPEncoding)}
                       options={[
-                        { label: "Auto-detect (Recommended)", value: "auto" },
-                        { label: "Base32", value: "base32" },
-                        { label: "Hex", value: "hex" }
+                        { label: "Auto-detect (Recommended)", value: OTPEncoding.Auto },
+                        { label: "Base32", value: OTPEncoding.Base32 },
+                        { label: "Hex", value: OTPEncoding.Hex }
                       ]}
                     />
                   </div>
@@ -559,10 +540,10 @@ export default function AuthenticatorPage() {
                       <div className="flex items-center gap-2">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{auth.issuer}</h3>
                         <div className="flex gap-1">
-                          {auth.algorithm && auth.algorithm !== "SHA1" && (
+                          {auth.algorithm && auth.algorithm !== OTPAlgorithm.SHA1 && (
                             <span className="text-[8px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-md font-bold uppercase">{auth.algorithm}</span>
                           )}
-                          {auth.encoding && auth.encoding !== "auto" && (
+                          {auth.encoding && auth.encoding !== OTPEncoding.Auto && (
                             <span className="text-[8px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-md font-bold uppercase">{auth.encoding}</span>
                           )}
                         </div>
@@ -626,3 +607,4 @@ export default function AuthenticatorPage() {
     </div>
   );
 }
+
