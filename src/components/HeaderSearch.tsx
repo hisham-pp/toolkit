@@ -4,12 +4,16 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Command, ArrowRight } from "lucide-react";
 import { TOOLS } from "@/utility/constants/tools";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/utility/helpers/utils";
 
 export default function HeaderSearch() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const filteredTools = useMemo(() => {
     if (query.trim() === "") return [];
@@ -21,6 +25,41 @@ export default function HeaderSearch() {
       tool.keywords?.some(tag => tag.toLowerCase().includes(lowerQuery))
     ).slice(0, 8);
   }, [query]);
+
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [query]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        return;
+      }
+
+      if (!isOpen || filteredTools.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev < filteredTools.length - 1 ? prev + 1 : prev));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
+      } else if (e.key === "Enter" && selectedIndex >= 0) {
+        e.preventDefault();
+        const tool = filteredTools[selectedIndex];
+        setIsOpen(false);
+        setQuery("");
+        if (router) router.push(tool.route);
+      } else if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, filteredTools, selectedIndex, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,6 +78,7 @@ export default function HeaderSearch() {
           <Search className="w-4 h-4" />
         </div>
         <input
+          ref={inputRef}
           type="text"
           placeholder="Quick find tool..."
           className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2 pl-10 pr-10 text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:bg-zinc-900 transition-all"
@@ -60,7 +100,7 @@ export default function HeaderSearch() {
         <div className="absolute top-full left-0 w-full mt-2 bg-[#09090B] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="p-2 space-y-1">
             {filteredTools.length > 0 ? (
-              filteredTools.map((tool) => (
+              filteredTools.map((tool, index) => (
                 <Link
                   key={tool.id}
                   href={tool.route}
@@ -68,14 +108,26 @@ export default function HeaderSearch() {
                     setIsOpen(false);
                     setQuery("");
                   }}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-zinc-900 group/item transition-all"
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-xl hover:bg-zinc-900 group/item transition-all",
+                    selectedIndex === index && "bg-zinc-900 border-zinc-800"
+                  )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center group-hover/item:bg-primary/10 transition-colors">
-                      <tool.icon className="w-4 h-4 text-zinc-500 group-hover/item:text-primary" />
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center group-hover/item:bg-primary/10 transition-colors",
+                      selectedIndex === index && "bg-primary/10"
+                    )}>
+                      <tool.icon className={cn(
+                        "w-4 h-4 text-zinc-500 group-hover/item:text-primary",
+                        selectedIndex === index && "text-primary"
+                      )} />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[11px] font-bold text-zinc-300 group-hover/item:text-white">
+                      <span className={cn(
+                        "text-[11px] font-bold text-zinc-300 group-hover/item:text-white",
+                        selectedIndex === index && "text-white"
+                      )}>
                         {tool.name}
                       </span>
                       <span className="text-[9px] text-zinc-600 font-medium uppercase tracking-wider">
@@ -83,7 +135,10 @@ export default function HeaderSearch() {
                       </span>
                     </div>
                   </div>
-                  <ArrowRight className="w-3 h-3 text-zinc-700 opacity-0 -translate-x-2 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                  <ArrowRight className={cn(
+                    "w-3 h-3 text-zinc-700 opacity-0 -translate-x-2 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all",
+                    selectedIndex === index && "opacity-100 translate-x-0 text-primary"
+                  )} />
                 </Link>
               ))
             ) : (
