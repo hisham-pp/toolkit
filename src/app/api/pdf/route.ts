@@ -10,18 +10,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "HTML content is required" }, { status: 400 });
     }
 
-    // Determine if we are running in a serverless environment (e.g. Vercel)
-    const isServerless = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+    // Comprehensive environment check
+    const isServerless = process.env.VERCEL === "1" || 
+                         process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined ||
+                         process.env.NODE_ENV === "production";
+    
+    console.log(`PDF Generation: Running in ${isServerless ? "Serverless" : "Local"} mode`);
     
     let browser;
     if (isServerless) {
+      const executablePath = await chromiumMin.executablePath();
+      console.log(`PDF Generation: Chromium Path - ${executablePath}`);
+      
       browser = await chromium.launch({
         args: chromiumMin.args,
-        executablePath: await chromiumMin.executablePath(),
+        executablePath: executablePath,
         headless: true,
       });
     } else {
-      // Local development fallback
       browser = await chromium.launch({ headless: true });
     }
 
