@@ -36,8 +36,8 @@ export default function CalculatorPage() {
     });
   };
 
-  const handleOperator = (op: string) => {
-    setActiveKey(op);
+  const handleOperator = (op: string, visualKey?: string) => {
+    setActiveKey(visualKey || op);
     setTimeout(() => setActiveKey(null), 100);
     setEquation(display + " " + op + " ");
     setIsNewInput(true);
@@ -84,21 +84,30 @@ export default function CalculatorPage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent calculator keys from triggering when focused on an input if any are added later
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
       if (e.key >= "0" && e.key <= "9") handleNumber(e.key);
       if (e.key === ".") handleNumber(".");
       if (e.key === "+") handleOperator("+");
       if (e.key === "-") handleOperator("-");
-      if (e.key === "*") handleOperator("*");
+      if (e.key === "*" || e.key.toLowerCase() === "x") handleOperator("*");
       if (e.key === "/") {
         e.preventDefault();
         handleOperator("/");
+      }
+      if (e.key === "%") {
+        handleOperator("/ 100", "%");
       }
       if (e.key === "Enter" || e.key === "=") {
         e.preventDefault();
         calculate();
       }
       if (e.key === "Backspace") backspace();
-      if (e.key === "Escape") clear();
+      if (e.key === "Escape" || e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        clear();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -108,7 +117,7 @@ export default function CalculatorPage() {
   const buttons = [
     { label: "AC", action: clear, type: "functional", key: "Escape" },
     { label: "C", action: backspace, type: "functional", key: "Backspace" },
-    { label: "%", action: () => handleOperator("/ 100"), type: "operator", key: "%" },
+    { label: "%", action: () => handleOperator("/ 100", "%"), type: "operator", key: "%" },
     { label: "÷", action: () => handleOperator("/"), type: "operator", icon: Divide, key: "/" },
     
     { label: "7", action: () => handleNumber("7"), type: "number", key: "7" },
