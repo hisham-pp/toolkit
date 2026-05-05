@@ -308,6 +308,15 @@ export class ToolRegistry {
       ["filler", "text", "mock", "dummy"]
     ),
     new Tool(
+      "time-converter",
+      "Time Converter",
+      "Format and convert between dates, timestamps, and various time formats.",
+      Clock,
+      "/tools/time-converter",
+      ToolCategory.Converters,
+      ["date", "timestamp", "unix", "epoch", "format"]
+    ),
+    new Tool(
       "timezone",
       "Timezone Converter",
       "Convert and compare times across zones.",
