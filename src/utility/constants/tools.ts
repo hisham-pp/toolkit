@@ -46,7 +46,7 @@ import {
   Network,
   Database,
   Activity,
-  Server
+  Server,ArrowRightLeft
 } from "lucide-react";
 import { ToolCategory } from "@/utility/enums/tool-category";
 import { Tool } from "@/utility/types/tool";
@@ -162,6 +162,15 @@ export class ToolRegistry {
       "/tools/text-diff",
       ToolCategory.Diff,
       ["letter", "word", "line", "comparison"]
+    ),
+    new Tool(
+      "timestamp-diff",
+      "Timestamp Diff",
+      "Calculate the precise duration and difference between two timestamps.",
+      ArrowRightLeft,
+      "/tools/timestamp-diff",
+      ToolCategory.Diff,
+      ["compare", "duration", "interval", "time", "difference"]
     ),
     new Tool(
       "image-generator",
