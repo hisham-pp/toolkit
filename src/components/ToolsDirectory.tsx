@@ -224,7 +224,7 @@ export default function ToolsDirectory() {
                               id={`tool-${currentToolIndex}`}
                               href={tool.route} 
                               className={cn(
-                                "group relative flex flex-col items-center justify-center p-6 bg-[#161618]/30 border border-zinc-800/50 rounded-2xl transition-all hover:bg-[#1C1C1E] hover:border-primary/30 hover:-translate-y-1 overflow-hidden block",
+                                "group relative flex flex-col items-center justify-center p-6 bg-[#161618]/30 border border-zinc-800/50 rounded-2xl transition-all hover:bg-[#1C1C1E] hover:border-primary/30 hover:-translate-y-1 overflow-hidden",
                                 isSelected && "ring-2 ring-primary bg-[#1C1C1E] border-primary/30 -translate-y-1"
                               )}
                             >
@@ -236,7 +236,7 @@ export default function ToolsDirectory() {
                                 <tool.icon className="w-6 h-6" />
                               </div>
                               <span className={cn(
-                                "text-[10px] sm:text-xs font-bold text-zinc-300 text-center tracking-tight group-hover:text-white truncate w-full px-2",
+                                "text-[10px] sm:text-xs font-bold text-zinc-300 text-center tracking-tight group-hover:text-white truncate w-full block min-w-0 px-1",
                                 isSelected && "text-white"
                               )}>
                                 {tool.name}
