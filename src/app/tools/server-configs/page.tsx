@@ -147,14 +147,14 @@ export default function SSHConfigPage() {
   };
 
   const copySSHCommand = (config: SSHConfig) => {
-    const host = config.domain || config.ip;
+    const host = config.ip || config.domain;
     const command = `ssh ${config.username}@${host}${config.port !== 22 ? ` -p ${config.port}` : ""}`;
     navigator.clipboard.writeText(command);
     toast.success("SSH command copied to clipboard");
   };
 
   const downloadConfig = (config: SSHConfig) => {
-    const host = config.domain || config.ip;
+    const host = config.ip || config.domain;
     const content = `Host ${config.name.replace(/\s+/g, "-").toLowerCase()}
     HostName ${host}
     User ${config.username}
@@ -213,7 +213,7 @@ ${config.sshKey ? `    # Note: SSH Private Key included below\n    IdentityFile 
             <Button 
               onClick={() => {
                 const content = configs.map(config => {
-                  const host = config.domain || config.ip;
+                  const host = config.ip || config.domain;
                   return `Host ${config.name.replace(/\s+/g, "-").toLowerCase()}
     HostName ${host}
     User ${config.username}
@@ -389,14 +389,14 @@ ${config.sshKey ? `    # Note: SSH Key was provided in the tool` : ""}
                     <h3 className="font-bold text-zinc-100 text-lg leading-tight">{config.name}</h3>
                     {!config.isActive && <span className="text-[8px] font-black uppercase tracking-widest bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">Inactive</span>}
                   </div>
-                  <p className="text-xs text-zinc-500 font-mono mt-1">{config.username}@{config.domain || config.ip}</p>
+                  <p className="text-xs text-zinc-500 font-mono mt-1">{config.username}@{config.ip || config.domain}</p>
                 </div>
               </div>
 
               <div className="space-y-2 mb-6 flex-1">
                 <div className="flex items-center justify-between text-xs py-2 border-b border-zinc-900/50">
                   <span className="text-zinc-500 uppercase tracking-widest font-bold">Host</span>
-                  <span className="text-zinc-300 font-mono">{config.domain || config.ip}</span>
+                  <span className="text-zinc-300 font-mono">{config.ip || config.domain}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs py-2 border-b border-zinc-900/50">
                   <span className="text-zinc-500 uppercase tracking-widest font-bold">Port</span>
