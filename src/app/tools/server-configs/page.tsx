@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { SSHConfig } from "@/utility/types/ssh-config";
-import { SSH_CONFIGS_KEY } from "@/utility/constants/storage-keys";
+import { SSH_CONFIGS_KEY, SSH_VAULT_KEY } from "@/utility/constants/storage-keys";
 import { cn } from "@/utility/helpers/utils";
 import CryptoJS from "crypto-js";
 
@@ -40,9 +40,9 @@ export default function SSHConfigPage() {
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(true);
   
-  // Encryption state
-  const [encryptionKey, setEncryptionKey] = useState("");
-  const [isLocked, setIsLocked] = useState(true);
+  // Encryption state - now defaults to the constant key
+  const [encryptionKey, setEncryptionKey] = useState(SSH_VAULT_KEY);
+  const [isLocked, setIsLocked] = useState(false);
   const [hasStoredData, setHasStoredData] = useState(false);
 
   const [formData, setFormData] = useState<Partial<SSHConfig>>({
@@ -60,6 +60,26 @@ export default function SSHConfigPage() {
     const saved = localStorage.getItem(SSH_CONFIGS_KEY);
     if (saved) {
       setHasStoredData(true);
+      
+      // Try to decrypt with the constant key first
+      try {
+        const bytes = CryptoJS.AES.decrypt(saved, SSH_VAULT_KEY);
+        const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+        
+        if (decryptedData) {
+          const parsed = JSON.parse(decryptedData);
+          if (Array.isArray(parsed)) {
+            setConfigs(parsed);
+            setEncryptionKey(SSH_VAULT_KEY);
+            setIsLocked(false);
+            return;
+          }
+        }
+      } catch (e) {
+        // Continue to check if it's unencrypted or using a custom key
+      }
+
+      // Try to see if it's unencrypted
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
@@ -67,10 +87,9 @@ export default function SSHConfigPage() {
           setIsLocked(false);
         }
       } catch (e) {
+        // Data is likely encrypted with a custom key
         setIsLocked(true);
       }
-    } else {
-      setIsLocked(false);
     }
   }, []);
 
@@ -110,12 +129,11 @@ export default function SSHConfigPage() {
   const saveConfigs = (newConfigs: SSHConfig[]) => {
     setConfigs(newConfigs);
     
-    if (encryptionKey) {
-      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(newConfigs), encryptionKey).toString();
-      localStorage.setItem(SSH_CONFIGS_KEY, encrypted);
-    } else {
-      localStorage.setItem(SSH_CONFIGS_KEY, JSON.stringify(newConfigs));
-    }
+    // Always encrypt, even if using the constant key
+    const keyToUse = encryptionKey || SSH_VAULT_KEY;
+    const encrypted = CryptoJS.AES.encrypt(JSON.stringify(newConfigs), keyToUse).toString();
+    localStorage.setItem(SSH_CONFIGS_KEY, encrypted);
+    
     setHasStoredData(newConfigs.length > 0);
   };
 
@@ -224,13 +242,13 @@ ${config.sshKey ? `    # Note: SSH Private Key included below\n    IdentityFile 
         </div>
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-white">Vault Locked</h2>
-          <p className="text-zinc-500 text-sm">Enter your secret key to decrypt and access your server configurations.</p>
+          <p className="text-zinc-500 text-sm">Enter your custom secret key to decrypt and access your server configurations.</p>
         </div>
         <div className="w-full space-y-4">
           <M3Password 
             label="Secret Key"
             placeholder="Enter key to unlock..."
-            value={encryptionKey}
+            value={encryptionKey === SSH_VAULT_KEY ? "" : encryptionKey}
             onChange={(e) => setEncryptionKey(e.target.value)}
           />
           <Button 
@@ -243,7 +261,7 @@ ${config.sshKey ? `    # Note: SSH Private Key included below\n    IdentityFile 
         <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex gap-3 items-start">
           <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
           <p className="text-[10px] text-amber-500/80 leading-relaxed uppercase tracking-wider font-bold">
-            If you lose your secret key, the data cannot be recovered.
+            If you lose your custom secret key, the data cannot be recovered.
           </p>
         </div>
       </div>
@@ -264,18 +282,20 @@ ${config.sshKey ? `    # Note: SSH Private Key included below\n    IdentityFile 
           <div>
             <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-widest">Storage Status</h4>
             <p className="text-[10px] text-zinc-500 font-medium">
-              {encryptionKey ? "AES-256 Encryption Active" : "Unencrypted Storage (Set key below)"}
+              {encryptionKey === SSH_VAULT_KEY ? "Default Encryption Active" : "Custom AES-256 Encryption Active"}
             </p>
           </div>
         </div>
         <div className="flex-1 max-w-xs w-full">
           <M3Password 
-            placeholder="Set Encryption Key..."
-            value={encryptionKey}
+            label={encryptionKey === SSH_VAULT_KEY ? "Set Custom Key (Optional)" : "Custom Secret Key"}
+            placeholder="Set Secret Key..."
+            value={encryptionKey === SSH_VAULT_KEY ? "" : encryptionKey}
             onChange={(e) => {
-              setEncryptionKey(e.target.value);
+              const newKey = e.target.value || SSH_VAULT_KEY;
+              setEncryptionKey(newKey);
               if (configs.length > 0) {
-                 const encrypted = CryptoJS.AES.encrypt(JSON.stringify(configs), e.target.value).toString();
+                 const encrypted = CryptoJS.AES.encrypt(JSON.stringify(configs), newKey).toString();
                  localStorage.setItem(SSH_CONFIGS_KEY, encrypted);
               }
             }}
