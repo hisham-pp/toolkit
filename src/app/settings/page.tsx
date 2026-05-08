@@ -442,7 +442,7 @@ export default function SettingsPage() {
     const [, , sId, eKey] = data.split(":");
     setSignalId(sId);
     setEncryptionKey(eKey);
-    setSyncPhase("confirming");
+    setSyncPhase("connecting");
 
     pollForSignal(sId, eKey, ["OFFER", "REJECT"], (type, offerSdp) => {
       if (type === "REJECT") {
@@ -450,8 +450,9 @@ export default function SettingsPage() {
         cleanupSync();
         return;
       }
-      addLog("Offer received from laptop.");
+      addLog("Offer received from source device.");
       setRemoteSdp(offerSdp!);
+      setSyncPhase("confirming");
     });
   };
 
