@@ -212,37 +212,53 @@ export default function SettingsPage() {
   const pollForSignal = (id: string, key: string, targetTypes: ("OFFER" | "ANSWER" | "APPROVE" | "REJECT")[], onSignal: (type: string, sdp?: string) => void) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     
-    pollingRef.current = setInterval(async () => {
+    // 1. Initial poll to catch missed messages
+    const checkOnce = async () => {
       try {
         const resp = await fetch(`${RELAY_URL}/${id}/json?poll=1`);
         const messages = await resp.json();
-        
         for (const msg of messages) {
-          if (!msg.body) continue;
-          try {
-            const bytes = CryptoJS.AES.decrypt(msg.body, key);
-            const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-            
-            if (targetTypes.includes(decrypted.type)) {
-              const sdp = decrypted.sdp ? decompressData(decrypted.sdp) : undefined;
-              onSignal(decrypted.type, sdp);
-              // Don't always clear interval, sometimes we need to keep polling (e.g. after receiving offer, wait for approve)
-              if (decrypted.type === "ANSWER" || decrypted.type === "APPROVE" || decrypted.type === "REJECT") {
-                if (pollingRef.current) {
-                  clearInterval(pollingRef.current);
-                  pollingRef.current = null;
-                }
-              }
-              break;
-            }
-          } catch (e) {
-            // Likely not our message or wrong key
-          }
+          processMessage(msg);
+        }
+      } catch (e) {}
+    };
+
+    const processMessage = (msg: any) => {
+      const encryptedData = msg.message || msg.body; // Handle both just in case
+      if (!encryptedData || typeof encryptedData !== "string") return;
+      
+      try {
+        const bytes = CryptoJS.AES.decrypt(encryptedData, key);
+        const decryptedStr = bytes.toString(CryptoJS.enc.Utf8);
+        if (!decryptedStr) return;
+        
+        const decrypted = JSON.parse(decryptedStr);
+        if (targetTypes.includes(decrypted.type)) {
+          const sdp = decrypted.sdp ? decompressData(decrypted.sdp) : undefined;
+          onSignal(decrypted.type, sdp);
         }
       } catch (e) {
-        console.error("Poll Error", e);
+        // Likely not our message or wrong key
       }
-    }, 2000);
+    };
+
+    checkOnce();
+
+    // 2. Use EventSource for real-time
+    const es = new EventSource(`${RELAY_URL}/${id}/sse`);
+    es.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        processMessage(msg);
+      } catch (e) {}
+    };
+
+    // Store EventSource closer so we can close it
+    (window as any)._currentSyncES = es;
+
+    return () => {
+      es.close();
+    };
   };
 
   const startSync = async (role: "sender" | "receiver") => {
@@ -263,8 +279,14 @@ export default function SettingsPage() {
     setSignalId(sId);
     setEncryptionKey(eKey);
 
+    const peerOptions = { 
+      initiator: role === "sender", 
+      trickle: false,
+      config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
+    };
+
     if (role === "sender") {
-      const newPeer = new PeerConstructor({ initiator: true, trickle: false });
+      const newPeer = new PeerConstructor(peerOptions);
       
       newPeer.on("signal", (data: any) => {
         const sdpStr = JSON.stringify(data);
@@ -287,16 +309,18 @@ export default function SettingsPage() {
       setPeer(newPeer);
 
       // Poll for answer or rejection
-      pollForSignal(sId, eKey, ["ANSWER", "REJECT"], (type, sdp) => {
+      const closeES = pollForSignal(sId, eKey, ["ANSWER", "REJECT"], (type, sdp) => {
         if (type === "REJECT") {
           toast.error("Connection rejected by other device");
           cleanupSync();
+          if (closeES) closeES();
           return;
         }
         
         // When we get an answer, we move to confirming phase
         setSyncPhase("confirming");
         setRemoteSdp(sdp!);
+        if (closeES) closeES();
       });
     }
   };
@@ -309,7 +333,12 @@ export default function SettingsPage() {
   };
 
   const handleReceiverApproval = (offerSdp: string, sId: string, eKey: string) => {
-    const newPeer = new PeerConstructor({ initiator: false, trickle: false });
+    const peerOptions = { 
+      initiator: false, 
+      trickle: false,
+      config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
+    };
+    const newPeer = new PeerConstructor(peerOptions);
     
     newPeer.on("signal", (ansData: any) => {
       const ansSdpStr = JSON.stringify(ansData);
@@ -318,7 +347,7 @@ export default function SettingsPage() {
       
       // Now wait for the sender to approve
       setSyncPhase("connecting");
-      pollForSignal(sId, eKey, ["APPROVE", "REJECT"], (type) => {
+      const closeES = pollForSignal(sId, eKey, ["APPROVE", "REJECT"], (type) => {
         if (type === "REJECT") {
           toast.error("Connection rejected by other device");
           cleanupSync();
@@ -326,6 +355,7 @@ export default function SettingsPage() {
           setSyncPhase("connected");
           toast.success("Connection approved! Receiving data...");
         }
+        if (closeES) closeES();
       });
     });
 
