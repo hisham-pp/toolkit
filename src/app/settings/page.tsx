@@ -449,6 +449,34 @@ export default function SettingsPage() {
     cleanupSync();
   };
 
+  const alignScannerPreview = () => {
+    const reader = document.getElementById("qr-reader");
+    if (!reader) return;
+
+    reader.style.display = "flex";
+    reader.style.alignItems = "center";
+    reader.style.justifyContent = "center";
+    reader.style.overflow = "hidden";
+    reader.style.background = "#09090b";
+
+    const video = reader.querySelector("video");
+    if (video) {
+      video.style.width = "100%";
+      video.style.height = "100%";
+      video.style.maxWidth = "none";
+      video.style.objectFit = "cover";
+      video.style.objectPosition = "center";
+      video.style.borderRadius = "inherit";
+      video.style.display = "block";
+      video.setAttribute("playsinline", "true");
+    }
+
+    const shadedRegion = reader.querySelector("#qr-shaded-region") as HTMLDivElement | null;
+    if (shadedRegion) {
+      shadedRegion.style.inset = "0";
+    }
+  };
+
   const startCamera = async () => {
     setIsManual(false);
     try {
@@ -473,6 +501,8 @@ export default function SettingsPage() {
         },
         () => {}
       );
+
+      alignScannerPreview();
     } catch (err) {
       console.error("Camera error", err);
       toast.error("Could not open camera. Try manual entry.");
@@ -697,7 +727,7 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="relative aspect-square w-full max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden border-2 border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center">
-                           <div id="qr-reader" className="absolute inset-0 h-full w-full [&>video]:!h-full [&>video]:!w-full [&>video]:object-cover [&>video]:object-center [&>#qr-shaded-region]:!inset-0" />
+                           <div id="qr-reader" className="absolute inset-0 h-full w-full" />
                            {syncPhase === "pairing" && (
                               <Button 
                                 onClick={startCamera}
