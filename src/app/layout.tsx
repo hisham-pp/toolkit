@@ -34,8 +34,26 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>',
+    apple: '/icon.svg',
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DevHub",
+  },
+  formatDetection: {
+    telephone: false,
   },
   robots: "index, follow",
+};
+
+export const viewport = {
+  themeColor: "#09090B",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 import { ThemeProvider } from "@/components/theme-provider";

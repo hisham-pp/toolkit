@@ -13,28 +13,30 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
     <div className="min-h-screen bg-[#09090B] text-zinc-400 flex flex-col font-sans">
       {/* Tool Header */}
       <header className="border-b border-zinc-700/50 bg-[#09090B]/80 backdrop-blur-md sticky top-0 z-50 w-full">
-        <div className="w-full px-6 h-16 flex items-center justify-between gap-8">
-          <div className="flex items-center gap-4 shrink-0">
+        <div className="w-full px-4 md:px-6 h-16 flex items-center justify-between gap-4 md:gap-8">
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <ToolBackButton />
-            <div className="h-6 w-[1px] bg-zinc-800 mx-1" />
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center shadow-lg group-hover:border-primary/50 transition-all">
+            <div className="h-6 w-[1px] bg-zinc-800 mx-0.5 md:mx-1" />
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-8 h-8 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center shadow-lg shrink-0">
                 <tool.icon className="w-4 h-4 text-primary" />
               </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm font-bold text-white tracking-tight leading-none">{tool.name}</h1>
-                  <span className="text-[10px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-1.5 py-0.5 rounded uppercase font-black tracking-tighter">v1.2</span>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <h1 className="text-xs md:text-sm font-bold text-white tracking-tight leading-none truncate">{tool.name}</h1>
+                  <span className="text-[8px] md:text-[10px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-1 py-0.5 md:px-1.5 rounded uppercase font-black tracking-tighter shrink-0">v1.2</span>
                 </div>
-                <p className="text-[9px] text-zinc-600 uppercase tracking-[0.2em] mt-1 font-bold">{tool.category}</p>
+                <p className="text-[8px] md:text-[9px] text-zinc-600 uppercase tracking-[0.1em] md:tracking-[0.2em] mt-0.5 md:mt-1 font-bold truncate">{tool.category}</p>
               </div>
             </div>
           </div>
 
-          {/* Global Search */}
-          <HeaderSearch />
+          {/* Global Search - Hidden on very small screens, smaller on medium */}
+          <div className="hidden sm:block flex-1 max-w-md">
+            <HeaderSearch />
+          </div>
 
-          <div className="flex items-center gap-6 shrink-0">
+          <div className="flex items-center gap-3 md:gap-6 shrink-0">
              <div className="hidden lg:flex items-center gap-6 pr-4">
                 <div className="flex flex-col items-end">
                    <span className="text-[9px] font-black uppercase text-zinc-600 tracking-widest leading-none mb-1">Processing Mode</span>
@@ -42,9 +44,9 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
                 </div>
              </div>
              <div className="h-8 w-[1px] bg-zinc-800 hidden lg:block" />
-             <div className="flex items-center gap-3">
+             <div className="flex items-center gap-2 md:gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 font-mono">System Ready</span>
+                <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-zinc-600 font-mono">Ready</span>
              </div>
           </div>
         </div>

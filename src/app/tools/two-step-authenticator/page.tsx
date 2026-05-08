@@ -402,17 +402,17 @@ export default function AuthenticatorPage() {
       {/* Add Form Overlay */}
       {isAdding && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
+          <div className="bg-[#161618] border border-zinc-800 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh] scrollbar-hide">
             <button 
               onClick={() => setIsAdding(false)}
-              className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-black uppercase tracking-widest text-white">Add New Account</h2>
-              <p className="text-xs text-zinc-500 font-medium">Extract from URI or enter manually</p>
+              <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-white italic">Add New Account</h2>
+              <p className="text-[10px] md:text-xs text-zinc-500 font-medium uppercase tracking-widest">Import via URI or enter manually</p>
             </div>
 
             <div className="space-y-6">
@@ -712,17 +712,17 @@ export default function AuthenticatorPage() {
       {/* Edit Account Overlay */}
       {editingAuth && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+          <div className="bg-[#161618] border border-zinc-800 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh] scrollbar-hide">
             <button 
               onClick={() => setEditingAuth(null)}
-              className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="space-y-2 text-center">
-              <h2 className="text-2xl font-black uppercase tracking-[0.2em] text-white italic">Edit Account</h2>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Update account details</p>
+              <h2 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-white italic">Edit Account</h2>
+              <p className="text-[10px] md:text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Update account details</p>
             </div>
 
             <div className="space-y-6">
@@ -774,20 +774,20 @@ export default function AuthenticatorPage() {
       {/* Recovery Codes Overlay */}
       {viewingRecoveryAuth && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
+          <div className="bg-[#161618] border border-zinc-800 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh] scrollbar-hide">
             <button 
               onClick={() => setViewingRecoveryAuth(null)}
-              className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-black uppercase tracking-widest text-white">Recovery Codes</h2>
-              <p className="text-xs text-zinc-500 font-medium">{viewingRecoveryAuth.issuer} - {viewingRecoveryAuth.account}</p>
+              <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-white italic">Recovery Codes</h2>
+              <p className="text-[10px] md:text-xs text-zinc-500 font-medium">{viewingRecoveryAuth.issuer} - {viewingRecoveryAuth.account}</p>
             </div>
 
-            <div className="bg-zinc-950 border border-zinc-900 rounded-3xl p-6 font-mono text-sm text-zinc-300 whitespace-pre-wrap break-all min-h-[150px] max-h-[300px] overflow-y-auto scrollbar-hide">
+            <div className="bg-zinc-950 border border-zinc-900 rounded-2xl md:rounded-3xl p-4 md:p-6 font-mono text-xs md:text-sm text-zinc-300 whitespace-pre-wrap break-all min-h-[120px] max-h-[300px] overflow-y-auto scrollbar-hide">
               {viewingRecoveryAuth.recoveryCode}
             </div>
 
