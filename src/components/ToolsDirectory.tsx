@@ -47,7 +47,7 @@ export default function ToolsDirectory() {
     }, {} as Record<string, Tool[]>);
 
     // Ensure flatTools follows visual category order
-    const categoryOrder = ["diff", "formatting", "converters", "encoding", "generation", "security", "utils"];
+    const categoryOrder = ["system", "diff", "formatting", "converters", "encoding", "generation", "security", "utils"];
     const orderedFlatTools: Tool[] = [];
     categoryOrder.forEach(cat => {
       if (grouped[cat]) {
@@ -108,12 +108,13 @@ export default function ToolsDirectory() {
     }
   }, [selectedIndex]);
 
-  const categoryOrder = ["diff", "formatting", "converters", "encoding", "generation", "security", "utils"];
+  const categoryOrder = ["system", "diff", "formatting", "converters", "encoding", "generation", "security", "utils"];
   
   const totalCount = TOOLS.length;
   const filteredCount = Object.values(categories).flat().length;
 
   const CATEGORY_ICONS: Record<string, any> = {
+    system: Terminal,
     diff: Split,
     formatting: Braces,
     converters: Zap,
