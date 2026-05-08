@@ -19,7 +19,6 @@ import {
   Settings as SettingsIcon,
   ChevronRight,
   Monitor,
-  Smartphone,
   Lock,
   Zap
 } from "lucide-react";
@@ -71,6 +70,7 @@ export default function SettingsPage() {
   const [p2pRole, setP2pRole] = useState<"sender" | "receiver" | null>(null);
   const [localSdp, setLocalSdp] = useState("");
   const [remoteSdp, setRemoteSdp] = useState("");
+  const [manualPairingString, setManualPairingString] = useState("");
   const [peer, setPeer] = useState<any>(null);
   const [isManual, setIsManual] = useState(false);
   
@@ -107,6 +107,7 @@ export default function SettingsPage() {
     setP2pRole(null);
     setLocalSdp("");
     setRemoteSdp("");
+    setManualPairingString("");
     setSignalId("");
     setEncryptionKey("");
     setIsManual(false);
@@ -371,6 +372,11 @@ export default function SettingsPage() {
   };
 
   const handleReceiverApproval = (offerSdp: string, sId: string, eKey: string) => {
+    if (!offerSdp) {
+      toast.error("Waiting for the laptop offer. Scan again or wait a moment.");
+      return;
+    }
+
     addLog("Approval granted. Initializing P2P connection...");
     const peerOptions = { 
       initiator: false, 
@@ -414,7 +420,15 @@ export default function SettingsPage() {
       setSyncPhase("error");
     });
 
-    newPeer.signal(JSON.parse(offerSdp));
+    try {
+      newPeer.signal(JSON.parse(offerSdp));
+    } catch (err) {
+      console.error("Invalid offer SDP", err);
+      toast.error("Invalid connection offer. Please rescan the QR code.");
+      cleanupSync();
+      return;
+    }
+
     setPeer(newPeer);
   };
 
@@ -547,7 +561,7 @@ export default function SettingsPage() {
                 <div className="max-w-md space-y-4">
                   <h3 className="text-2xl font-black text-white uppercase italic tracking-widest">Sync Your Devices</h3>
                   <p className="text-sm text-zinc-500 leading-relaxed font-medium">
-                    Move your 2FA accounts and settings to your phone or another laptop securely. 
+                    Move your 2FA accounts and settings between any two devices securely.
                     No account needed. No data stored on servers.
                   </p>
                 </div>
@@ -560,8 +574,8 @@ export default function SettingsPage() {
                     <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Monitor className="w-8 h-8 text-primary" />
                     <div className="text-center">
-                      <span className="block text-xs font-black text-white uppercase tracking-widest">I am on Laptop</span>
-                      <span className="text-[10px] text-zinc-600 font-bold uppercase">Show QR to Sync</span>
+                      <span className="block text-xs font-black text-white uppercase tracking-widest">Show Pairing Code</span>
+                      <span className="text-[10px] text-zinc-600 font-bold uppercase">Use this device as source</span>
                     </div>
                   </button>
                   
@@ -570,10 +584,10 @@ export default function SettingsPage() {
                     className="group relative flex flex-col items-center gap-4 p-8 bg-zinc-950 border border-zinc-900 rounded-[2rem] hover:border-primary/50 transition-all overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Smartphone className="w-8 h-8 text-primary" />
+                    <Scan className="w-8 h-8 text-primary" />
                     <div className="text-center">
-                      <span className="block text-xs font-black text-white uppercase tracking-widest">I am on Mobile</span>
-                      <span className="text-[10px] text-zinc-600 font-bold uppercase">Scan to Receive</span>
+                      <span className="block text-xs font-black text-white uppercase tracking-widest">Scan Or Paste Code</span>
+                      <span className="text-[10px] text-zinc-600 font-bold uppercase">Use this device as destination</span>
                     </div>
                   </button>
                 </div>
@@ -646,6 +660,7 @@ export default function SettingsPage() {
                             if (p2pRole === "sender") handleSenderApproval();
                             else handleReceiverApproval(remoteSdp, signalId, encryptionKey);
                           }}
+                          disabled={p2pRole === "receiver" && !remoteSdp}
                           className="flex-1 h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20"
                         >
                           Accept
@@ -664,7 +679,7 @@ export default function SettingsPage() {
                       <div className="space-y-6">
                         <div className="space-y-2">
                           <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Step 1: Scan this QR</h5>
-                          <p className="text-xs text-zinc-400 font-medium">Open this same page on your phone and tap &quot;I am on Mobile&quot; to scan.</p>
+                          <p className="text-xs text-zinc-400 font-medium">Open this same page on the other device and choose &quot;Scan Or Paste Code&quot;.</p>
                         </div>
                         
                         <div className="bg-white p-6 rounded-[2.5rem] shadow-xl flex items-center justify-center aspect-square max-w-[320px] mx-auto group relative">
@@ -684,7 +699,7 @@ export default function SettingsPage() {
                             <span className="text-[10px] font-black uppercase tracking-widest text-white">End-to-End Encrypted</span>
                           </div>
                           <p className="text-[10px] text-zinc-600 font-bold uppercase leading-relaxed">
-                            A secure temporary channel has been created. Once the mobile device scans this QR, you will be asked to approve the connection.
+                            A secure temporary channel has been created. Once the other device scans or pastes this code, you will be asked to approve the connection.
                           </p>
                         </div>
 
@@ -722,8 +737,8 @@ export default function SettingsPage() {
                     <>
                       <div className="space-y-6">
                         <div className="space-y-2">
-                          <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Step 1: Scan Laptop QR</h5>
-                          <p className="text-xs text-zinc-400 font-medium">Scan the QR code displayed on your other device.</p>
+                          <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Step 1: Scan Or Paste Code</h5>
+                          <p className="text-xs text-zinc-400 font-medium">Scan the QR code shown on the other device, or paste its pairing string manually.</p>
                         </div>
 
                         <div className="relative aspect-square w-full max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden border-2 border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center">
@@ -750,10 +765,10 @@ export default function SettingsPage() {
                         <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-3xl space-y-4">
                            <div className="flex items-center gap-3">
                              <Zap className="w-4 h-4 text-amber-500" />
-                             <span className="text-[10px] font-black uppercase tracking-widest text-white">One-Way Scan Only</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest text-white">Any Device Pairing</span>
                            </div>
                            <p className="text-[10px] text-zinc-600 font-bold uppercase leading-relaxed">
-                             Your laptop doesn&apos;t need to scan anything. Just scan its screen once, and we&apos;ll handle the rest securely.
+                             This works for laptop-to-laptop, mobile-to-laptop, or mobile-to-mobile. One device shows the pairing code, the other scans it or pastes it.
                            </p>
                         </div>
 
@@ -769,9 +784,9 @@ export default function SettingsPage() {
                               <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <M3Textarea 
                                   placeholder="Paste pairing string from other device..."
-                                  value={remoteSdp}
+                                  value={manualPairingString}
                                   onChange={(e) => {
-                                    setRemoteSdp(e.target.value);
+                                    setManualPairingString(e.target.value);
                                     if (e.target.value.startsWith("toolkit-sync:v1:")) {
                                       handleScannedData(e.target.value);
                                     }
