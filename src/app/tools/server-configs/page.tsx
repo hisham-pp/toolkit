@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { 
+  LayoutGrid,
+  List,
   Plus, 
   Trash2, 
   Copy, 
@@ -39,6 +41,7 @@ export default function SSHConfigPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(true);
+  const [viewMode, setViewMode] = useState<"grid" | "compact">("compact");
   
   // Encryption state - uses the constant key
   const [encryptionKey] = useState(SSH_VAULT_KEY);
@@ -197,6 +200,28 @@ ${config.sshKey ? `    # Note: SSH Private Key included below\n    IdentityFile 
           />
         </div>
         <div className="flex gap-2">
+          <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode("compact")}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewMode === "compact" ? "bg-zinc-800 text-primary shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+              )}
+              title="Compact View"
+            >
+              <List className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                viewMode === "grid" ? "bg-zinc-800 text-primary shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+              )}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </button>
+          </div>
           <Button
             onClick={() => setShowInactive(!showInactive)}
             variant="outline"
@@ -343,9 +368,13 @@ ${config.sshKey ? `    # Note: SSH Key was provided in the tool` : ""}
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className={cn(
+        viewMode === "grid" 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          : "space-y-3"
+      )}>
         {filteredConfigs.length > 0 ? (
-          filteredConfigs.map(config => (
+          filteredConfigs.map(config => viewMode === "grid" ? (
             <Card key={config.id} className={cn(
               "group p-6 bg-zinc-950/40 border-zinc-800 hover:border-primary/30 transition-all duration-300 rounded-3xl flex flex-col h-full relative overflow-hidden",
               !config.isActive && "opacity-60 grayscale-[0.5]"
@@ -426,6 +455,70 @@ ${config.sshKey ? `    # Note: SSH Key was provided in the tool` : ""}
                   <Download className="w-3.5 h-3.5 mr-2" />
                   Download
                 </Button>
+              </div>
+            </Card>
+          ) : (
+            <Card 
+              key={config.id} 
+              className={cn(
+                "p-4 bg-zinc-950/40 border-zinc-800 hover:border-primary/30 transition-all duration-300 rounded-2xl flex items-center justify-between group",
+                !config.isActive && "opacity-60 grayscale-[0.5]"
+              )}
+            >
+              <div className="flex items-center gap-4 flex-1">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center border transition-colors",
+                  config.isActive ? "bg-zinc-900 text-primary border-zinc-800" : "bg-zinc-950 text-zinc-700 border-zinc-900"
+                )}>
+                  <Server className="w-5 h-5" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 flex-1">
+                  <div>
+                    <h3 className="font-bold text-zinc-100 text-sm leading-tight truncate max-w-[200px]">{config.name}</h3>
+                    {!config.isActive && <span className="text-[7px] font-black uppercase tracking-widest bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">Inactive</span>}
+                  </div>
+                  <div className="hidden md:block">
+                    <p className="text-xs text-zinc-500 font-mono truncate">{config.username}@{config.ip || config.domain}</p>
+                  </div>
+                  <div className="hidden lg:block text-right">
+                    <p className="text-xs text-zinc-400 font-mono">Port: {config.port}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => copySSHCommand(config)}
+                  variant="outline"
+                  size="sm"
+                  disabled={!config.isActive}
+                  className="rounded-lg h-9 px-3 border-zinc-800 hover:bg-zinc-900 text-[9px] font-bold uppercase tracking-wider hidden sm:flex"
+                >
+                  <Copy className="w-3 h-3 mr-2" />
+                  Copy
+                </Button>
+                <Button 
+                  onClick={() => handleEdit(config)}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg h-9 px-3 border-zinc-800 hover:bg-zinc-900 text-[9px] font-bold uppercase tracking-wider"
+                >
+                  <Edit2 className="w-3 h-3 mr-2" />
+                  Edit
+                </Button>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                  <button 
+                    onClick={() => toggleActive(config)}
+                    className="p-2 text-zinc-500 hover:text-white transition-colors"
+                  >
+                    {config.isActive ? <PowerOff className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(config.id)}
+                    className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </Card>
           ))
