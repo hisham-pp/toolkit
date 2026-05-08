@@ -53,7 +53,17 @@ import { obfuscate, deobfuscate } from "@/utility/helpers/otp";
 import { compressData, decompressData } from "@/utility/helpers/sync";
 
 type SyncPhase = "idle" | "pairing" | "connecting" | "confirming" | "connected" | "error";
+type SignalType = "JOIN" | "OFFER" | "ANSWER" | "APPROVE" | "REJECT" | "DISCONNECT";
+type SenderDeviceStatus = "joined" | "offer_sent" | "awaiting_approval" | "connecting" | "connected" | "rejected" | "disconnected" | "error";
+type SenderDevice = {
+  id: string;
+  status: SenderDeviceStatus;
+  remoteSdp?: string;
+  lastUpdated: number;
+};
 const RELAY_URL = "https://ntfy.sh";
+const SYNC_SESSION_META_KEY = "toolkit-sync-session-meta";
+const LIVE_SYNC_INTERVAL_MS = 3000;
 
 export default function SettingsPage() {
   const [PeerConstructor, setPeerConstructor] = useState<any>(null);
@@ -72,6 +82,9 @@ export default function SettingsPage() {
   const [remoteSdp, setRemoteSdp] = useState("");
   const [manualPairingString, setManualPairingString] = useState("");
   const [peer, setPeer] = useState<any>(null);
+  const senderPeersRef = useRef<Map<string, any>>(new Map());
+  const [senderDevices, setSenderDevices] = useState<SenderDevice[]>([]);
+  const [receiverDeviceId, setReceiverDeviceId] = useState("");
   const [isManual, setIsManual] = useState(false);
   
   // New relay-based sync states
@@ -80,7 +93,9 @@ export default function SettingsPage() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const scannerAlignTimeoutRef = useRef<number | null>(null);
-  const [pendingApproval, setPendingApproval] = useState(false);
+  const signalListenerCleanupRef = useRef<(() => void) | null>(null);
+  const syncIntervalRef = useRef<number | null>(null);
+  const lastSyncedHashRef = useRef("");
   
   const [connectionLogs, setConnectionLogs] = useState<string[]>([]);
   const addLog = useCallback((msg: string) => {
@@ -92,8 +107,10 @@ export default function SettingsPage() {
     addLog("Cleaning up sync session...");
     if (peer) {
       peer.destroy();
-      setPeer(null);
     }
+    senderPeersRef.current.forEach((senderPeer) => senderPeer.destroy());
+    senderPeersRef.current.clear();
+    setPeer(null);
     if (html5QrCodeRef.current) {
       if (html5QrCodeRef.current.isScanning) {
         html5QrCodeRef.current.stop().catch(console.error);
@@ -108,16 +125,26 @@ export default function SettingsPage() {
       window.clearTimeout(scannerAlignTimeoutRef.current);
       scannerAlignTimeoutRef.current = null;
     }
+    if (signalListenerCleanupRef.current) {
+      signalListenerCleanupRef.current();
+      signalListenerCleanupRef.current = null;
+    }
+    if (syncIntervalRef.current !== null) {
+      window.clearInterval(syncIntervalRef.current);
+      syncIntervalRef.current = null;
+    }
+    lastSyncedHashRef.current = "";
     setSyncPhase("idle");
     setP2pRole(null);
     setLocalSdp("");
     setRemoteSdp("");
     setManualPairingString("");
+    setSenderDevices([]);
+    setReceiverDeviceId("");
     setSignalId("");
     setEncryptionKey("");
     setIsManual(false);
-    setPendingApproval(false);
-  }, [peer]);
+  }, [addLog, peer]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -127,6 +154,13 @@ export default function SettingsPage() {
       if (scannerAlignTimeoutRef.current !== null) {
         window.clearTimeout(scannerAlignTimeoutRef.current);
       }
+      if (signalListenerCleanupRef.current) {
+        signalListenerCleanupRef.current();
+      }
+      if (syncIntervalRef.current !== null) {
+        window.clearInterval(syncIntervalRef.current);
+      }
+      senderPeersRef.current.forEach((senderPeer) => senderPeer.destroy());
     };
   }, []);
 
@@ -141,6 +175,25 @@ export default function SettingsPage() {
 
   const mergeData = async (payload: any) => {
     const { storage, todos } = payload;
+
+    const parseSshConfigs = (raw: string | null) => {
+      if (!raw) return [];
+
+      try {
+        const decrypted = CryptoJS.AES.decrypt(raw, SSH_VAULT_KEY).toString(CryptoJS.enc.Utf8);
+        if (decrypted) {
+          const parsed = JSON.parse(decrypted);
+          return Array.isArray(parsed) ? parsed : [];
+        }
+      } catch {}
+
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    };
 
     // 1. Merge localStorage items
     if (storage) {
@@ -165,13 +218,15 @@ export default function SettingsPage() {
       // SSH Configs
       if (storage[SSH_CONFIGS_KEY]) {
         try {
-          const remote = JSON.parse(storage[SSH_CONFIGS_KEY]);
-          const local = JSON.parse(localStorage.getItem(SSH_CONFIGS_KEY) || "[]");
+          const remote = parseSshConfigs(storage[SSH_CONFIGS_KEY]);
+          const local = parseSshConfigs(localStorage.getItem(SSH_CONFIGS_KEY));
           const localMap = new Map(local.map((s: any) => [s.id, s]));
           remote.forEach((s: any) => {
             if (!localMap.has(s.id)) localMap.set(s.id, s);
           });
-          localStorage.setItem(SSH_CONFIGS_KEY, JSON.stringify(Array.from(localMap.values())));
+          const merged = Array.from(localMap.values());
+          const encrypted = CryptoJS.AES.encrypt(JSON.stringify(merged), SSH_VAULT_KEY).toString();
+          localStorage.setItem(SSH_CONFIGS_KEY, encrypted);
         } catch (e) { console.error("SSH Merge Error", e); }
       }
 
@@ -216,9 +271,24 @@ export default function SettingsPage() {
     }
   };
 
-  const sendSignal = async (id: string, key: string, type: "OFFER" | "ANSWER" | "APPROVE" | "REJECT", sdp?: string) => {
+  const computeSyncHash = useCallback((payload: any) => {
+    return CryptoJS.MD5(JSON.stringify(payload)).toString();
+  }, []);
+
+  const applyIncomingSyncPayload = useCallback(async (payload: any, hash?: string) => {
+    const resolvedHash = hash || computeSyncHash(payload);
+    if (resolvedHash === lastSyncedHashRef.current) {
+      return false;
+    }
+
+    await mergeData(payload);
+    lastSyncedHashRef.current = resolvedHash;
+    return true;
+  }, [computeSyncHash, mergeData]);
+
+  const sendSignal = async (id: string, key: string, type: SignalType, sdp?: string, receiverId?: string) => {
     try {
-      const payload = { type, sdp: sdp ? compressData(sdp) : undefined };
+      const payload = { type, receiverId, sdp: sdp ? compressData(sdp) : undefined };
       const encrypted = CryptoJS.AES.encrypt(JSON.stringify(payload), key).toString();
       await fetch(`${RELAY_URL}/${id}`, {
         method: "POST",
@@ -230,7 +300,72 @@ export default function SettingsPage() {
     }
   };
 
-  const pollForSignal = (id: string, key: string, targetTypes: ("OFFER" | "ANSWER" | "APPROVE" | "REJECT")[], onSignal: (type: string, sdp?: string) => void) => {
+  const updateSenderDevice = useCallback((receiverId: string, updates: Partial<SenderDevice>) => {
+    setSenderDevices((prev) => {
+      const existing = prev.find((device) => device.id === receiverId);
+      if (!existing) {
+        return [...prev, {
+          id: receiverId,
+          status: "joined",
+          lastUpdated: Date.now(),
+          ...updates,
+        }];
+      }
+
+      return prev.map((device) => device.id === receiverId ? {
+        ...device,
+        ...updates,
+        lastUpdated: Date.now(),
+      } : device);
+    });
+  }, []);
+
+  const removeSenderPeer = useCallback((receiverId: string) => {
+    const senderPeer = senderPeersRef.current.get(receiverId);
+    if (senderPeer) {
+      senderPeer.destroy();
+      senderPeersRef.current.delete(receiverId);
+    }
+  }, []);
+
+  const sendLiveSyncToPeer = useCallback((targetPeer: any, payload: any, originId: string) => {
+    const hash = computeSyncHash(payload);
+    targetPeer.send(JSON.stringify({
+      type: "STATE_SYNC",
+      payload,
+      hash,
+      originId,
+    }));
+    lastSyncedHashRef.current = hash;
+    return hash;
+  }, [computeSyncHash]);
+
+  const broadcastLiveSyncToPeers = useCallback((payload: any, originId: string, excludeDeviceId?: string) => {
+    const hash = computeSyncHash(payload);
+    senderPeersRef.current.forEach((targetPeer, deviceId) => {
+      if (excludeDeviceId && deviceId === excludeDeviceId) return;
+      try {
+        targetPeer.send(JSON.stringify({
+          type: "STATE_SYNC",
+          payload,
+          hash,
+          originId,
+        }));
+      } catch (err) {
+        addLog(`Failed to broadcast state to ${deviceId.slice(0, 8)}...`);
+      }
+    });
+    lastSyncedHashRef.current = hash;
+    return hash;
+  }, [addLog, computeSyncHash]);
+
+  const pollForSignal = (
+    id: string,
+    key: string,
+    targetTypes: SignalType[],
+    onSignal: (signal: { type: SignalType; sdp?: string; receiverId?: string }) => void,
+    receiverId?: string,
+  ) => {
     addLog(`Starting real-time signal listener for: ${targetTypes.join(", ")}`);
     const seenIds = new Set<string>();
 
@@ -275,12 +410,17 @@ export default function SettingsPage() {
           return;
         }
         
-        const decrypted = JSON.parse(decryptedStr);
+        const decrypted = JSON.parse(decryptedStr) as { type: SignalType; sdp?: string; receiverId?: string };
         addLog(`Received signal: ${decrypted.type}`);
+
+        if (receiverId && decrypted.receiverId !== receiverId) {
+          addLog(`Ignoring ${decrypted.type} for another device`);
+          return;
+        }
         
         if (targetTypes.includes(decrypted.type)) {
           const sdp = decrypted.sdp ? decompressData(decrypted.sdp) : undefined;
-          onSignal(decrypted.type, sdp);
+          onSignal({ type: decrypted.type, sdp, receiverId: decrypted.receiverId });
         } else {
           addLog(`Ignoring ${decrypted.type} signal (Waiting for ${targetTypes.join("/")})`);
         }
@@ -327,6 +467,56 @@ export default function SettingsPage() {
     };
   };
 
+  const createSenderPeer = useCallback(async (receiverId: string, sId: string, eKey: string) => {
+    if (!PeerConstructor || senderPeersRef.current.has(receiverId)) return;
+
+    updateSenderDevice(receiverId, { status: "joined" });
+    const newPeer = new PeerConstructor({
+      initiator: true,
+      trickle: false,
+      config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
+    });
+
+    senderPeersRef.current.set(receiverId, newPeer);
+
+    newPeer.on("signal", (data: any) => {
+      addLog(`Offer generated for device ${receiverId.slice(0, 8)}...`);
+      const sdpStr = JSON.stringify(data);
+      sendSignal(sId, eKey, "OFFER", sdpStr, receiverId);
+      updateSenderDevice(receiverId, { status: "offer_sent" });
+    });
+
+    newPeer.on("connect", async () => {
+      addLog(`P2P connection established with ${receiverId.slice(0, 8)}...`);
+      setSyncPhase("connected");
+      updateSenderDevice(receiverId, { status: "connected" });
+      const allData = await gatherAllData();
+      newPeer.send(JSON.stringify({ type: "FULL_SYNC", payload: allData }));
+      toast.success(`Sync successful for ${receiverId.slice(0, 8)}`);
+    });
+
+    newPeer.on("data", async (msgData: any) => {
+      const msg = JSON.parse(msgData.toString());
+      if (msg.type === "STATE_SYNC") {
+        addLog(`Live update received from ${receiverId.slice(0, 8)}...`);
+        const applied = await applyIncomingSyncPayload(msg.payload, msg.hash);
+        if (applied) {
+          broadcastLiveSyncToPeers(msg.payload, msg.originId || receiverId, receiverId);
+        }
+      }
+    });
+
+    newPeer.on("close", () => {
+      updateSenderDevice(receiverId, { status: "disconnected" });
+      senderPeersRef.current.delete(receiverId);
+    });
+
+    newPeer.on("error", (err: any) => {
+      addLog(`P2P Error for ${receiverId.slice(0, 8)}: ${err.message || err}`);
+      updateSenderDevice(receiverId, { status: "error" });
+    });
+  }, [PeerConstructor, addLog, applyIncomingSyncPayload, broadcastLiveSyncToPeers, gatherAllData, updateSenderDevice]);
+
   const startSync = async (role: "sender" | "receiver") => {
     if (!PeerConstructor) {
       toast.error("P2P library not loaded. Please refresh.");
@@ -346,67 +536,77 @@ export default function SettingsPage() {
     setSignalId(sId);
     setEncryptionKey(eKey);
 
-    const peerOptions = { 
-      initiator: role === "sender", 
-      trickle: false,
-      config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
-    };
-
     if (role === "sender") {
-      addLog("Creating peer connection...");
-      const newPeer = new PeerConstructor(peerOptions);
-      let cleanup: (() => void) | null = null;
-      
-      newPeer.on("signal", (data: any) => {
-        addLog("Local offer generated. Sending to relay...");
-        const sdpStr = JSON.stringify(data);
-        setLocalSdp(sdpStr);
-        sendSignal(sId, eKey, "OFFER", sdpStr);
-      });
+      if (signalListenerCleanupRef.current) {
+        signalListenerCleanupRef.current();
+      }
+      signalListenerCleanupRef.current = pollForSignal(sId, eKey, ["JOIN", "ANSWER", "REJECT", "DISCONNECT"], async ({ type, sdp, receiverId }) => {
+        if (!receiverId) return;
 
-      newPeer.on("connect", async () => {
-        addLog("P2P connection established!");
-        setSyncPhase("connected");
-        const allData = await gatherAllData();
-        newPeer.send(JSON.stringify({ type: "FULL_SYNC", payload: allData }));
-        toast.success("Sync successful!");
-      });
-
-      newPeer.on("error", (err: any) => {
-        addLog(`P2P Error: ${err.message || err}`);
-        setSyncPhase("error");
-      });
-
-      setPeer(newPeer);
-
-      // Poll for answer or rejection
-      cleanup = pollForSignal(sId, eKey, ["ANSWER", "REJECT"], (type, sdp) => {
-        if (type === "REJECT") {
-          toast.error("Rejected by other device");
-          cleanupSync();
-          if (cleanup) cleanup();
+        if (type === "JOIN") {
+          addLog(`Join received from ${receiverId.slice(0, 8)}...`);
+          updateSenderDevice(receiverId, { status: "joined" });
+          await createSenderPeer(receiverId, sId, eKey);
           return;
         }
-        
-        // When we get an answer, we move to confirming phase
-        setSyncPhase("confirming");
-        setRemoteSdp(sdp!);
-        if (cleanup) cleanup();
+
+        if (type === "ANSWER") {
+          addLog(`Answer received from ${receiverId.slice(0, 8)}...`);
+          updateSenderDevice(receiverId, { status: "awaiting_approval", remoteSdp: sdp });
+          return;
+        }
+
+        if (type === "REJECT") {
+          addLog(`Device ${receiverId.slice(0, 8)} rejected the connection.`);
+          updateSenderDevice(receiverId, { status: "rejected" });
+          removeSenderPeer(receiverId);
+          return;
+        }
+
+        if (type === "DISCONNECT") {
+          addLog(`Device ${receiverId.slice(0, 8)} disconnected.`);
+          updateSenderDevice(receiverId, { status: "disconnected" });
+          removeSenderPeer(receiverId);
+        }
       });
     }
   };
 
-  const handleSenderApproval = () => {
-    if (!peer || !remoteSdp || !signalId || !encryptionKey) return;
-    addLog("Approval granted. Connecting to remote device...");
+  const handleSenderApproval = (deviceId: string) => {
+    const senderPeer = senderPeersRef.current.get(deviceId);
+    const device = senderDevices.find((entry) => entry.id === deviceId);
+    if (!senderPeer || !device?.remoteSdp || !signalId || !encryptionKey) return;
+
+    addLog(`Approval granted for ${deviceId.slice(0, 8)}...`);
     setSyncPhase("connecting");
-    sendSignal(signalId, encryptionKey, "APPROVE");
-    peer.signal(JSON.parse(remoteSdp));
+    updateSenderDevice(deviceId, { status: "connecting" });
+    sendSignal(signalId, encryptionKey, "APPROVE", undefined, deviceId);
+    senderPeer.signal(JSON.parse(device.remoteSdp));
+  };
+
+  const disconnectSenderDevice = (deviceId: string) => {
+    if (signalId && encryptionKey) {
+      sendSignal(signalId, encryptionKey, "DISCONNECT", undefined, deviceId);
+    }
+    updateSenderDevice(deviceId, { status: "disconnected" });
+    removeSenderPeer(deviceId);
+  };
+
+  const handleSenderReject = (deviceId: string) => {
+    if (signalId && encryptionKey) {
+      sendSignal(signalId, encryptionKey, "REJECT", undefined, deviceId);
+    }
+    updateSenderDevice(deviceId, { status: "rejected" });
+    removeSenderPeer(deviceId);
   };
 
   const handleReceiverApproval = (offerSdp: string, sId: string, eKey: string) => {
     if (!offerSdp) {
-      toast.error("Waiting for the laptop offer. Scan again or wait a moment.");
+      toast.error("Waiting for the source device offer. Scan again or wait a moment.");
+      return;
+    }
+    if (!receiverDeviceId) {
+      toast.error("Missing receiver device ID. Scan the code again.");
       return;
     }
 
@@ -423,34 +623,52 @@ export default function SettingsPage() {
       addLog("Local response generated. Sending to relay...");
       const ansSdpStr = JSON.stringify(ansData);
       setLocalSdp(ansSdpStr);
-      sendSignal(sId, eKey, "ANSWER", ansSdpStr);
+      sendSignal(sId, eKey, "ANSWER", ansSdpStr, receiverDeviceId);
       
       setSyncPhase("connecting");
-      cleanupListener = pollForSignal(sId, eKey, ["APPROVE", "REJECT"], (type) => {
+      if (signalListenerCleanupRef.current) {
+        signalListenerCleanupRef.current();
+      }
+      cleanupListener = pollForSignal(sId, eKey, ["APPROVE", "REJECT", "DISCONNECT"], ({ type }) => {
         if (type === "REJECT") {
           addLog("Connection rejected by other device.");
           cleanupSync();
         } else if (type === "APPROVE") {
           addLog("Connection approved! Receiving data...");
           setSyncPhase("connected");
+        } else if (type === "DISCONNECT") {
+          addLog("Source device disconnected.");
+          cleanupSync();
         }
         if (cleanupListener) cleanupListener();
       });
+      signalListenerCleanupRef.current = cleanupListener;
     });
 
     newPeer.on("data", async (msgData: any) => {
       const msg = JSON.parse(msgData.toString());
       if (msg.type === "FULL_SYNC") {
         addLog("Sync data received. Merging...");
-        await mergeData(msg.payload);
+        await applyIncomingSyncPayload(msg.payload, computeSyncHash(msg.payload));
+        setSyncPhase("connected");
         toast.success("Sync complete!");
-        cleanupSync();
+      } else if (msg.type === "STATE_SYNC") {
+        addLog("Live update received from source device.");
+        const applied = await applyIncomingSyncPayload(msg.payload, msg.hash);
+        if (applied) {
+          toast.success("Remote changes synced");
+        }
       }
     });
 
     newPeer.on("error", (err: any) => {
       addLog(`P2P Error: ${err.message || err}`);
       setSyncPhase("error");
+    });
+
+    newPeer.on("close", () => {
+      addLog("Peer connection closed.");
+      cleanupSync();
     });
 
     try {
@@ -473,29 +691,99 @@ export default function SettingsPage() {
 
     addLog("QR code parsed. Waiting for connection offer...");
     const [, , sId, eKey] = data.split(":");
+    const localReceiverId = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
     setSignalId(sId);
     setEncryptionKey(eKey);
+    setReceiverDeviceId(localReceiverId);
     setSyncPhase("connecting");
 
-    pollForSignal(sId, eKey, ["OFFER", "REJECT"], (type, offerSdp) => {
+    sendSignal(sId, eKey, "JOIN", undefined, localReceiverId);
+    if (signalListenerCleanupRef.current) {
+      signalListenerCleanupRef.current();
+    }
+    signalListenerCleanupRef.current = pollForSignal(sId, eKey, ["OFFER", "REJECT", "DISCONNECT"], ({ type, sdp: offerSdp }) => {
       if (type === "REJECT") {
         addLog("Sync session was rejected.");
+        cleanupSync();
+        return;
+      }
+      if (type === "DISCONNECT") {
+        addLog("Source device disconnected.");
         cleanupSync();
         return;
       }
       addLog("Offer received from source device.");
       setRemoteSdp(offerSdp!);
       setSyncPhase("confirming");
-    });
+    }, localReceiverId);
   };
 
   const handleReject = () => {
     if (signalId && encryptionKey) {
-      sendSignal(signalId, encryptionKey, "REJECT");
+      sendSignal(signalId, encryptionKey, "REJECT", undefined, receiverDeviceId || undefined);
     }
     toast.error("Connection rejected");
     cleanupSync();
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const sessionMeta = {
+      savedAt: Date.now(),
+      role: p2pRole,
+      syncPhase,
+      signalId,
+      receiverDeviceId,
+      senderDevices: senderDevices.map(({ id, status, lastUpdated }) => ({
+        id,
+        status,
+        lastUpdated,
+      })),
+    };
+
+    localStorage.setItem(SYNC_SESSION_META_KEY, JSON.stringify(sessionMeta));
+  }, [p2pRole, receiverDeviceId, senderDevices, signalId, syncPhase]);
+
+  useEffect(() => {
+    const senderHasConnections = senderDevices.some((device) => device.status === "connected");
+    const receiverHasConnection = p2pRole === "receiver" && syncPhase === "connected" && peer;
+
+    if (!senderHasConnections && !receiverHasConnection) {
+      if (syncIntervalRef.current !== null) {
+        window.clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const runSync = async () => {
+      const payload = await gatherAllData();
+      const hash = computeSyncHash(payload);
+      if (hash === lastSyncedHashRef.current) return;
+
+      if (p2pRole === "sender") {
+        broadcastLiveSyncToPeers(payload, "host");
+      } else if (p2pRole === "receiver" && peer) {
+        try {
+          sendLiveSyncToPeer(peer, payload, receiverDeviceId || "receiver");
+        } catch (err) {
+          addLog("Failed to push local changes to source device.");
+        }
+      }
+    };
+
+    runSync();
+    syncIntervalRef.current = window.setInterval(runSync, LIVE_SYNC_INTERVAL_MS);
+
+    return () => {
+      if (syncIntervalRef.current !== null) {
+        window.clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
+    };
+  }, [addLog, broadcastLiveSyncToPeers, computeSyncHash, gatherAllData, p2pRole, peer, receiverDeviceId, senderDevices, sendLiveSyncToPeer, syncPhase]);
 
   const alignScannerPreview = () => {
     const reader = document.getElementById("qr-reader");
@@ -571,10 +859,11 @@ export default function SettingsPage() {
         {
           fps: 10,
           qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-            const size = Math.max(180, Math.min(viewfinderWidth, viewfinderHeight) * 0.72);
+            const width = Math.max(220, Math.min(viewfinderWidth * 0.9, viewfinderWidth - 24));
+            const height = Math.max(260, Math.min(viewfinderHeight * 0.82, viewfinderHeight - 24));
             return {
-              width: Math.floor(size),
-              height: Math.floor(size),
+              width: Math.floor(width),
+              height: Math.floor(height),
             };
           },
         },
@@ -594,6 +883,8 @@ export default function SettingsPage() {
   };
 
   const pairingString = `toolkit-sync:v1:${signalId}:${encryptionKey}`;
+  const pendingSenderDevices = senderDevices.filter((device) => device.status === "awaiting_approval");
+  const activeSenderDevices = senderDevices.filter((device) => device.status !== "awaiting_approval");
 
   return (
     <div className="max-w-4xl mx-auto space-y-12">
@@ -712,7 +1003,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                  {syncPhase === "confirming" ? (
+                  {syncPhase === "confirming" && p2pRole === "receiver" ? (
                     <div className="col-span-full flex flex-col items-center justify-center py-12 space-y-8 text-center bg-zinc-950 border border-zinc-900 rounded-[3rem]">
                       <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary animate-pulse">
                         <ShieldCheck className="w-10 h-10" />
@@ -720,16 +1011,15 @@ export default function SettingsPage() {
                       <div className="space-y-3">
                         <h3 className="text-xl font-black text-white uppercase italic tracking-widest">Confirm Connection</h3>
                         <p className="text-sm text-zinc-500 max-w-sm font-medium">
-                          A device is requesting to {p2pRole === "sender" ? "receive your data" : "send you data"}. Do you want to proceed?
+                          The source device is requesting to send you data. Do you want to proceed?
                         </p>
                       </div>
                       <div className="flex gap-4 w-full max-w-sm">
                         <Button 
                           onClick={() => {
-                            if (p2pRole === "sender") handleSenderApproval();
-                            else handleReceiverApproval(remoteSdp, signalId, encryptionKey);
+                            handleReceiverApproval(remoteSdp, signalId, encryptionKey);
                           }}
-                          disabled={p2pRole === "receiver" && !remoteSdp}
+                          disabled={!remoteSdp}
                           className="flex-1 h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20"
                         >
                           Accept
@@ -772,6 +1062,74 @@ export default function SettingsPage() {
                           </p>
                         </div>
 
+                        {pendingSenderDevices.length > 0 && (
+                          <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-3xl space-y-4">
+                            <div className="flex items-center gap-3">
+                              <ShieldCheck className="w-4 h-4 text-primary" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white">Pending Approvals</span>
+                            </div>
+                            <div className="space-y-3">
+                              {pendingSenderDevices.map((device) => (
+                                <div key={device.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+                                  <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                      <p className="text-xs font-black uppercase tracking-widest text-white">Device {device.id.slice(0, 8)}</p>
+                                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Awaiting approval</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      onClick={() => handleSenderApproval(device.id)}
+                                      className="flex-1 h-10 rounded-xl bg-primary hover:bg-primary/90 text-white text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleSenderReject(device.id)}
+                                      variant="outline"
+                                      className="flex-1 h-10 rounded-xl border-zinc-800 bg-zinc-900 text-zinc-400 text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                      Reject
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-3xl space-y-4">
+                          <div className="flex items-center gap-3">
+                            <Monitor className="w-4 h-4 text-primary" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Connected Devices</span>
+                          </div>
+                          {senderDevices.length === 0 ? (
+                            <p className="text-[10px] text-zinc-600 font-bold uppercase leading-relaxed">
+                              No devices joined yet. Keep this pairing code open and connect from other devices.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {senderDevices.map((device) => (
+                                <div key={device.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 flex items-center justify-between gap-4">
+                                  <div>
+                                    <p className="text-xs font-black uppercase tracking-widest text-white">Device {device.id.slice(0, 8)}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{device.status.replace("_", " ")}</p>
+                                  </div>
+                                  {device.status === "connected" ? (
+                                    <Button
+                                      onClick={() => disconnectSenderDevice(device.id)}
+                                      variant="outline"
+                                      className="h-9 rounded-xl border-zinc-800 bg-zinc-900 text-zinc-400 text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                      Disconnect
+                                    </Button>
+                                  ) : null}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="space-y-4">
                           <button 
                             onClick={() => setIsManual(!isManual)}
@@ -810,7 +1168,7 @@ export default function SettingsPage() {
                           <p className="text-xs text-zinc-400 font-medium">Scan the QR code shown on the other device, or paste its pairing string manually.</p>
                         </div>
 
-                        <div className="relative aspect-square w-full max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden border-2 border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                        <div className="relative h-[26rem] min-h-[22rem] w-full max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden border-2 border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center sm:h-[30rem]">
                            <div id="qr-reader" className="absolute inset-0 h-full w-full" />
                            {syncPhase === "pairing" && (
                               <Button 

@@ -25,9 +25,7 @@ import {
   Triangle,
   Filter,
   Shield,
-  Pencil,
-  Eye,
-  EyeOff
+  Pencil
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -64,12 +62,6 @@ export default function AuthenticatorPage() {
   const [editIssuer, setEditIssuer] = useState("");
   const [editAccount, setEditAccount] = useState("");
   const [editRecoveryCode, setEditRecoveryCode] = useState("");
-
-  const [visibleCodes, setVisibleCodes] = useState<Record<string, boolean>>({});
-
-  const toggleVisibility = (id: string) => {
-    setVisibleCodes(prev => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const handleUpdate = () => {
     if (!editingAuth) return;
@@ -319,16 +311,16 @@ export default function AuthenticatorPage() {
   const uniqueIssuers = Array.from(new Set(authenticators.map(a => a.issuer))).sort();
 
   return (
-    <div className="flex flex-col h-full max-w-6xl mx-auto gap-8 pt-6">
+    <div className="flex flex-col h-full max-w-6xl mx-auto gap-5 md:gap-8 pt-4 md:pt-6">
       {/* Header Controls */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between">
+        <div className="flex flex-col md:flex-row gap-3 md:gap-4 w-full md:w-auto flex-1">
           <div className="relative flex-1 md:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <input 
               type="text"
               placeholder="Search accounts..."
-              className="w-full h-12 bg-[#161618] border border-zinc-800 rounded-2xl py-3 pl-12 pr-4 text-sm text-zinc-300 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              className="w-full h-11 md:h-12 bg-[#161618] border border-zinc-800 rounded-xl md:rounded-2xl py-3 pl-12 pr-4 text-sm text-zinc-300 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -347,12 +339,12 @@ export default function AuthenticatorPage() {
           </div>
         </div>
         
-        <div className="flex gap-4 w-full md:w-auto">
-          <div className="flex items-center gap-2">
+        <div className="flex gap-3 md:gap-4 w-full md:w-auto">
+          <div className="flex items-center gap-2 shrink-0">
             <Button 
               onClick={exportData}
               variant="outline"
-              className="h-12 px-4 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white transition-all gap-2"
+              className="h-11 md:h-12 px-3 md:px-4 rounded-xl md:rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white transition-all gap-2"
               title="Export Backup"
             >
               <Download className="w-4 h-4" />
@@ -367,7 +359,7 @@ export default function AuthenticatorPage() {
               />
               <Button 
                 variant="outline"
-                className="h-12 px-4 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white transition-all gap-2"
+                className="h-11 md:h-12 px-3 md:px-4 rounded-xl md:rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white transition-all gap-2"
               >
                 <Upload className="w-4 h-4" />
               </Button>
@@ -376,12 +368,12 @@ export default function AuthenticatorPage() {
 
           <Button 
             onClick={() => setIsAdding(true)}
-            className="flex-1 md:flex-none h-12 px-6 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold uppercase tracking-widest gap-2 shadow-lg shadow-primary/20"
+            className="flex-1 md:flex-none h-11 md:h-12 px-4 md:px-6 rounded-xl md:rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold uppercase tracking-[0.2em] md:tracking-widest gap-2 shadow-lg shadow-primary/20 text-[11px] md:text-sm"
           >
             <Plus className="w-4 h-4" /> Add Account
           </Button>
           
-          <div className="flex items-center gap-3 px-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl h-12">
+          <div className="flex items-center justify-center gap-3 px-3 md:px-4 bg-zinc-900/50 border border-zinc-800 rounded-xl md:rounded-2xl h-11 md:h-12 shrink-0">
             <div className="relative w-5 h-5">
               <svg className="w-5 h-5 -rotate-90">
                 <circle cx="10" cy="10" r="8" className="fill-none stroke-zinc-800" strokeWidth="2" />
@@ -565,7 +557,7 @@ export default function AuthenticatorPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
           {filteredAuthenticators.map((auth) => {
             let code = "000000";
             try {
@@ -580,13 +572,13 @@ export default function AuthenticatorPage() {
               <div 
                 key={auth.id}
                 className={cn(
-                  "bg-[#161618] border border-zinc-800 rounded-[2rem] p-6 transition-all group relative overflow-hidden shadow-xl",
+                  "bg-[#161618] border border-zinc-800 rounded-[1.4rem] md:rounded-[2rem] p-4 md:p-6 transition-all group relative overflow-hidden shadow-xl",
                   isExpiring ? "border-amber-500/20" : "hover:border-primary/30"
                 )}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex gap-4 items-center">
-                    <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-primary shadow-inner shrink-0">
+                <div className="flex items-start justify-between gap-3 mb-4 md:mb-6">
+                  <div className="flex gap-3 items-center min-w-0">
+                    <div className="w-10 h-10 md:w-10 md:h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-primary shadow-inner shrink-0">
                       {(() => {
                         const preset = SERVICE_PRESETS.find(p => p.name.toLowerCase() === auth.issuer.toLowerCase());
                         const Icon = preset?.icon || ShieldCheck;
@@ -594,7 +586,7 @@ export default function AuthenticatorPage() {
                       })()}
                     </div>
                     <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary truncate">{auth.issuer}</h3>
                         <div className="flex gap-1 shrink-0">
                           {auth.algorithm && auth.algorithm !== OTPAlgorithm.SHA1 && (
@@ -605,10 +597,10 @@ export default function AuthenticatorPage() {
                           )}
                         </div>
                       </div>
-                      <p className="text-sm font-bold text-zinc-300 truncate max-w-[150px]">{auth.account}</p>
+                      <p className="text-sm font-bold text-zinc-300 truncate max-w-[180px]">{auth.account}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1 items-center">
+                  <div className="flex gap-1 items-center shrink-0">
                     <button 
                       onClick={() => startEditing(auth)}
                       className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10 flex items-center justify-center"
@@ -634,43 +626,45 @@ export default function AuthenticatorPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
                   <div className={cn(
-                    "flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden transition-all",
+                    "flex-1 bg-zinc-950 border border-zinc-900 rounded-[1.25rem] md:rounded-2xl px-4 py-3 md:p-4 relative group/code overflow-hidden transition-all",
                     isExpiring && "border-amber-500/50 shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]"
                   )}>
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
-                      <button 
-                        onClick={() => toggleVisibility(auth.id)}
-                        className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10 flex items-center justify-center"
-                        title={visibleCodes[auth.id] ? "Hide Code" : "Show Code"}
-                      >
-                        {visibleCodes[auth.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-
                     <AnimatePresence mode="wait">
                       <motion.span 
-                        key={`${auth.id}-${visibleCodes[auth.id] ? code : 'hidden'}`}
+                        key={`${auth.id}-${code}`}
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: -10, opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         className={cn(
-                          "text-3xl font-black tracking-[0.2em] font-mono transition-colors relative z-10",
-                          isExpiring ? "text-amber-500" : "text-white",
-                          !visibleCodes[auth.id] && "blur-md select-none opacity-40"
+                          "block text-[2rem] leading-none md:text-3xl font-black tracking-[0.18em] md:tracking-[0.2em] font-mono transition-colors relative z-10",
+                          isExpiring ? "text-amber-500" : "text-white"
                         )}
                       >
-                        {visibleCodes[auth.id] ? (
-                          <>
-                            {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
-                          </>
-                        ) : (
-                          "••••••"
-                        )}
+                        {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
                       </motion.span>
                     </AnimatePresence>
+                    <div className="mt-2 flex items-center justify-between gap-3 relative z-10">
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">
+                        Refreshes in {authTimeLeft}s
+                      </p>
+                      <div className={cn(
+                        "h-2 w-16 md:w-20 overflow-hidden rounded-full bg-zinc-800",
+                        isExpiring && "bg-amber-950/60"
+                      )}>
+                        <motion.div
+                          initial={false}
+                          animate={{
+                            width: `${(authTimeLeft / auth.period) * 100}%`,
+                            backgroundColor: isExpiring ? "#f59e0b" : "#6366f1"
+                          }}
+                          transition={{ duration: 1, ease: "linear" }}
+                          className="h-full rounded-full"
+                        />
+                      </div>
+                    </div>
                     <div className="absolute inset-0 bg-primary opacity-0 group-hover/code:opacity-5 transition-opacity" />
                     {isExpiring && (
                       <motion.div 
@@ -684,24 +678,11 @@ export default function AuthenticatorPage() {
                   
                   <button 
                     onClick={() => copyCode(code)}
-                    className="h-14 w-14 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-primary hover:border-primary/50 transition-all shadow-inner"
+                    className="h-12 w-12 md:h-14 md:w-14 bg-zinc-900 border border-zinc-800 rounded-xl md:rounded-2xl flex items-center justify-center text-zinc-500 hover:text-primary hover:border-primary/50 transition-all shadow-inner shrink-0"
                     title="Copy Code"
                   >
                     <Copy className="w-5 h-5" />
                   </button>
-                </div>
-
-                {/* Animated Progress Bar */}
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-zinc-900 overflow-hidden">
-                  <motion.div 
-                    initial={false}
-                    animate={{ 
-                      width: `${(authTimeLeft / auth.period) * 100}%`,
-                      backgroundColor: isExpiring ? "#f59e0b" : "#6366f1"
-                    }}
-                    transition={{ duration: 1, ease: "linear" }}
-                    className="h-full"
-                  />
                 </div>
               </div>
             );
