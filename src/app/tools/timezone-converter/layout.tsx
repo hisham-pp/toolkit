@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { ToolRegistry } from "@/utility/constants/tools";
 import ToolLayout from "@/components/ToolLayout";
 
-const tool = ToolRegistry.getById("timezone")!;
+const tool = ToolRegistry.getById("timezone-converter")!;
 
 export const metadata: Metadata = {
   title: tool.metaTitle,

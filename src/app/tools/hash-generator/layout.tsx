@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { ToolRegistry } from "@/utility/constants/tools";
 import ToolLayout from "@/components/ToolLayout";
 
-const tool = ToolRegistry.getById("hash-gen")!;
+const tool = ToolRegistry.getById("hash-generator")!;
 
 export const metadata: Metadata = {
   title: tool.metaTitle,

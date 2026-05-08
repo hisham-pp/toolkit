@@ -146,6 +146,15 @@ export class ToolRegistry {
       ["json", "diff", "compare", "structure", "values"]
     ),
     new Tool(
+      "deep-compare",
+      "Deep Compare",
+      "Deeply compare two JSON objects and find differences.",
+      ArrowRightLeft,
+      "/tools/deep-compare",
+      ToolCategory.Diff,
+      ["json", "diff", "compare", "deep", "structure"]
+    ),
+    new Tool(
       "text-diff",
       "Text Diff",
       "Simple side-by-side text comparison with line-by-line highlights.",
