@@ -27,7 +27,7 @@ import {
   Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { M3Input, M3Select } from "@/components/ui/m3-ui";
+import { M3Input, M3Select, M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
 import { cn } from "@/utility/helpers/utils";
 import { generateTOTP, obfuscate, deobfuscate } from "@/utility/helpers/otp";
@@ -48,11 +48,13 @@ export default function AuthenticatorPage() {
   const [newPeriod, setNewPeriod] = useState(30);
   const [newAlgorithm, setNewAlgorithm] = useState<OTPAlgorithm>(OTPAlgorithm.SHA1);
   const [newEncoding, setNewEncoding] = useState<OTPEncoding>(OTPEncoding.Auto);
+  const [newRecoveryCode, setNewRecoveryCode] = useState("");
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceFilter, setServiceFilter] = useState("All");
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
   const [importUri, setImportUri] = useState("");
+  const [viewingRecoveryAuth, setViewingRecoveryAuth] = useState<Authenticator | null>(null);
 
   const handleServiceChange = (serviceName: string) => {
     const preset = SERVICE_PRESETS.find(p => p.name === serviceName) || SERVICE_PRESETS[0];
@@ -134,7 +136,8 @@ export default function AuthenticatorPage() {
       period: newPeriod,
       algorithm: newAlgorithm,
       encoding: newEncoding,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      recoveryCode: newRecoveryCode.trim() || undefined
     };
 
     const updated = [...authenticators, newAuth];
@@ -149,6 +152,7 @@ export default function AuthenticatorPage() {
     setNewPeriod(30);
     setNewAlgorithm(OTPAlgorithm.SHA1);
     setNewEncoding(OTPEncoding.Auto);
+    setNewRecoveryCode("");
     setSelectedService(SERVICE_PRESETS[0]);
     setIsAdding(false);
     setIsAdvanced(false);
@@ -258,6 +262,11 @@ export default function AuthenticatorPage() {
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success("Code copied to clipboard");
+  };
+
+  const copyRecoveryCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success("Recovery code copied to clipboard");
   };
 
   const filteredAuthenticators = authenticators.filter(a => {
@@ -423,6 +432,14 @@ export default function AuthenticatorPage() {
                 onChange={(e) => setNewSecret(e.target.value)}
                 icon={<Key className="w-4 h-4" />}
               />
+              <M3Textarea 
+                label="Recovery Codes (Optional)"
+                placeholder="Paste your backup recovery codes here (one per line or space-separated)..."
+                value={newRecoveryCode}
+                onChange={(e) => setNewRecoveryCode(e.target.value)}
+                rows={3}
+                className="min-h-[100px] text-xs font-mono"
+              />
 
               <div className="space-y-4">
                 <button 
@@ -551,12 +568,23 @@ export default function AuthenticatorPage() {
                       <p className="text-sm font-bold text-zinc-300 truncate max-w-[150px]">{auth.account}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleDelete(auth.id)}
-                    className="p-2 text-zinc-600 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-1">
+                    {auth.recoveryCode && (
+                      <button 
+                        onClick={() => setViewingRecoveryAuth(auth)}
+                        className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                        title="View Recovery Codes"
+                      >
+                        <Shield className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => handleDelete(auth.id)}
+                      className="p-2 text-zinc-600 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-4">
@@ -594,6 +622,48 @@ export default function AuthenticatorPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Recovery Codes Overlay */}
+      {viewingRecoveryAuth && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
+            <button 
+              onClick={() => setViewingRecoveryAuth(null)}
+              className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-black uppercase tracking-widest text-white">Recovery Codes</h2>
+              <p className="text-xs text-zinc-500 font-medium">{viewingRecoveryAuth.issuer} - {viewingRecoveryAuth.account}</p>
+            </div>
+
+            <div className="bg-zinc-950 border border-zinc-900 rounded-3xl p-6 font-mono text-sm text-zinc-300 whitespace-pre-wrap break-all min-h-[150px] max-h-[300px] overflow-y-auto scrollbar-hide">
+              {viewingRecoveryAuth.recoveryCode}
+            </div>
+
+            <div className="flex gap-4">
+              <Button 
+                onClick={() => {
+                  copyRecoveryCode(viewingRecoveryAuth.recoveryCode!);
+                  setViewingRecoveryAuth(null);
+                }}
+                className="flex-1 h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+              >
+                Copy All Codes
+              </Button>
+              <Button 
+                onClick={() => setViewingRecoveryAuth(null)}
+                variant="outline"
+                className="h-14 px-6 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-white transition-all"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

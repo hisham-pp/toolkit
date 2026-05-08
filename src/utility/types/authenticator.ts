@@ -12,6 +12,7 @@ export interface Authenticator {
   algorithm: OTPAlgorithm;
   encoding: OTPEncoding;
   createdAt: number;
+  recoveryCode?: string;
 }
 
 export interface ServicePreset {
