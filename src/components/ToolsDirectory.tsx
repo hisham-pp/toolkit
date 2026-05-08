@@ -219,12 +219,12 @@ export default function ToolsDirectory() {
                       
                       return (
                         <Tooltip key={tool.id}>
-                          <TooltipTrigger asChild>
+                          <TooltipTrigger>
                             <Link 
                               id={`tool-${currentToolIndex}`}
                               href={tool.route} 
                               className={cn(
-                                "group relative flex flex-col items-center justify-center p-6 bg-[#161618]/30 border border-zinc-800/50 rounded-2xl transition-all hover:bg-[#1C1C1E] hover:border-primary/30 hover:-translate-y-1 overflow-hidden",
+                                "group relative flex flex-col items-center justify-center p-6 bg-[#161618]/30 border border-zinc-800/50 rounded-2xl transition-all hover:bg-[#1C1C1E] hover:border-primary/30 hover:-translate-y-1 overflow-hidden block",
                                 isSelected && "ring-2 ring-primary bg-[#1C1C1E] border-primary/30 -translate-y-1"
                               )}
                             >
