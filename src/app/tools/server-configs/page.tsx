@@ -287,33 +287,36 @@ ${config.sshKey ? `    # Note: SSH Key was provided in the tool` : ""}
                 onChange={e => setFormData({ ...formData, domain: e.target.value })}
                 icon={<Globe className="w-4 h-4" />}
               />
-              <M3Input 
-                label="Port"
-                type="number"
-                placeholder="22"
-                value={formData.port}
-                onChange={e => setFormData({ ...formData, port: parseInt(e.target.value) || 22 })}
-                icon={<Terminal className="w-4 h-4" />}
-              />
-            </div>
-            
-            <div className="flex items-center gap-3 p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800 w-fit">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-                className={cn(
-                  "p-2 rounded-xl transition-all",
-                  formData.isActive ? "bg-primary text-white" : "bg-zinc-800 text-zinc-500"
-                )}
-              >
-                {formData.isActive ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
-              </button>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Default Status</p>
-                <p className="text-xs text-zinc-100 font-medium">{formData.isActive ? 'Active' : 'Inactive'}</p>
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <M3Input 
+                    label="Port"
+                    type="number"
+                    placeholder="22"
+                    value={formData.port}
+                    onChange={e => setFormData({ ...formData, port: parseInt(e.target.value) || 22 })}
+                    icon={<Terminal className="w-4 h-4" />}
+                  />
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-zinc-800 h-[56px] min-w-[140px]">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                    className={cn(
+                      "p-2 rounded-xl transition-all",
+                      formData.isActive ? "bg-primary text-white" : "bg-zinc-800 text-zinc-500"
+                    )}
+                  >
+                    {formData.isActive ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+                  </button>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Status</p>
+                    <p className="text-xs text-zinc-100 font-medium">{formData.isActive ? 'Active' : 'Inactive'}</p>
+                  </div>
+                </div>
               </div>
             </div>
-
+            
             <M3Textarea 
               label="SSH Private Key (Optional)"
               placeholder="Paste your private key here..."
