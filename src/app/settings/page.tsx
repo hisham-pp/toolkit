@@ -32,6 +32,11 @@ import CryptoJS from "crypto-js";
 if (typeof window !== "undefined") {
   (window as any).global = window;
   (window as any).Buffer = (window as any).Buffer || require("buffer").Buffer;
+  (window as any).process = (window as any).process || { 
+    env: {}, 
+    nextTick: (fn: any) => setTimeout(fn, 0),
+    browser: true 
+  };
 }
 
 import { Button } from "@/components/ui/button";
@@ -75,8 +80,15 @@ export default function SettingsPage() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const [pendingApproval, setPendingApproval] = useState(false);
+  
+  const [connectionLogs, setConnectionLogs] = useState<string[]>([]);
+  const addLog = useCallback((msg: string) => {
+    console.log(`[P2P Sync] ${msg}`);
+    setConnectionLogs(prev => [...prev.slice(-4), msg]);
+  }, []);
 
   const cleanupSync = useCallback(() => {
+    addLog("Cleaning up sync session...");
     if (peer) {
       peer.destroy();
       setPeer(null);
@@ -210,41 +222,59 @@ export default function SettingsPage() {
   };
 
   const pollForSignal = (id: string, key: string, targetTypes: ("OFFER" | "ANSWER" | "APPROVE" | "REJECT")[], onSignal: (type: string, sdp?: string) => void) => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
-    
-    // 1. Initial poll to catch missed messages
-    const checkOnce = async () => {
-      try {
-        const resp = await fetch(`${RELAY_URL}/${id}/json?poll=1`);
-        const messages = await resp.json();
-        for (const msg of messages) {
-          processMessage(msg);
-        }
-      } catch (e) {}
-    };
+    addLog(`Starting real-time signal listener for: ${targetTypes.join(", ")}`);
+    const seenIds = new Set<string>();
 
     const processMessage = (msg: any) => {
-      const encryptedData = msg.message || msg.body; // Handle both just in case
+      if (seenIds.has(msg.id)) return;
+      seenIds.add(msg.id);
+
+      const encryptedData = msg.message || msg.body;
       if (!encryptedData || typeof encryptedData !== "string") return;
       
       try {
+        addLog("Attempting to decrypt incoming signal...");
         const bytes = CryptoJS.AES.decrypt(encryptedData, key);
         const decryptedStr = bytes.toString(CryptoJS.enc.Utf8);
-        if (!decryptedStr) return;
+        
+        if (!decryptedStr) {
+          addLog("Decryption failed (Wrong key or invalid data)");
+          return;
+        }
         
         const decrypted = JSON.parse(decryptedStr);
+        addLog(`Received signal: ${decrypted.type}`);
+        
         if (targetTypes.includes(decrypted.type)) {
           const sdp = decrypted.sdp ? decompressData(decrypted.sdp) : undefined;
           onSignal(decrypted.type, sdp);
+        } else {
+          addLog(`Ignoring ${decrypted.type} signal (Waiting for ${targetTypes.join("/")})`);
         }
       } catch (e) {
-        // Likely not our message or wrong key
+        addLog("Error processing message");
+      }
+    };
+
+    // 1. Initial poll to catch missed messages
+    const checkOnce = async () => {
+      try {
+        addLog("Checking for cached signals...");
+        const resp = await fetch(`${RELAY_URL}/${id}/json?poll=1`);
+        const messages = await resp.json();
+        if (messages.length > 0) {
+          addLog(`Found ${messages.length} cached messages`);
+          messages.forEach(processMessage);
+        }
+      } catch (e) {
+        addLog("Failed to fetch cached signals");
       }
     };
 
     checkOnce();
 
     // 2. Use EventSource for real-time
+    addLog("Opening SSE connection to relay...");
     const es = new EventSource(`${RELAY_URL}/${id}/sse`);
     es.onmessage = (event) => {
       try {
@@ -253,20 +283,23 @@ export default function SettingsPage() {
       } catch (e) {}
     };
 
-    // Store EventSource closer so we can close it
-    (window as any)._currentSyncES = es;
+    es.onerror = () => {
+      addLog("SSE connection error. Still polling...");
+    };
 
     return () => {
+      addLog("Closing signal listener.");
       es.close();
     };
   };
 
   const startSync = async (role: "sender" | "receiver") => {
     if (!PeerConstructor) {
-      toast.error("P2P library not loaded yet. Try again in a moment.");
+      toast.error("P2P library not loaded. Please refresh.");
       return;
     }
 
+    addLog(`Initializing ${role} role...`);
     setP2pRole(role);
     setSyncPhase("pairing");
 
@@ -286,15 +319,19 @@ export default function SettingsPage() {
     };
 
     if (role === "sender") {
+      addLog("Creating peer connection...");
       const newPeer = new PeerConstructor(peerOptions);
+      let cleanup: (() => void) | null = null;
       
       newPeer.on("signal", (data: any) => {
+        addLog("Local offer generated. Sending to relay...");
         const sdpStr = JSON.stringify(data);
         setLocalSdp(sdpStr);
         sendSignal(sId, eKey, "OFFER", sdpStr);
       });
 
       newPeer.on("connect", async () => {
+        addLog("P2P connection established!");
         setSyncPhase("connected");
         const allData = await gatherAllData();
         newPeer.send(JSON.stringify({ type: "FULL_SYNC", payload: allData }));
@@ -302,70 +339,70 @@ export default function SettingsPage() {
       });
 
       newPeer.on("error", (err: any) => {
-        console.error("P2P Error:", err);
+        addLog(`P2P Error: ${err.message || err}`);
         setSyncPhase("error");
       });
 
       setPeer(newPeer);
 
       // Poll for answer or rejection
-      const closeES = pollForSignal(sId, eKey, ["ANSWER", "REJECT"], (type, sdp) => {
+      cleanup = pollForSignal(sId, eKey, ["ANSWER", "REJECT"], (type, sdp) => {
         if (type === "REJECT") {
-          toast.error("Connection rejected by other device");
+          toast.error("Rejected by other device");
           cleanupSync();
-          if (closeES) closeES();
+          if (cleanup) cleanup();
           return;
         }
         
         // When we get an answer, we move to confirming phase
         setSyncPhase("confirming");
         setRemoteSdp(sdp!);
-        if (closeES) closeES();
+        if (cleanup) cleanup();
       });
     }
   };
 
   const handleSenderApproval = () => {
     if (!peer || !remoteSdp || !signalId || !encryptionKey) return;
+    addLog("Approval granted. Connecting to remote device...");
     setSyncPhase("connecting");
     sendSignal(signalId, encryptionKey, "APPROVE");
     peer.signal(JSON.parse(remoteSdp));
   };
 
   const handleReceiverApproval = (offerSdp: string, sId: string, eKey: string) => {
+    addLog("Approval granted. Initializing P2P connection...");
     const peerOptions = { 
       initiator: false, 
       trickle: false,
       config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
     };
     const newPeer = new PeerConstructor(peerOptions);
+    let cleanupListener: (() => void) | null = null;
     
     newPeer.on("signal", (ansData: any) => {
+      addLog("Local response generated. Sending to relay...");
       const ansSdpStr = JSON.stringify(ansData);
       setLocalSdp(ansSdpStr);
       sendSignal(sId, eKey, "ANSWER", ansSdpStr);
       
-      // Now wait for the sender to approve
       setSyncPhase("connecting");
-      const closeES = pollForSignal(sId, eKey, ["APPROVE", "REJECT"], (type) => {
+      cleanupListener = pollForSignal(sId, eKey, ["APPROVE", "REJECT"], (type) => {
         if (type === "REJECT") {
-          toast.error("Connection rejected by other device");
+          addLog("Connection rejected by other device.");
           cleanupSync();
         } else if (type === "APPROVE") {
+          addLog("Connection approved! Receiving data...");
           setSyncPhase("connected");
-          toast.success("Connection approved! Receiving data...");
         }
-        if (closeES) closeES();
+        if (cleanupListener) cleanupListener();
       });
-    });
-
-    newPeer.on("connect", () => {
-      // Phase handled by pollForSignal APPROVE
     });
 
     newPeer.on("data", async (msgData: any) => {
       const msg = JSON.parse(msgData.toString());
       if (msg.type === "FULL_SYNC") {
+        addLog("Sync data received. Merging...");
         await mergeData(msg.payload);
         toast.success("Sync complete!");
         cleanupSync();
@@ -373,7 +410,7 @@ export default function SettingsPage() {
     });
 
     newPeer.on("error", (err: any) => {
-      console.error("P2P Error:", err);
+      addLog(`P2P Error: ${err.message || err}`);
       setSyncPhase("error");
     });
 
@@ -387,18 +424,19 @@ export default function SettingsPage() {
       return;
     }
 
+    addLog("QR code parsed. Waiting for connection offer...");
     const [, , sId, eKey] = data.split(":");
     setSignalId(sId);
     setEncryptionKey(eKey);
     setSyncPhase("confirming");
 
-    // Receiver flow: First wait for offer, then ask for approval
     pollForSignal(sId, eKey, ["OFFER", "REJECT"], (type, offerSdp) => {
       if (type === "REJECT") {
-        toast.error("Connection rejected");
+        addLog("Sync session was rejected.");
         cleanupSync();
         return;
       }
+      addLog("Offer received from laptop.");
       setRemoteSdp(offerSdp!);
     });
   };
@@ -419,7 +457,16 @@ export default function SettingsPage() {
       
       await html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        {
+          fps: 10,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const size = Math.max(180, Math.min(viewfinderWidth, viewfinderHeight) * 0.72);
+            return {
+              width: Math.floor(size),
+              height: Math.floor(size),
+            };
+          },
+        },
         (decodedText) => {
           handleScannedData(decodedText);
           html5QrCode.stop().catch(console.error);
@@ -511,6 +558,21 @@ export default function SettingsPage() {
                 exit={{ opacity: 0, scale: 1.05 }}
                 className="space-y-8"
               >
+                {/* Connection Status Log */}
+                {connectionLogs.length > 0 && (
+                  <div className="bg-zinc-950 border border-zinc-900 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Live Status Log</span>
+                    </div>
+                    {connectionLogs.map((log, i) => (
+                      <p key={i} className="text-[10px] font-mono text-zinc-400 break-all leading-tight">
+                        <span className="text-zinc-700 mr-2">›</span>{log}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={cn(
@@ -634,8 +696,8 @@ export default function SettingsPage() {
                           <p className="text-xs text-zinc-400 font-medium">Scan the QR code displayed on your other device.</p>
                         </div>
 
-                        <div className="relative aspect-square max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden border-2 border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center">
-                           <div id="qr-reader" className="absolute inset-0 w-full h-full" />
+                        <div className="relative aspect-square w-full max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden border-2 border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                           <div id="qr-reader" className="absolute inset-0 h-full w-full [&>video]:!h-full [&>video]:!w-full [&>video]:object-cover [&>video]:object-center [&>#qr-shaded-region]:!inset-0" />
                            {syncPhase === "pairing" && (
                               <Button 
                                 onClick={startCamera}
