@@ -1,7 +1,9 @@
 import React from "react";
+import Link from "next/link";
 import { Tool } from "@/utility/constants/tools";
 import ToolBackButton from "@/components/ToolBackButton";
 import HeaderSearch from "@/components/HeaderSearch";
+import { Settings as SettingsIcon } from "lucide-react";
 
 interface ToolLayoutProps {
   tool: Tool;
@@ -37,6 +39,14 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
           </div>
 
           <div className="flex items-center gap-3 md:gap-6 shrink-0">
+             <Link 
+               href="/settings" 
+               className="p-2 text-zinc-600 hover:text-white transition-colors rounded-lg hover:bg-zinc-800"
+               title="Settings & Sync"
+             >
+               <SettingsIcon className="w-5 h-5" />
+             </Link>
+             <div className="h-8 w-[1px] bg-zinc-800 hidden lg:block" />
              <div className="hidden lg:flex items-center gap-6 pr-4">
                 <div className="flex flex-col items-end">
                    <span className="text-[9px] font-black uppercase text-zinc-600 tracking-widest leading-none mb-1">Processing Mode</span>

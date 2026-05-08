@@ -131,10 +131,16 @@ export default function ToolsDirectory() {
         <header className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-4">
-              <Link href="/" className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 hover:gap-3 transition-all group">
-                <span className="w-4 h-[1px] bg-primary group-hover:w-8 transition-all"></span>
-                Back to Dashboard
-              </Link>
+              <div className="flex items-center gap-6">
+                <Link href="/" className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 hover:gap-3 transition-all group">
+                  <span className="w-4 h-[1px] bg-primary group-hover:w-8 transition-all"></span>
+                  Back to Dashboard
+                </Link>
+                <div className="w-1 h-1 rounded-full bg-zinc-800" />
+                <Link href="/settings" className="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-all">
+                  Settings & Sync
+                </Link>
+              </div>
               <div className="flex items-center gap-4">
                 <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
                   Tool <span className="text-primary italic">Directory</span>

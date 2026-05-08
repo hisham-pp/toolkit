@@ -111,7 +111,11 @@ export default function Home() {
         <div className="flex items-end justify-between border-b border-zinc-900 pb-12">
           <div>
             <h2 className="text-white font-black text-5xl tracking-tighter uppercase italic">Control Panel</h2>
-            <p className="text-[11px] text-zinc-600 font-black uppercase tracking-[0.4em] mt-3 italic">High-velocity command center</p>
+            <div className="flex items-center gap-4 mt-3">
+              <p className="text-[11px] text-zinc-600 font-black uppercase tracking-[0.4em] italic">High-velocity command center</p>
+              <div className="w-1 h-1 rounded-full bg-zinc-800" />
+              <Link href="/settings" className="text-[11px] text-primary font-black uppercase tracking-[0.4em] italic hover:text-white transition-colors">Settings & Sync</Link>
+            </div>
           </div>
           <Link href="/tools" className="group flex items-center gap-4 text-[11px] font-black uppercase tracking-widest text-zinc-600 hover:text-white transition-colors">
             Full Tool Inventory
