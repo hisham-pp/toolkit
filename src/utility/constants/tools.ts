@@ -58,15 +58,15 @@ export class ToolRegistry {
     new Tool(
       "system-diagram",
       "System Diagram",
-      "Interactive drag-and-drop system architecture diagram builder.",
+      "Create complex system architecture diagrams with drag-and-drop nodes.",
       Network,
       "/tools/system-diagram",
       ToolCategory.System,
-      ["architecture", "design", "diagram", "blocks", "infrastructure"]
+      ["architecture", "diagram", "nodes", "flowchart", "system"]
     ),
     new Tool(
       "db-schema",
-      "DB Schema Designer",
+      "Database Schema Designer",
       "Visual database schema designer with table relations and field types.",
       Database,
       "/tools/db-schema",
@@ -110,76 +110,283 @@ export class ToolRegistry {
       ["environment", "variables", "secrets", "config", "dotenv"]
     ),
     new Tool(
-      "base64-file",
-      "File to Base64",
-      "Convert images and files to Base64 data strings for embedding.",
-      ImagePlus,
-      "/tools/base64-file",
-      ToolCategory.Encoding,
-      ["image", "upload", "string", "data-uri", "binary"]
+      "json-formatter",
+      "JSON Formatter",
+      "Prettify, minify, and validate complex JSON data structures.",
+      FileJson,
+      "/tools/json-formatter",
+      ToolCategory.Formatting,
+      ["json", "format", "pretty", "minify", "validate"]
     ),
     new Tool(
-      "api-builder",
-      "API Builder",
-      "Mini Postman-style UI for testing REST API requests.",
-      Globe,
-      "/tools/api-builder",
-      ToolCategory.Utils,
-      ["rest", "http", "request", "fetch", "endpoint", "postman"]
+      "sql-formatter",
+      "SQL Formatter",
+      "Beautify and standardize SQL queries for various dialects.",
+      Code2,
+      "/tools/sql-formatter",
+      ToolCategory.Formatting,
+      ["sql", "format", "pretty", "query", "database"]
     ),
     new Tool(
       "code-diff",
-      "Code Diff",
-      "Compare various code languages with syntax highlighting support.",
+      "Code Diff Checker",
+      "Compare two snippets of code or text to highlight structural differences.",
       Split,
       "/tools/code-diff",
       ToolCategory.Diff,
-      ["compare", "git", "merge", "syntax", "highlight"]
-    ),
-    new Tool(
-      "yaml-diff",
-      "YAML Diff",
-      "Structural comparison for YAML configuration files.",
-      Files,
-      "/tools/yaml-diff",
-      ToolCategory.Diff,
-      ["config", "kubernetes", "infra", "comparison"]
-    ),
-    new Tool(
-      "excel-diff",
-      "Excel Diff",
-      "Compare two Spreadsheet/CSV files for row differences.",
-      FileSpreadsheet,
-      "/tools/excel-diff",
-      ToolCategory.Diff,
-      ["csv", "data", "spreadsheet", "rows", "columns"]
+      ["diff", "compare", "code", "text", "changes"]
     ),
     new Tool(
       "json-diff",
-      "JSON Diff",
-      "Compare two JSON payloads and see the differences.",
-      FileJson,
+      "JSON Diff Tool",
+      "Identify structural and value differences between two JSON objects.",
+      Files,
       "/tools/json-diff",
       ToolCategory.Diff,
-      ["api", "payload", "structure", "object", "comparison"]
+      ["json", "diff", "compare", "structure", "values"]
     ),
     new Tool(
       "text-diff",
       "Text Diff",
-      "Compare two blocks of text side-by-side.",
+      "Simple side-by-side text comparison with line-by-line highlights.",
       AlignLeft,
       "/tools/text-diff",
       ToolCategory.Diff,
-      ["letter", "word", "line", "comparison"]
+      ["text", "diff", "compare", "string"]
     ),
     new Tool(
-      "timestamp-diff",
-      "Timestamp Diff",
-      "Calculate the precise duration and difference between two timestamps.",
-      ArrowRightLeft,
-      "/tools/timestamp-diff",
+      "excel-diff",
+      "Excel/CSV Diff",
+      "Compare two spreadsheet files and highlight modified rows and cells.",
+      FileSpreadsheet,
+      "/tools/excel-diff",
       ToolCategory.Diff,
-      ["compare", "duration", "interval", "time", "difference"]
+      ["excel", "csv", "diff", "compare", "spreadsheet"]
+    ),
+    new Tool(
+      "yaml-diff",
+      "YAML Diff",
+      "Compare YAML configurations and see structural differences clearly.",
+      Files,
+      "/tools/yaml-diff",
+      ToolCategory.Diff,
+      ["yaml", "diff", "compare", "config", "structure"]
+    ),
+    new Tool(
+      "json-flattener",
+      "JSON Flattener",
+      "Transform nested JSON objects into single-level key-value pairs.",
+      Minimize2,
+      "/tools/json-flattener",
+      ToolCategory.Formatting,
+      ["json", "flatten", "unflatten", "nested"]
+    ),
+    new Tool(
+      "json-duplicates",
+      "JSON Duplicate Finder",
+      "Locate and remove duplicate keys or values within JSON data.",
+      Files,
+      "/tools/json-duplicates",
+      ToolCategory.Formatting,
+      ["json", "duplicates", "cleanup", "unique"]
+    ),
+    new Tool(
+      "json-sorter",
+      "JSON Sorter",
+      "Alphabetically sort JSON keys for consistent structure and readability.",
+      AlignLeft,
+      "/tools/json-sorter",
+      ToolCategory.Formatting,
+      ["json", "sort", "keys", "alphabetical"]
+    ),
+    new Tool(
+      "xml-json",
+      "XML to JSON",
+      "Seamlessly convert XML data to JSON format and vice versa.",
+      Scaling,
+      "/tools/xml-json",
+      ToolCategory.Converters,
+      ["xml", "json", "convert", "transform"]
+    ),
+    new Tool(
+      "csv-json",
+      "CSV to JSON",
+      "Convert CSV data to structured JSON arrays or objects easily.",
+      FileSpreadsheet,
+      "/tools/csv-json",
+      ToolCategory.Converters,
+      ["csv", "json", "convert", "transform"]
+    ),
+    new Tool(
+      "yaml-json",
+      "YAML to JSON",
+      "Convert between YAML and JSON configurations without data loss.",
+      Files,
+      "/tools/yaml-json",
+      ToolCategory.Converters,
+      ["yaml", "json", "convert", "transform"]
+    ),
+    new Tool(
+      "base64",
+      "Base64 Text",
+      "Encode and decode text strings to and from Base64 format.",
+      Link2,
+      "/tools/base64",
+      ToolCategory.Encoding,
+      ["base64", "encode", "decode", "text"]
+    ),
+    new Tool(
+      "base64-file",
+      "Base64 File",
+      "Convert binary files to Base64 strings for easy embedding or transfer.",
+      Files,
+      "/tools/base64-file",
+      ToolCategory.Encoding,
+      ["base64", "file", "encode", "decode", "binary"]
+    ),
+    new Tool(
+      "url-encoder",
+      "URL Encoder/Decoder",
+      "Safely encode or decode URL components to ensure valid web addresses.",
+      Globe,
+      "/tools/url-encoder",
+      ToolCategory.Encoding,
+      ["url", "encode", "decode", "uri"]
+    ),
+    new Tool(
+      "aes-tool",
+      "AES 256 Tool",
+      "Encrypt and decrypt text using industrial-grade AES-256 encryption.",
+      Lock,
+      "/tools/aes-tool",
+      ToolCategory.Security,
+      ["aes", "encryption", "decryption", "security", "crypto"]
+    ),
+    new Tool(
+      "bcrypt-generator",
+      "Bcrypt Generator",
+      "Generate secure Bcrypt hashes for passwords with adjustable cost.",
+      Fingerprint,
+      "/tools/bcrypt-generator",
+      ToolCategory.Security,
+      ["bcrypt", "hash", "password", "security"]
+    ),
+    new Tool(
+      "bcrypt-comparator",
+      "Bcrypt Comparator",
+      "Verify if a plain text password matches a given Bcrypt hash.",
+      ShieldCheck,
+      "/tools/bcrypt-comparator",
+      ToolCategory.Security,
+      ["bcrypt", "compare", "verify", "password"]
+    ),
+    new Tool(
+      "hash-generator",
+      "Hash Generator",
+      "Generate MD5, SHA-1, SHA-256, and SHA-512 hashes for any data.",
+      Hash,
+      "/tools/hash-generator",
+      ToolCategory.Security,
+      ["hash", "md5", "sha256", "security", "sha1", "sha512"]
+    ),
+    new Tool(
+      "hmac-generator",
+      "HMAC Generator",
+      "Create keyed-hash message authentication codes (HMAC) for security.",
+      ShieldPlus,
+      "/tools/hmac-generator",
+      ToolCategory.Security,
+      ["hmac", "security", "authentication", "hash"]
+    ),
+    new Tool(
+      "jwt-decoder",
+      "JWT Decoder",
+      "Inspect and decode JSON Web Tokens (JWT) to view payload data.",
+      Eye,
+      "/tools/jwt-decoder",
+      ToolCategory.Security,
+      ["jwt", "decode", "token", "auth", "inspect"]
+    ),
+    new Tool(
+      "jwt-expiry",
+      "JWT Expiry Checker",
+      "Verify the expiration status and validity window of JWT tokens.",
+      Timer,
+      "/tools/jwt-expiry",
+      ToolCategory.Security,
+      ["jwt", "expiry", "token", "check", "validation"]
+    ),
+    new Tool(
+      "two-step-authenticator",
+      "2FA Authenticator",
+      "Generate and manage 2FA (TOTP/HOTP) tokens for your accounts.",
+      Timer,
+      "/tools/two-step-authenticator",
+      ToolCategory.Security,
+      ["2fa", "otp", "totp", "hotp", "auth", "authenticator"]
+    ),
+    new Tool(
+      "password-generator",
+      "Password Generator",
+      "Generate strong, random passwords with custom complexity rules.",
+      Key,
+      "/tools/password-generator",
+      ToolCategory.Security,
+      ["password", "generator", "random", "security"]
+    ),
+    new Tool(
+      "password-strength",
+      "Password Strength",
+      "Analyze password entropy and estimate time to crack.",
+      Zap,
+      "/tools/password-strength",
+      ToolCategory.Security,
+      ["password", "strength", "entropy", "security"]
+    ),
+    new Tool(
+      "password-policy",
+      "Password Policy",
+      "Define and test password complexity policies for your apps.",
+      ShieldCheck,
+      "/tools/password-policy",
+      ToolCategory.Security,
+      ["password", "policy", "rules", "security"]
+    ),
+    new Tool(
+      "psk-generator",
+      "PSK Generator",
+      "Create high-entropy Pre-Shared Keys for VPNs, WiFi, or APIs.",
+      Key,
+      "/tools/psk-generator",
+      ToolCategory.Security,
+      ["psk", "key", "vpn", "wifi", "security"]
+    ),
+    new Tool(
+      "uuid-generator",
+      "UUID/ULID Generator",
+      "Generate universally unique identifiers (v1, v4) and ULIDs.",
+      Fingerprint,
+      "/tools/uuid-generator",
+      ToolCategory.Generation,
+      ["uuid", "ulid", "guid", "generator", "unique"]
+    ),
+    new Tool(
+      "lorem-ipsum",
+      "Lorem Ipsum",
+      "Generate placeholder text for layouts, mockups, and designs.",
+      AlignLeft,
+      "/tools/lorem-ipsum",
+      ToolCategory.Generation,
+      ["lorem", "ipsum", "placeholder", "text", "mockup"]
+    ),
+    new Tool(
+      "data-generator",
+      "Mock Data Generator",
+      "Create realistic mock data (names, emails, dates) in various formats.",
+      Braces,
+      "/tools/data-generator",
+      ToolCategory.Generation,
+      ["mock", "data", "fake", "generator", "testing"]
     ),
     new Tool(
       "image-generator",
@@ -191,453 +398,246 @@ export class ToolRegistry {
       ["icon", "image", "generator", "text", "asset", "creation"]
     ),
     new Tool(
+      "animation-generator",
+      "CSS Animation",
+      "Design and preview CSS animations and keyframes visually.",
+      Film,
+      "/tools/animation-generator",
+      ToolCategory.Generation,
+      ["css", "animation", "keyframes", "motion", "ui"]
+    ),
+    new Tool(
+      "gradient-generator",
+      "Gradient Studio",
+      "Create and copy CSS linear and radial gradients with live preview.",
+      Palette,
+      "/tools/gradient-generator",
+      ToolCategory.Generation,
+      ["css", "gradient", "color", "preview", "style"]
+    ),
+    new Tool(
       "box-shadow",
-      "Box Shadow",
-      "Interactive CSS box-shadow generator and preview.",
-      LayoutGrid,
+      "Shadow Designer",
+      "Visual designer for CSS box-shadows with multiple layer support.",
+      Layers,
       "/tools/box-shadow",
       ToolCategory.Generation,
-      ["style", "css", "visual", "ui", "design"]
+      ["css", "shadow", "depth", "visual", "ui"]
     ),
     new Tool(
-      "cron-parser",
-      "Cron Parser",
-      "Decode cron expressions into human-readable text.",
-      Clock,
-      "/tools/cron-parser",
-      ToolCategory.Utils,
-      ["schedule", "time", "job", "linux", "automation"]
-    ),
-    new Tool(
-      "password-strength",
-      "Strength Check",
-      "Analyze password strength and entropy.",
-      ShieldCheck,
-      "/tools/password-strength",
-      ToolCategory.Security,
-      ["auth", "entropy", ToolCategory.Security, "bits"]
-    ),
-    new Tool(
-      "markdown-html",
-      "MD to HTML",
-      "Convert Markdown content into clean, semantic HTML code.",
-      FileCode,
-      "/tools/markdown-html",
-      ToolCategory.Converters,
-      ["convert", "web", "rich-text", "blog", "md", "markdown"]
-    ),
-    new Tool(
-      "xml-json",
-      "XML to JSON",
-      "Convert between XML and JSON formats easily.",
-      FileType,
-      "/tools/xml-json",
-      ToolCategory.Converters,
-      ["soap", "rest", "parsing"]
-    ),
-    new Tool(
-      "json-formatter",
-      "JSON Formatter",
-      "Beautify and validate your JSON data with history support.",
-      FileJson,
-      "/tools/json-formatter",
-      ToolCategory.Formatting,
-      ["pretty", "lint", "validate", "history", "beautify", "json", "format"]
-    ),
-    new Tool(
-      "base64",
-      "Base64 Tool",
-      "Encode or decode strings to Base64 format.",
-      Hash,
-      "/tools/base64",
-      ToolCategory.Encoding,
-      ["encode", "decode", "binary", "data", "b64", "base64"]
-    ),
-    new Tool(
-      "url-encoder",
-      "URL Encoder",
-      "Encode or decode URL components safely.",
-      Link2,
-      "/tools/url-encoder",
-      ToolCategory.Encoding,
-      ["uri", "params", "query", "web"]
-    ),
-    new Tool(
-      "jwt-decoder",
-      "JWT Decoder",
-      "Decode and inspect JSON Web Tokens payloads.",
-      Code2,
-      "/tools/jwt-decoder",
-      ToolCategory.Security,
-      ["auth", "token", "payload", "header", "signature", "jwt", "json"]
-    ),
-    new Tool(
-      "uuid-generator",
-      "UUID Generator",
-      "Generate v4 UUIDs for your projects.",
-      Fingerprint,
-      "/tools/uuid-generator",
+      "theme-generator",
+      "Color Theme Generator",
+      "Generate accessible color palettes and themes for your applications.",
+      Paintbrush,
+      "/tools/theme-generator",
       ToolCategory.Generation,
-      ["guid", "id", "random", "unique", "uuid", "v4"]
-    ),
-    new Tool(
-      "http-status",
-      "HTTP Status",
-      "Explore HTTP status codes and their meanings.",
-      Globe,
-      "/tools/http-status",
-      ToolCategory.Utils,
-      ["error", "response", "codes", "lookup"]
-    ),
-    new Tool(
-      "csv-json",
-      "CSV to JSON",
-      "Convert CSV data to JSON objects and vice versa.",
-      FileSpreadsheet,
-      "/tools/csv-json",
-      ToolCategory.Converters,
-      ["excel", "export", "import", "data"]
-    ),
-    new Tool(
-      "yaml-json",
-      "YAML to JSON",
-      "Convert between YAML and JSON formats.",
-      FileType,
-      "/tools/yaml-json",
-      ToolCategory.Converters,
-      ["config", "docker", "parsing"]
-    ),
-    new Tool(
-      "password-gen",
-      "Password Generator",
-      "Create secure, random passwords instantly.",
-      Key,
-      "/tools/password-generator",
-      ToolCategory.Security,
-      ["random", "entropy", "privacy"]
-    ),
-    new Tool(
-      "lorem-ipsum",
-      "Lorem Ipsum",
-      "Generate placeholder text for your designs.",
-      AlignLeft,
-      "/tools/lorem-ipsum",
-      ToolCategory.Generation,
-      ["filler", "text", "mock", "dummy"]
-    ),
-    new Tool(
-      "time-converter",
-      "Time Converter",
-      "Format and convert between dates, timestamps, and various time formats.",
-      Clock,
-      "/tools/time-converter",
-      ToolCategory.Converters,
-      ["date", "timestamp", "unix", "epoch", "format"]
-    ),
-    new Tool(
-      "timezone",
-      "Timezone Converter",
-      "Convert and compare times across zones.",
-      Clock,
-      "/tools/timezone-converter",
-      ToolCategory.Utils,
-      ["world", "clock", "offset", "utc"]
-    ),
-    new Tool(
-      "hash-gen",
-      "Hash Generator",
-      "Generate MD5, SHA256 hashes for any text.",
-      ShieldCheck,
-      "/tools/hash-generator",
-      ToolCategory.Security,
-      ["crypto", "md5", "sha256", "integrity"]
-    ),
-    new Tool(
-      "bcrypt-gen",
-      "Bcrypt Generator",
-      "Securely hash passwords using Bcrypt algorithm.",
-      ShieldCheck,
-      "/tools/bcrypt-generator",
-      ToolCategory.Security,
-      ["hash", "crypto", "rounds", "auth"]
-    ),
-    new Tool(
-      "bcrypt-comp",
-      "Bcrypt Checker",
-      "Verify if a password matches a Bcrypt hash.",
-      ShieldCheck,
-      "/tools/bcrypt-comparator",
-      ToolCategory.Security,
-      ["compare", "verify", "auth"]
-    ),
-    new Tool(
-      "sql-formatter",
-      "SQL Formatter",
-      "Format and beautify your SQL queries.",
-      FileJson,
-      "/tools/sql-formatter",
-      ToolCategory.Formatting,
-      ["database", "postgres", "mysql", "pretty"]
-    ),
-    new Tool(
-      "regex-tester",
-      "Regex Tester",
-      "Test and debug regular expressions.",
-      Search,
-      "/tools/regex-tester",
-      ToolCategory.Utils,
-      ["match", "replace", "pattern", "expression"]
-    ),
-    new Tool(
-      "markdown-preview",
-      "Markdown Preview",
-      "Write and preview markdown in real-time.",
-      Eye,
-      "/tools/markdown-preview",
-      ToolCategory.Formatting,
-      ["live", "render", "gfm", "editor", "md", "markdown"]
+      ["theme", "color", "palette", "accessibility", "design"]
     ),
     new Tool(
       "color-picker",
       "Color Picker",
-      "Advanced color selector with HSL, RGB, and Hex support.",
-      Palette,
+      "Pick, convert, and contrast test colors for web and design.",
+      Pipette,
       "/tools/color-picker",
-      ToolCategory.Generation,
-      ["ui", "palette", "design", "hex", "rgb"]
+      ToolCategory.Utils,
+      ["color", "picker", "contrast", "convert", "hex", "rgb"]
     ),
     new Tool(
       "image-color-picker",
       "Image Color Picker",
-      "Extract colors and pick specific pixels from uploaded images.",
+      "Extract dominant colors and specific hex codes from uploaded images.",
       Pipette,
       "/tools/image-color-picker",
-      ToolCategory.Generation,
-      ["upload", "palette", "extraction"]
-    ),
-    new Tool(
-      "theme-generator",
-      "Theme Generator",
-      "Generate cohesive color themes and palettes from base colors.",
-      Layers,
-      "/tools/theme-generator",
-      ToolCategory.Generation,
-      ["shadcn", "sidebar", "layout", "visual"]
-    ),
-    new Tool(
-      "animation-generator",
-      "Animation Gen",
-      "Build CSS animations and keyframes with live previews.",
-      Film,
-      "/tools/animation-generator",
-      ToolCategory.Generation,
-      ["motion", "keyframes", "css", "transitions"]
-    ),
-    new Tool(
-      "gradient-generator",
-      "Gradient Gen",
-      "Design complex CSS gradients with multiple color stops.",
-      Paintbrush,
-      "/tools/gradient-generator",
-      ToolCategory.Generation,
-      ["radial", "linear", "style", "css"]
-    ),
-    new Tool(
-      "md-gdocs",
-      "Docs MD",
-      "Convert Markdown to Rich Text for Google Docs pasting.",
-      FileText,
-      "/tools/md-gdocs",
-      ToolCategory.Converters,
-      ["google", "docs", ToolCategory.Formatting, "rich-text", "md", "markdown"]
-    ),
-    new Tool(
-      "calculator",
-      "Calculator",
-      "Perform basic and scientific mathematical operations.",
-      Calculator,
-      "/tools/calculator",
       ToolCategory.Utils,
-      ["math", "sum", "scientific", "numbers"]
-    ),
-    new Tool(
-      "advanced-todos",
-      "Advanced Todos",
-      "Local-only project and todo workspace with IndexedDB persistence.",
-      ListTodo,
-      "/tools/advanced-todos",
-      ToolCategory.Utils,
-      ["projects", "tasks", "checklist", "indexeddb", "offline"]
-    ),
-    new Tool(
-      "distance-converter",
-      "Distance Conv",
-      "Convert between kilometers, miles, meters, and more.",
-      Ruler,
-      "/tools/distance-converter",
-      ToolCategory.Converters,
-      ["length", "units", "imperial", "metric"]
-    ),
-    new Tool(
-      "weight-converter",
-      "Weight Conv",
-      "Convert between kilograms, pounds, ounces, and grams.",
-      Scale,
-      "/tools/weight-converter",
-      ToolCategory.Converters,
-      ["mass", "units", "imperial", "metric"]
-    ),
-    new Tool(
-      "hmac-generator",
-      "HMAC Gen",
-      "Generate Hash-based Message Authentication Codes.",
-      ShieldPlus,
-      "/tools/hmac-generator",
-      ToolCategory.Security,
-      ["crypto", "token", "sha256", "signature"]
-    ),
-    new Tool(
-      "aes-tool",
-      "AES Tool",
-      "Encrypt and decrypt data using AES-256 algorithm.",
-      Lock,
-      "/tools/aes-tool",
-      ToolCategory.Security,
-      ["crypto", "encryption", "privacy", "secure"]
-    ),
-    new Tool(
-      "jwt-expiry",
-      "JWT Simulator",
-      "Simulate and check JWT token expiration states.",
-      Timer,
-      "/tools/jwt-expiry",
-      ToolCategory.Security,
-      ["auth", "token", "session", "expiration"]
-    ),
-    new Tool(
-      "password-policy",
-      "Policy Builder",
-      "Build and test enterprise-grade password policies.",
-      ShieldCheck,
-      "/tools/password-policy",
-      ToolCategory.Security,
-      ["auth", "validation", "requirements", "enterprise"]
-    ),
-    new Tool(
-      "psk-generator",
-      "PSK Generator",
-      "Generate secure Pre-Shared Keys for WPA/VPN/IPSec protocols.",
-      Key,
-      "/tools/psk-generator",
-      ToolCategory.Security,
-      ["wpa2", "wpa3", "vpn", "ipsec", "encryption", "wifi", "password", "key"]
-    ),
-    new Tool(
-      "json-duplicates",
-      "Duplicate Finder",
-      "Identify and remove duplicates from JSON arrays.",
-      CopyCheck,
-      "/tools/json-duplicates",
-      ToolCategory.Utils,
-      ["json", "duplicates", "cleaning", "unique", "dedupe", "array"]
-    ),
-    new Tool(
-      "deep-compare",
-      "Deep Compare",
-      "Deeply compare two JSON objects and find differences.",
-      Scaling,
-      "/tools/deep-compare",
-      ToolCategory.Diff,
-      ["comparison", ToolCategory.Diff, "deep", "json"]
-    ),
-    new Tool(
-      "json-flattener",
-      "JSON Flattener",
-      "Flatten and unflatten nested JSON objects.",
-      Minimize2,
-      "/tools/json-flattener",
-      ToolCategory.Converters,
-      ["flatten", "unflatten", "nested", "dot-notation"]
-    ),
-    new Tool(
-      "case-converter",
-      "Case Converter",
-      "Convert text between camel, snake, kebab, and pascal cases.",
-      Type,
-      "/tools/case-converter",
-      ToolCategory.Utils,
-      ["case", "string", "camel", "snake", "pascal"]
-    ),
-    new Tool(
-      "data-generator",
-      "Data Generator",
-      "Generate mock data like names, emails, and addresses.",
-      Dice5,
-      "/tools/data-generator",
-      ToolCategory.Generation,
-      ["mock", "faker", "random", "test-data", "fake", "dummy"]
-    ),
-    new Tool(
-      "shortcut-cheatsheet",
-      "Shortcuts",
-      "Keyboard shortcut cheat sheet for developers.",
-      Keyboard,
-      "/tools/shortcut-cheatsheet",
-      ToolCategory.Utils,
-      ["hotkeys", "keyboard", "productivity", "cheat-sheet"]
-    ),
-    new Tool(
-      "two-step-authenticator",
-      "Authenticator",
-      "Secure 2FA code generator with local encrypted storage.",
-      ShieldCheck,
-      "/tools/two-step-authenticator",
-      ToolCategory.Security,
-      ["2fa", "mfa", "totp", "otp", "security", "authenticator"]
+      ["image", "color", "picker", "extraction", "palette"]
     ),
     new Tool(
       "text-analyzer",
       "Text Analyzer",
-      "Real-time character, word, sentence, and paragraph counter with advanced filters.",
-      Type,
+      "Detailed statistics for text: word count, reading time, and more.",
+      AlignLeft,
       "/tools/text-analyzer",
       ToolCategory.Utils,
-      ["text", "counter", "words", "characters", "sentences", "paragraphs", "analysis"]
+      ["text", "analyze", "count", "stats", "reading-time"]
     ),
-    new_tool(
+    new Tool(
+      "case-converter",
+      "Case Converter",
+      "Switch between camelCase, snake_case, PascalCase, and more.",
+      Type,
+      "/tools/case-converter",
+      ToolCategory.Utils,
+      ["case", "convert", "camelCase", "snake_case", "text"]
+    ),
+    new Tool(
+      "regex-tester",
+      "Regex Tester",
+      "Test and debug regular expressions with live highlighting and groups.",
+      Code2,
+      "/tools/regex-tester",
+      ToolCategory.Utils,
+      ["regex", "test", "debug", "text", "pattern"]
+    ),
+    new Tool(
+      "cron-parser",
+      "Cron Parser",
+      "Decode cron expressions into human-readable text and next run times.",
+      Clock,
+      "/tools/cron-parser",
+      ToolCategory.Utils,
+      ["cron", "schedule", "parser", "human-readable"]
+    ),
+    new Tool(
+      "calculator",
+      "Dev Calculator",
+      "Standard and scientific calculator with programmer-focused features.",
+      Calculator,
+      "/tools/calculator",
+      ToolCategory.Utils,
+      ["calculator", "math", "programmer", "scientific"]
+    ),
+    new Tool(
+      "weight-converter",
+      "Weight Converter",
+      "Convert between metric and imperial weight units accurately.",
+      Scale,
+      "/tools/weight-converter",
+      ToolCategory.Converters,
+      ["weight", "convert", "mass", "units"]
+    ),
+    new Tool(
+      "distance-converter",
+      "Distance Converter",
+      "Transform lengths between various units like km, miles, and feet.",
+      Ruler,
+      "/tools/distance-converter",
+      ToolCategory.Converters,
+      ["distance", "convert", "length", "units"]
+    ),
+    new Tool(
+      "time-converter",
+      "Time Converter",
+      "Convert between various time formats and units effortlessly.",
+      Clock,
+      "/tools/time-converter",
+      ToolCategory.Converters,
+      ["time", "convert", "duration", "units"]
+    ),
+    new Tool(
+      "timestamp-diff",
+      "Timestamp Diff",
+      "Compare two timestamps and see the exact difference in multiple units.",
+      ArrowRightLeft,
+      "/tools/timestamp-diff",
+      ToolCategory.Converters,
+      ["timestamp", "diff", "compare", "time", "interval"]
+    ),
+    new Tool(
+      "timezone-converter",
+      "Timezone Converter",
+      "Convert times between different world timezones easily.",
+      Globe,
+      "/tools/timezone-converter",
+      ToolCategory.Converters,
+      ["timezone", "convert", "world-time", "units"]
+    ),
+    new Tool(
+      "markdown-preview",
+      "Markdown Preview",
+      "Real-time previewer for Markdown text with GFM support.",
+      Eye,
+      "/tools/markdown-preview",
+      ToolCategory.Utils,
+      ["markdown", "preview", "gfm", "viewer"]
+    ),
+    new Tool(
+      "markdown-html",
+      "Markdown to HTML",
+      "Convert Markdown strings to clean, semantic HTML code.",
+      Code2,
+      "/tools/markdown-html",
+      ToolCategory.Converters,
+      ["markdown", "html", "convert", "transform"]
+    ),
+    new Tool(
+      "text-pdf",
+      "Text to PDF",
+      "Generate clean PDF documents from plain text inputs.",
+      FileType,
+      "/tools/text-pdf",
+      ToolCategory.Converters,
+      ["text", "pdf", "convert", "transform"]
+    ),
+    new Tool(
       "md-pdf",
-      "MD to PDF",
-      "Convert Markdown documents into high-quality PDF files.",
+      "Markdown to PDF",
+      "Export your Markdown documents as professionally styled PDF files.",
       FileType,
       "/tools/md-pdf",
       ToolCategory.Converters,
-      ["convert", "export", "document", "md", "markdown", "pdf"]
+      ["markdown", "pdf", "convert", "transform"]
     ),
-    new_tool(
+    new Tool(
+      "md-gdocs",
+      "Markdown to GDocs",
+      "Optimize Markdown for pasting directly into Google Docs.",
+      FileText,
+      "/tools/md-gdocs",
+      ToolCategory.Converters,
+      ["markdown", "google-docs", "convert", "transform"]
+    ),
+    new Tool(
       "html-pdf",
       "HTML to PDF",
-      "Convert HTML code or snippets into portable PDF documents.",
-      FileCode,
+      "Render HTML strings or websites into high-quality PDF files.",
+      FileType,
       "/tools/html-pdf",
       ToolCategory.Converters,
-      ["web", "export", "rendering", "html", "pdf"]
+      ["html", "pdf", "convert", "transform"]
     ),
-    new_tool(
-      "text-pdf",
-      "Text to PDF",
-      "Convert plain text files or snippets into simple PDF documents.",
-      AlignLeft,
-      "/tools/text-pdf",
-      ToolCategory.Converters,
-      ["plain-text", "export", "note", "txt", "pdf"]
+    new Tool(
+      "http-status",
+      "HTTP Status Codes",
+      "Comprehensive directory of HTTP status codes and their meanings.",
+      Globe,
+      "/tools/http-status",
+      ToolCategory.Utils,
+      ["http", "status", "codes", "lookup"]
+    ),
+    new Tool(
+      "shortcut-cheatsheet",
+      "Shortcut Cheatsheet",
+      "Common development shortcuts for OS and popular IDEs.",
+      Keyboard,
+      "/tools/shortcut-cheatsheet",
+      ToolCategory.Utils,
+      ["shortcuts", "cheatsheet", "dev", "productivity"]
+    ),
+    new Tool(
+      "api-builder",
+      "API Builder",
+      "Visually design and prototype API endpoints and responses.",
+      Zap,
+      "/tools/api-builder",
+      ToolCategory.System,
+      ["api", "builder", "prototype", "design", "endpoint"]
+    ),
+    new Tool(
+      "advanced-todos",
+      "Dev Todo Board",
+      "Feature-rich todo manager with priority, labels, and local storage.",
+      ListTodo,
+      "/tools/advanced-todos",
+      ToolCategory.Utils,
+      ["todo", "tasks", "management", "productivity", "dev"]
     ),
     new Tool(
       "json-sorter",
       "JSON Sorter",
-      "Sort and visualize JSON object keys and array elements.",
+      "Sort JSON keys alphabetically or by length.",
       ListFilter,
       "/tools/json-sorter",
-      "formatters" as ToolCategory,
+      ToolCategory.Formatting,
       ["sort", "organize", "alphabetical", "visualize"]
     ),
   ];

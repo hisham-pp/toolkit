@@ -1,19 +1,15 @@
-import ToolLayout from "@/components/ToolLayout";
+import { Metadata } from "next";
 import { ToolRegistry } from "@/utility/constants/tools";
+import ToolLayout from "@/components/ToolLayout";
 
-export default function SSHConfigLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const tool = ToolRegistry.getById("server-configs");
+const tool = ToolRegistry.getById("server-configs")!;
 
-  return (
-    <ToolLayout
-      title={tool?.name || "Server Configs"}
-      description={tool?.description || "Manage and generate SSH server configurations."}
-    >
-      {children}
-    </ToolLayout>
-  );
+export const metadata: Metadata = {
+  title: tool.metaTitle,
+  description: tool.metaDescription,
+  keywords: tool.keywords,
+};
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <ToolLayout tool={tool}>{children}</ToolLayout>;
 }
