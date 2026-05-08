@@ -236,7 +236,7 @@ export default function ToolsDirectory() {
                                 <tool.icon className="w-6 h-6" />
                               </div>
                               <span className={cn(
-                                "text-[10px] sm:text-xs font-bold text-zinc-300 text-center tracking-tight group-hover:text-white truncate w-full",
+                                "text-[10px] sm:text-xs font-bold text-zinc-300 text-center tracking-tight group-hover:text-white truncate w-full px-1",
                                 isSelected && "text-white"
                               )}>
                                 {tool.name}
