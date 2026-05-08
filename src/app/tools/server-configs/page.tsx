@@ -371,7 +371,7 @@ ${config.sshKey ? `    # Note: SSH Key was provided in the tool` : ""}
       <div className={cn(
         viewMode === "grid" 
           ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          : "space-y-3"
+          : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
       )}>
         {filteredConfigs.length > 0 ? (
           filteredConfigs.map(config => viewMode === "grid" ? (
@@ -461,64 +461,49 @@ ${config.sshKey ? `    # Note: SSH Key was provided in the tool` : ""}
             <Card 
               key={config.id} 
               className={cn(
-                "p-4 bg-zinc-950/40 border-zinc-800 hover:border-primary/30 transition-all duration-300 rounded-2xl flex items-center justify-between group",
+                "p-3 bg-zinc-950/40 border-zinc-800 hover:border-primary/30 transition-all duration-300 rounded-2xl flex flex-col gap-3 group relative overflow-hidden",
                 !config.isActive && "opacity-60 grayscale-[0.5]"
               )}
             >
-              <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center gap-3">
                 <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center border transition-colors",
+                  "w-8 h-8 rounded-lg flex items-center justify-center border transition-colors shrink-0",
                   config.isActive ? "bg-zinc-900 text-primary border-zinc-800" : "bg-zinc-950 text-zinc-700 border-zinc-900"
                 )}>
-                  <Server className="w-5 h-5" />
+                  <Server className="w-4 h-4" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 flex-1">
-                  <div>
-                    <h3 className="font-bold text-zinc-100 text-sm leading-tight truncate max-w-[200px]">{config.name}</h3>
-                    {!config.isActive && <span className="text-[7px] font-black uppercase tracking-widest bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">Inactive</span>}
-                  </div>
-                  <div className="hidden md:block">
-                    <p className="text-xs text-zinc-500 font-mono truncate">{config.username}@{config.ip || config.domain}</p>
-                  </div>
-                  <div className="hidden lg:block text-right">
-                    <p className="text-xs text-zinc-400 font-mono">Port: {config.port}</p>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-zinc-100 text-xs leading-tight truncate">{config.name}</h3>
+                  <p className="text-[9px] text-zinc-600 font-mono truncate">{config.ip || config.domain}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
+              
+              <div className="flex gap-1.5 mt-auto">
+                <button 
                   onClick={() => copySSHCommand(config)}
-                  variant="outline"
-                  size="sm"
                   disabled={!config.isActive}
-                  className="rounded-lg h-9 px-3 border-zinc-800 hover:bg-zinc-900 text-[9px] font-bold uppercase tracking-wider hidden sm:flex"
+                  className="flex-1 h-8 bg-zinc-900 hover:bg-primary hover:text-primary-foreground disabled:opacity-50 disabled:hover:bg-zinc-900 disabled:hover:text-zinc-500 rounded-lg flex items-center justify-center transition-all"
+                  title="Copy Command"
                 >
-                  <Copy className="w-3 h-3 mr-2" />
-                  Copy
-                </Button>
-                <Button 
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+                <button 
                   onClick={() => handleEdit(config)}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-lg h-9 px-3 border-zinc-800 hover:bg-zinc-900 text-[9px] font-bold uppercase tracking-wider"
+                  className="flex-1 h-8 bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                  title="Edit Server"
                 >
-                  <Edit2 className="w-3 h-3 mr-2" />
-                  Edit
-                </Button>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                  <button 
-                    onClick={() => toggleActive(config)}
-                    className="p-2 text-zinc-500 hover:text-white transition-colors"
-                  >
-                    {config.isActive ? <PowerOff className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(config.id)}
-                    className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Hover Delete Action */}
+              <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                 <button 
+                  onClick={() => handleDelete(config.id)}
+                  className="p-1 text-zinc-700 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
               </div>
             </Card>
           ))
