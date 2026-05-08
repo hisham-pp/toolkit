@@ -405,7 +405,7 @@ export default function AuthenticatorPage() {
           <div className="bg-[#161618] border border-zinc-800 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh] scrollbar-hide">
             <button 
               onClick={() => setIsAdding(false)}
-              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors flex items-center justify-center p-1 rounded-lg hover:bg-zinc-800"
             >
               <X className="w-5 h-5" />
             </button>
@@ -584,19 +584,19 @@ export default function AuthenticatorPage() {
                   isExpiring ? "border-amber-500/20" : "hover:border-primary/30"
                 )}
               >
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex gap-4 items-center">
-                    <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-primary shadow-inner">
+                    <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-primary shadow-inner shrink-0">
                       {(() => {
                         const preset = SERVICE_PRESETS.find(p => p.name.toLowerCase() === auth.issuer.toLowerCase());
                         const Icon = preset?.icon || ShieldCheck;
                         return <Icon className="w-5 h-5" />;
                       })()}
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{auth.issuer}</h3>
-                        <div className="flex gap-1">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary truncate">{auth.issuer}</h3>
+                        <div className="flex gap-1 shrink-0">
                           {auth.algorithm && auth.algorithm !== OTPAlgorithm.SHA1 && (
                             <span className="text-[8px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-md font-bold uppercase">{auth.algorithm}</span>
                           )}
@@ -608,10 +608,10 @@ export default function AuthenticatorPage() {
                       <p className="text-sm font-bold text-zinc-300 truncate max-w-[150px]">{auth.account}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
                     <button 
                       onClick={() => startEditing(auth)}
-                      className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                      className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10 flex items-center justify-center"
                       title="Edit Account"
                     >
                       <Pencil className="w-4 h-4" />
@@ -619,7 +619,7 @@ export default function AuthenticatorPage() {
                     {auth.recoveryCode && (
                       <button 
                         onClick={() => setViewingRecoveryAuth(auth)}
-                        className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                        className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10 flex items-center justify-center"
                         title="View Recovery Codes"
                       >
                         <Shield className="w-4 h-4" />
@@ -627,7 +627,7 @@ export default function AuthenticatorPage() {
                     )}
                     <button 
                       onClick={() => handleDelete(auth.id)}
-                      className="p-2 text-zinc-600 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
+                      className="p-2 text-zinc-600 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10 flex items-center justify-center"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -639,10 +639,10 @@ export default function AuthenticatorPage() {
                     "flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden transition-all",
                     isExpiring && "border-amber-500/50 shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]"
                   )}>
-                    <div className="absolute left-4 z-20">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
                       <button 
                         onClick={() => toggleVisibility(auth.id)}
-                        className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                        className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10 flex items-center justify-center"
                         title={visibleCodes[auth.id] ? "Hide Code" : "Show Code"}
                       >
                         {visibleCodes[auth.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -715,7 +715,7 @@ export default function AuthenticatorPage() {
           <div className="bg-[#161618] border border-zinc-800 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh] scrollbar-hide">
             <button 
               onClick={() => setEditingAuth(null)}
-              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors flex items-center justify-center p-1 rounded-lg hover:bg-zinc-800"
             >
               <X className="w-5 h-5" />
             </button>
@@ -777,7 +777,7 @@ export default function AuthenticatorPage() {
           <div className="bg-[#161618] border border-zinc-800 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh] scrollbar-hide">
             <button 
               onClick={() => setViewingRecoveryAuth(null)}
-              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors"
+              className="absolute top-4 right-4 md:top-6 md:right-6 text-zinc-500 hover:text-white transition-colors flex items-center justify-center p-1 rounded-lg hover:bg-zinc-800"
             >
               <X className="w-5 h-5" />
             </button>
