@@ -79,6 +79,7 @@ export default function SettingsPage() {
   const [encryptionKey, setEncryptionKey] = useState("");
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const scannerAlignTimeoutRef = useRef<number | null>(null);
   const [pendingApproval, setPendingApproval] = useState(false);
   
   const [connectionLogs, setConnectionLogs] = useState<string[]>([]);
@@ -103,6 +104,10 @@ export default function SettingsPage() {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
+    if (scannerAlignTimeoutRef.current !== null) {
+      window.clearTimeout(scannerAlignTimeoutRef.current);
+      scannerAlignTimeoutRef.current = null;
+    }
     setSyncPhase("idle");
     setP2pRole(null);
     setLocalSdp("");
@@ -119,6 +124,9 @@ export default function SettingsPage() {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
       if (html5QrCodeRef.current?.isScanning) html5QrCodeRef.current.stop();
+      if (scannerAlignTimeoutRef.current !== null) {
+        window.clearTimeout(scannerAlignTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -226,6 +234,30 @@ export default function SettingsPage() {
     addLog(`Starting real-time signal listener for: ${targetTypes.join(", ")}`);
     const seenIds = new Set<string>();
 
+    const parseCachedMessages = (raw: string) => {
+      const trimmed = raw.trim();
+      if (!trimmed) return [];
+
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed;
+        return [parsed];
+      } catch {
+        return trimmed
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            try {
+              return JSON.parse(line);
+            } catch {
+              return null;
+            }
+          })
+          .filter((msg): msg is Record<string, any> => Boolean(msg));
+      }
+    };
+
     const processMessage = (msg: any) => {
       if (seenIds.has(msg.id)) return;
       seenIds.add(msg.id);
@@ -262,7 +294,8 @@ export default function SettingsPage() {
       try {
         addLog("Checking for cached signals...");
         const resp = await fetch(`${RELAY_URL}/${id}/json?poll=1`);
-        const messages = await resp.json();
+        const raw = await resp.text();
+        const messages = parseCachedMessages(raw);
         if (messages.length > 0) {
           addLog(`Found ${messages.length} cached messages`);
           messages.forEach(processMessage);
@@ -468,19 +501,42 @@ export default function SettingsPage() {
     const reader = document.getElementById("qr-reader");
     if (!reader) return;
 
+    const readerRect = reader.getBoundingClientRect();
+    if (!readerRect.width || !readerRect.height) return;
+
     reader.style.display = "flex";
     reader.style.alignItems = "center";
     reader.style.justifyContent = "center";
     reader.style.overflow = "hidden";
     reader.style.background = "#09090b";
+    reader.style.position = "absolute";
 
     const video = reader.querySelector("video");
     if (video) {
-      video.style.width = "100%";
-      video.style.height = "100%";
+      const videoWidth = video.videoWidth || 1280;
+      const videoHeight = video.videoHeight || 720;
+      const videoAspect = videoWidth / videoHeight;
+      const readerAspect = readerRect.width / readerRect.height;
+
+      let fittedWidth = readerRect.width;
+      let fittedHeight = readerRect.height;
+
+      if (videoAspect > readerAspect) {
+        fittedHeight = readerRect.height;
+        fittedWidth = fittedHeight * videoAspect;
+      } else {
+        fittedWidth = readerRect.width;
+        fittedHeight = fittedWidth / videoAspect;
+      }
+
+      video.style.position = "absolute";
+      video.style.top = "50%";
+      video.style.left = "50%";
+      video.style.width = `${fittedWidth}px`;
+      video.style.height = `${fittedHeight}px`;
       video.style.maxWidth = "none";
-      video.style.objectFit = "cover";
-      video.style.objectPosition = "center";
+      video.style.maxHeight = "none";
+      video.style.transform = "translate(-50%, -50%)";
       video.style.borderRadius = "inherit";
       video.style.display = "block";
       video.setAttribute("playsinline", "true");
@@ -489,7 +545,19 @@ export default function SettingsPage() {
     const shadedRegion = reader.querySelector("#qr-shaded-region") as HTMLDivElement | null;
     if (shadedRegion) {
       shadedRegion.style.inset = "0";
+      shadedRegion.style.position = "absolute";
     }
+  };
+
+  const scheduleScannerAlignment = (attempt = 0) => {
+    alignScannerPreview();
+    if (attempt >= 24) {
+      scannerAlignTimeoutRef.current = null;
+      return;
+    }
+    scannerAlignTimeoutRef.current = window.setTimeout(() => {
+      scheduleScannerAlignment(attempt + 1);
+    }, 120);
   };
 
   const startCamera = async () => {
@@ -517,7 +585,7 @@ export default function SettingsPage() {
         () => {}
       );
 
-      alignScannerPreview();
+      scheduleScannerAlignment();
     } catch (err) {
       console.error("Camera error", err);
       toast.error("Could not open camera. Try manual entry.");
