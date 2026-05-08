@@ -40,10 +40,8 @@ export default function SSHConfigPage() {
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(true);
   
-  // Encryption state - now defaults to the constant key
-  const [encryptionKey, setEncryptionKey] = useState(SSH_VAULT_KEY);
-  const [isLocked, setIsLocked] = useState(false);
-  const [hasStoredData, setHasStoredData] = useState(false);
+  // Encryption state - uses the constant key
+  const [encryptionKey] = useState(SSH_VAULT_KEY);
 
   const [formData, setFormData] = useState<Partial<SSHConfig>>({
     name: "",
@@ -59,9 +57,6 @@ export default function SSHConfigPage() {
   useEffect(() => {
     const saved = localStorage.getItem(SSH_CONFIGS_KEY);
     if (saved) {
-      setHasStoredData(true);
-      
-      // Try to decrypt with the constant key first
       try {
         const bytes = CryptoJS.AES.decrypt(saved, SSH_VAULT_KEY);
         const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
@@ -70,71 +65,25 @@ export default function SSHConfigPage() {
           const parsed = JSON.parse(decryptedData);
           if (Array.isArray(parsed)) {
             setConfigs(parsed);
-            setEncryptionKey(SSH_VAULT_KEY);
-            setIsLocked(false);
             return;
           }
         }
-      } catch (e) {
-        // Continue to check if it's unencrypted or using a custom key
-      }
 
-      // Try to see if it's unencrypted
-      try {
+        // Fallback for unencrypted data
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           setConfigs(parsed);
-          setIsLocked(false);
         }
       } catch (e) {
-        // Data is likely encrypted with a custom key
-        setIsLocked(true);
+        console.error("Failed to parse SSH configs", e);
       }
     }
   }, []);
 
-  const handleUnlock = () => {
-    if (!encryptionKey) {
-      toast.error("Please enter a decryption key");
-      return;
-    }
-
-    const saved = localStorage.getItem(SSH_CONFIGS_KEY);
-    if (!saved) {
-      setIsLocked(false);
-      return;
-    }
-
-    try {
-      const bytes = CryptoJS.AES.decrypt(saved, encryptionKey);
-      const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
-      
-      if (!decryptedData) {
-        throw new Error("Invalid key");
-      }
-
-      const parsed = JSON.parse(decryptedData);
-      if (Array.isArray(parsed)) {
-        setConfigs(parsed);
-        setIsLocked(false);
-        toast.success("Vault unlocked successfully");
-      } else {
-        throw new Error("Invalid data format");
-      }
-    } catch (e) {
-      toast.error("Invalid decryption key or corrupted data");
-    }
-  };
-
   const saveConfigs = (newConfigs: SSHConfig[]) => {
     setConfigs(newConfigs);
-    
-    // Always encrypt, even if using the constant key
-    const keyToUse = encryptionKey || SSH_VAULT_KEY;
-    const encrypted = CryptoJS.AES.encrypt(JSON.stringify(newConfigs), keyToUse).toString();
+    const encrypted = CryptoJS.AES.encrypt(JSON.stringify(newConfigs), SSH_VAULT_KEY).toString();
     localStorage.setItem(SSH_CONFIGS_KEY, encrypted);
-    
-    setHasStoredData(newConfigs.length > 0);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -154,7 +103,7 @@ export default function SSHConfigPage() {
     } else {
       const newConfig: SSHConfig = {
         ...formData as SSHConfig,
-        id: formData.id || Math.random().toString(36).substring(7),
+        id: Math.random().toString(36).substring(7),
         isActive: formData.isActive ?? true,
         createdAt: Date.now()
       } as SSHConfig;
@@ -234,75 +183,8 @@ ${config.sshKey ? `    # Note: SSH Private Key included below\n    IdentityFile 
     return matchesSearch && matchesFilter;
   });
 
-  if (isLocked && hasStoredData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] max-w-md mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
-        <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-2xl shadow-primary/20">
-          <Lock className="w-10 h-10" />
-        </div>
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-white">Vault Locked</h2>
-          <p className="text-zinc-500 text-sm">Enter your custom secret key to decrypt and access your server configurations.</p>
-        </div>
-        <div className="w-full space-y-4">
-          <M3Password 
-            label="Secret Key"
-            placeholder="Enter key to unlock..."
-            value={encryptionKey === SSH_VAULT_KEY ? "" : encryptionKey}
-            onChange={(e) => setEncryptionKey(e.target.value)}
-          />
-          <Button 
-            onClick={handleUnlock}
-            className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold uppercase tracking-widest"
-          >
-            Unlock Vault
-          </Button>
-        </div>
-        <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex gap-3 items-start">
-          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-          <p className="text-[10px] text-amber-500/80 leading-relaxed uppercase tracking-wider font-bold">
-            If you lose your custom secret key, the data cannot be recovered.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Encryption Header */}
-      <Card className="p-4 bg-zinc-900/30 border-zinc-800 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            "p-2 rounded-xl flex items-center justify-center",
-            encryptionKey ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
-          )}>
-            {encryptionKey ? <Shield className="w-5 h-5" /> : <Shield className="w-5 h-5 opacity-50" />}
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-widest">Storage Status</h4>
-            <p className="text-[10px] text-zinc-500 font-medium">
-              {encryptionKey === SSH_VAULT_KEY ? "Default Encryption Active" : "Custom AES-256 Encryption Active"}
-            </p>
-          </div>
-        </div>
-        <div className="flex-1 max-w-xs w-full">
-          <M3Password 
-            label={encryptionKey === SSH_VAULT_KEY ? "Set Custom Key (Optional)" : "Custom Secret Key"}
-            placeholder="Set Secret Key..."
-            value={encryptionKey === SSH_VAULT_KEY ? "" : encryptionKey}
-            onChange={(e) => {
-              const newKey = e.target.value || SSH_VAULT_KEY;
-              setEncryptionKey(newKey);
-              if (configs.length > 0) {
-                 const encrypted = CryptoJS.AES.encrypt(JSON.stringify(configs), newKey).toString();
-                 localStorage.setItem(SSH_CONFIGS_KEY, encrypted);
-              }
-            }}
-          />
-        </div>
-      </Card>
-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -412,14 +294,6 @@ ${config.sshKey ? `    # Note: SSH Key was provided in the tool` : ""}
                 value={formData.port}
                 onChange={e => setFormData({ ...formData, port: parseInt(e.target.value) || 22 })}
                 icon={<Terminal className="w-4 h-4" />}
-              />
-              <M3Input 
-                label="Unique Key / ID"
-                placeholder="custom-key-123"
-                value={formData.id || ""}
-                disabled={!!editingId}
-                onChange={e => setFormData({ ...formData, id: e.target.value })}
-                icon={<KeyIcon className="w-4 h-4" />}
               />
             </div>
             
