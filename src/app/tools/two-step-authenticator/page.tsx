@@ -25,7 +25,9 @@ import {
   Triangle,
   Filter,
   Shield,
-  Pencil
+  Pencil,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -62,6 +64,12 @@ export default function AuthenticatorPage() {
   const [editIssuer, setEditIssuer] = useState("");
   const [editAccount, setEditAccount] = useState("");
   const [editRecoveryCode, setEditRecoveryCode] = useState("");
+
+  const [visibleCodes, setVisibleCodes] = useState<Record<string, boolean>>({});
+
+  const toggleVisibility = (id: string) => {
+    setVisibleCodes(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const handleUpdate = () => {
     if (!editingAuth) return;
@@ -631,19 +639,36 @@ export default function AuthenticatorPage() {
                     "flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden transition-all",
                     isExpiring && "border-amber-500/50 shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]"
                   )}>
+                    <div className="absolute left-4 z-20">
+                      <button 
+                        onClick={() => toggleVisibility(auth.id)}
+                        className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                        title={visibleCodes[auth.id] ? "Hide Code" : "Show Code"}
+                      >
+                        {visibleCodes[auth.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
                     <AnimatePresence mode="wait">
                       <motion.span 
-                        key={code}
+                        key={`${auth.id}-${visibleCodes[auth.id] ? code : 'hidden'}`}
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: -10, opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         className={cn(
                           "text-3xl font-black tracking-[0.2em] font-mono transition-colors relative z-10",
-                          isExpiring ? "text-amber-500" : "text-white"
+                          isExpiring ? "text-amber-500" : "text-white",
+                          !visibleCodes[auth.id] && "blur-md select-none opacity-40"
                         )}
                       >
-                        {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
+                        {visibleCodes[auth.id] ? (
+                          <>
+                            {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
+                          </>
+                        ) : (
+                          "••••••"
+                        )}
                       </motion.span>
                     </AnimatePresence>
                     <div className="absolute inset-0 bg-primary opacity-0 group-hover/code:opacity-5 transition-opacity" />
@@ -660,6 +685,7 @@ export default function AuthenticatorPage() {
                   <button 
                     onClick={() => copyCode(code)}
                     className="h-14 w-14 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-primary hover:border-primary/50 transition-all shadow-inner"
+                    title="Copy Code"
                   >
                     <Copy className="w-5 h-5" />
                   </button>
