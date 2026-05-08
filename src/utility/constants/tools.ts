@@ -83,6 +83,15 @@ export class ToolRegistry {
       ["api", "flow", "sequence", "mermaid", "tracing", "mapping"]
     ),
     new Tool(
+      "server-configs",
+      "Server Configs",
+      "Manage SSH server configurations, generate connection commands and download config files.",
+      Server,
+      "/tools/server-configs",
+      ToolCategory.System,
+      ["ssh", "server", "config", "remote", "terminal", "connection"]
+    ),
+    new Tool(
       "microservices",
       "Service Dependency Mapper",
       "Visualize dependencies and interactions between microservices.",
