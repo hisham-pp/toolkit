@@ -219,24 +219,24 @@ export default function ToolsDirectory() {
                       
                       return (
                         <Tooltip key={tool.id}>
-                          <TooltipTrigger>
+                          <TooltipTrigger asChild>
                             <Link 
                               id={`tool-${currentToolIndex}`}
                               href={tool.route} 
                               className={cn(
-                                "group relative flex flex-col items-center justify-center p-6 bg-[#161618]/30 border border-zinc-800/50 rounded-2xl transition-all hover:bg-[#1C1C1E] hover:border-primary/30 hover:-translate-y-1 block",
+                                "group relative flex flex-col items-center justify-center p-6 bg-[#161618]/30 border border-zinc-800/50 rounded-2xl transition-all hover:bg-[#1C1C1E] hover:border-primary/30 hover:-translate-y-1 overflow-hidden",
                                 isSelected && "ring-2 ring-primary bg-[#1C1C1E] border-primary/30 -translate-y-1"
                               )}
                             >
 
                               <div className={cn(
-                                "p-3 bg-zinc-900 rounded-xl mb-3 text-zinc-500 group-hover:text-primary transition-colors border border-zinc-800 group-hover:scale-110 duration-300",
+                                "p-3 bg-zinc-900 rounded-xl mb-3 text-zinc-500 group-hover:text-primary transition-colors border border-zinc-800 group-hover:scale-110 duration-300 shrink-0",
                                 isSelected && "text-primary scale-110"
                               )}>
                                 <tool.icon className="w-6 h-6" />
                               </div>
                               <span className={cn(
-                                "text-[10px] sm:text-xs font-bold text-zinc-300 text-center tracking-tight group-hover:text-white truncate w-full px-1",
+                                "text-[10px] sm:text-xs font-bold text-zinc-300 text-center tracking-tight group-hover:text-white line-clamp-2 w-full px-1 min-h-[2.5em] flex items-center justify-center",
                                 isSelected && "text-white"
                               )}>
                                 {tool.name}
