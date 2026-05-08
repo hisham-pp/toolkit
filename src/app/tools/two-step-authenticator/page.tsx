@@ -24,8 +24,10 @@ import {
   MessageSquare,
   Triangle,
   Filter,
-  Shield
+  Shield,
+  Pencil
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { M3Input, M3Select, M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
@@ -55,6 +57,36 @@ export default function AuthenticatorPage() {
   const [timeLeft, setTimeLeft] = useState(30 - (Math.floor(Date.now() / 1000) % 30));
   const [importUri, setImportUri] = useState("");
   const [viewingRecoveryAuth, setViewingRecoveryAuth] = useState<Authenticator | null>(null);
+  const [editingAuth, setEditingAuth] = useState<Authenticator | null>(null);
+
+  const [editIssuer, setEditIssuer] = useState("");
+  const [editAccount, setEditAccount] = useState("");
+  const [editRecoveryCode, setEditRecoveryCode] = useState("");
+
+  const handleUpdate = () => {
+    if (!editingAuth) return;
+    
+    const updated = authenticators.map(a => 
+      a.id === editingAuth.id ? { 
+        ...a, 
+        issuer: editIssuer || "Unknown", 
+        account: editAccount || "Unknown",
+        recoveryCode: editRecoveryCode.trim() || undefined
+      } : a
+    );
+    
+    setAuthenticators(updated);
+    saveAuthenticators(updated);
+    setEditingAuth(null);
+    toast.success("Account updated successfully");
+  };
+
+  const startEditing = (auth: Authenticator) => {
+    setEditingAuth(auth);
+    setEditIssuer(auth.issuer);
+    setEditAccount(auth.account);
+    setEditRecoveryCode(auth.recoveryCode || "");
+  };
 
   const handleServiceChange = (serviceName: string) => {
     const preset = SERVICE_PRESETS.find(p => p.name === serviceName) || SERVICE_PRESETS[0];
@@ -569,6 +601,13 @@ export default function AuthenticatorPage() {
                     </div>
                   </div>
                   <div className="flex gap-1">
+                    <button 
+                      onClick={() => startEditing(auth)}
+                      className="p-2 text-zinc-600 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                      title="Edit Account"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     {auth.recoveryCode && (
                       <button 
                         onClick={() => setViewingRecoveryAuth(auth)}
@@ -590,15 +629,32 @@ export default function AuthenticatorPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div className={cn(
                     "flex-1 bg-zinc-950 border border-zinc-900 rounded-2xl p-4 flex items-center justify-center gap-4 relative group/code overflow-hidden transition-all",
-                    isExpiring && "animate-pulse"
+                    isExpiring && "border-amber-500/50 shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]"
                   )}>
-                    <span className={cn(
-                      "text-3xl font-black tracking-[0.2em] font-mono transition-colors",
-                      isExpiring ? "text-amber-500" : "text-white"
-                    )}>
-                      {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
-                    </span>
+                    <AnimatePresence mode="wait">
+                      <motion.span 
+                        key={code}
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -10, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className={cn(
+                          "text-3xl font-black tracking-[0.2em] font-mono transition-colors relative z-10",
+                          isExpiring ? "text-amber-500" : "text-white"
+                        )}
+                      >
+                        {code.substring(0, Math.floor(code.length / 2))} {code.substring(Math.floor(code.length / 2))}
+                      </motion.span>
+                    </AnimatePresence>
                     <div className="absolute inset-0 bg-primary opacity-0 group-hover/code:opacity-5 transition-opacity" />
+                    {isExpiring && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0, 0.05, 0] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                        className="absolute inset-0 bg-amber-500"
+                      />
+                    )}
                   </div>
                   
                   <button 
@@ -609,19 +665,83 @@ export default function AuthenticatorPage() {
                   </button>
                 </div>
 
-                {/* Individual Progress Bar */}
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-zinc-900">
-                  <div 
-                    className={cn(
-                      "h-full transition-all duration-1000 ease-linear",
-                      isExpiring ? "bg-amber-500" : "bg-primary"
-                    )}
-                    style={{ width: `${(authTimeLeft / auth.period) * 100}%` }}
+                {/* Animated Progress Bar */}
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-zinc-900 overflow-hidden">
+                  <motion.div 
+                    initial={false}
+                    animate={{ 
+                      width: `${(authTimeLeft / auth.period) * 100}%`,
+                      backgroundColor: isExpiring ? "#f59e0b" : "#6366f1"
+                    }}
+                    transition={{ duration: 1, ease: "linear" }}
+                    className="h-full"
                   />
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Edit Account Overlay */}
+      {editingAuth && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] w-full max-w-md p-8 space-y-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <button 
+              onClick={() => setEditingAuth(null)}
+              className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-2 text-center">
+              <h2 className="text-2xl font-black uppercase tracking-[0.2em] text-white italic">Edit Account</h2>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Update account details</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <M3Input 
+                  label="Service Name"
+                  placeholder="e.g. Google, GitHub..."
+                  value={editIssuer}
+                  onChange={(e) => setEditIssuer(e.target.value)}
+                  icon={<Globe className="w-4 h-4" />}
+                />
+                <M3Input 
+                  label="Account Email / Name"
+                  placeholder="e.g. user@example.com"
+                  value={editAccount}
+                  onChange={(e) => setEditAccount(e.target.value)}
+                  icon={<Mail className="w-4 h-4" />}
+                />
+                <M3Textarea 
+                  label="Recovery Codes (Optional)"
+                  placeholder="Paste backup codes..."
+                  value={editRecoveryCode}
+                  onChange={(e) => setEditRecoveryCode(e.target.value)}
+                  rows={3}
+                  className="min-h-[100px] text-xs font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button 
+                onClick={handleUpdate}
+                className="flex-1 h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+              >
+                Update Account
+              </Button>
+              <Button 
+                onClick={() => setEditingAuth(null)}
+                variant="outline"
+                className="h-14 px-6 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-white transition-all"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -676,5 +796,5 @@ export default function AuthenticatorPage() {
       </div>
     </div>
   );
-}
 
+}
