@@ -64,6 +64,14 @@ type SenderDevice = {
 const RELAY_URL = "https://ntfy.sh";
 const SYNC_SESSION_META_KEY = "toolkit-sync-session-meta";
 const LIVE_SYNC_INTERVAL_MS = 3000;
+const AUTO_RECONNECT_MAX_AGE_MS = 1000 * 60 * 30;
+const persistentSyncRuntime = {
+  peer: null as any,
+  senderPeers: new Map<string, any>(),
+  signalListenerCleanup: null as (() => void) | null,
+  syncInterval: null as number | null,
+  lastSyncedHash: "",
+};
 
 export default function SettingsPage() {
   const [PeerConstructor, setPeerConstructor] = useState<any>(null);
@@ -76,13 +84,33 @@ export default function SettingsPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const saved = localStorage.getItem(SYNC_SESSION_META_KEY);
+      if (!saved) return;
+
+      const meta = JSON.parse(saved);
+      restoredSessionRef.current = meta;
+      if (meta?.signalId) setSignalId(meta.signalId);
+      if (meta?.encryptionKey) setEncryptionKey(meta.encryptionKey);
+      if (meta?.role) setP2pRole(meta.role);
+      if (meta?.syncPhase) setSyncPhase(meta.syncPhase);
+      if (meta?.receiverDeviceId) setReceiverDeviceId(meta.receiverDeviceId);
+      if (Array.isArray(meta?.senderDevices)) setSenderDevices(meta.senderDevices);
+      if (persistentSyncRuntime.peer) setPeer(persistentSyncRuntime.peer);
+    } catch (err) {
+      console.error("Failed to restore sync session metadata", err);
+    }
+  }, []);
+
   const [syncPhase, setSyncPhase] = useState<SyncPhase>("idle");
   const [p2pRole, setP2pRole] = useState<"sender" | "receiver" | null>(null);
   const [localSdp, setLocalSdp] = useState("");
   const [remoteSdp, setRemoteSdp] = useState("");
   const [manualPairingString, setManualPairingString] = useState("");
-  const [peer, setPeer] = useState<any>(null);
-  const senderPeersRef = useRef<Map<string, any>>(new Map());
+  const [peer, setPeer] = useState<any>(persistentSyncRuntime.peer);
   const [senderDevices, setSenderDevices] = useState<SenderDevice[]>([]);
   const [receiverDeviceId, setReceiverDeviceId] = useState("");
   const [isManual, setIsManual] = useState(false);
@@ -93,11 +121,10 @@ export default function SettingsPage() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const scannerAlignTimeoutRef = useRef<number | null>(null);
-  const signalListenerCleanupRef = useRef<(() => void) | null>(null);
-  const syncIntervalRef = useRef<number | null>(null);
-  const lastSyncedHashRef = useRef("");
   
   const [connectionLogs, setConnectionLogs] = useState<string[]>([]);
+  const restoredSessionRef = useRef<any>(null);
+  const hasAutoReconnectAttemptedRef = useRef(false);
   const addLog = useCallback((msg: string) => {
     console.log(`[P2P Sync] ${msg}`);
     setConnectionLogs(prev => [...prev.slice(-4), msg]);
@@ -105,11 +132,12 @@ export default function SettingsPage() {
 
   const cleanupSync = useCallback(() => {
     addLog("Cleaning up sync session...");
-    if (peer) {
-      peer.destroy();
+    if (persistentSyncRuntime.peer) {
+      persistentSyncRuntime.peer.destroy();
     }
-    senderPeersRef.current.forEach((senderPeer) => senderPeer.destroy());
-    senderPeersRef.current.clear();
+    persistentSyncRuntime.senderPeers.forEach((senderPeer) => senderPeer.destroy());
+    persistentSyncRuntime.senderPeers.clear();
+    persistentSyncRuntime.peer = null;
     setPeer(null);
     if (html5QrCodeRef.current) {
       if (html5QrCodeRef.current.isScanning) {
@@ -125,15 +153,15 @@ export default function SettingsPage() {
       window.clearTimeout(scannerAlignTimeoutRef.current);
       scannerAlignTimeoutRef.current = null;
     }
-    if (signalListenerCleanupRef.current) {
-      signalListenerCleanupRef.current();
-      signalListenerCleanupRef.current = null;
+    if (persistentSyncRuntime.signalListenerCleanup) {
+      persistentSyncRuntime.signalListenerCleanup();
+      persistentSyncRuntime.signalListenerCleanup = null;
     }
-    if (syncIntervalRef.current !== null) {
-      window.clearInterval(syncIntervalRef.current);
-      syncIntervalRef.current = null;
+    if (persistentSyncRuntime.syncInterval !== null) {
+      window.clearInterval(persistentSyncRuntime.syncInterval);
+      persistentSyncRuntime.syncInterval = null;
     }
-    lastSyncedHashRef.current = "";
+    persistentSyncRuntime.lastSyncedHash = "";
     setSyncPhase("idle");
     setP2pRole(null);
     setLocalSdp("");
@@ -154,13 +182,6 @@ export default function SettingsPage() {
       if (scannerAlignTimeoutRef.current !== null) {
         window.clearTimeout(scannerAlignTimeoutRef.current);
       }
-      if (signalListenerCleanupRef.current) {
-        signalListenerCleanupRef.current();
-      }
-      if (syncIntervalRef.current !== null) {
-        window.clearInterval(syncIntervalRef.current);
-      }
-      senderPeersRef.current.forEach((senderPeer) => senderPeer.destroy());
     };
   }, []);
 
@@ -277,12 +298,12 @@ export default function SettingsPage() {
 
   const applyIncomingSyncPayload = useCallback(async (payload: any, hash?: string) => {
     const resolvedHash = hash || computeSyncHash(payload);
-    if (resolvedHash === lastSyncedHashRef.current) {
+    if (resolvedHash === persistentSyncRuntime.lastSyncedHash) {
       return false;
     }
 
     await mergeData(payload);
-    lastSyncedHashRef.current = resolvedHash;
+    persistentSyncRuntime.lastSyncedHash = resolvedHash;
     return true;
   }, [computeSyncHash, mergeData]);
 
@@ -321,10 +342,10 @@ export default function SettingsPage() {
   }, []);
 
   const removeSenderPeer = useCallback((receiverId: string) => {
-    const senderPeer = senderPeersRef.current.get(receiverId);
+    const senderPeer = persistentSyncRuntime.senderPeers.get(receiverId);
     if (senderPeer) {
       senderPeer.destroy();
-      senderPeersRef.current.delete(receiverId);
+      persistentSyncRuntime.senderPeers.delete(receiverId);
     }
   }, []);
 
@@ -336,13 +357,13 @@ export default function SettingsPage() {
       hash,
       originId,
     }));
-    lastSyncedHashRef.current = hash;
+    persistentSyncRuntime.lastSyncedHash = hash;
     return hash;
   }, [computeSyncHash]);
 
   const broadcastLiveSyncToPeers = useCallback((payload: any, originId: string, excludeDeviceId?: string) => {
     const hash = computeSyncHash(payload);
-    senderPeersRef.current.forEach((targetPeer, deviceId) => {
+    persistentSyncRuntime.senderPeers.forEach((targetPeer, deviceId) => {
       if (excludeDeviceId && deviceId === excludeDeviceId) return;
       try {
         targetPeer.send(JSON.stringify({
@@ -355,7 +376,7 @@ export default function SettingsPage() {
         addLog(`Failed to broadcast state to ${deviceId.slice(0, 8)}...`);
       }
     });
-    lastSyncedHashRef.current = hash;
+    persistentSyncRuntime.lastSyncedHash = hash;
     return hash;
   }, [addLog, computeSyncHash]);
 
@@ -468,7 +489,7 @@ export default function SettingsPage() {
   };
 
   const createSenderPeer = useCallback(async (receiverId: string, sId: string, eKey: string) => {
-    if (!PeerConstructor || senderPeersRef.current.has(receiverId)) return;
+    if (!PeerConstructor || persistentSyncRuntime.senderPeers.has(receiverId)) return;
 
     updateSenderDevice(receiverId, { status: "joined" });
     const newPeer = new PeerConstructor({
@@ -477,7 +498,7 @@ export default function SettingsPage() {
       config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
     });
 
-    senderPeersRef.current.set(receiverId, newPeer);
+    persistentSyncRuntime.senderPeers.set(receiverId, newPeer);
 
     newPeer.on("signal", (data: any) => {
       addLog(`Offer generated for device ${receiverId.slice(0, 8)}...`);
@@ -508,7 +529,7 @@ export default function SettingsPage() {
 
     newPeer.on("close", () => {
       updateSenderDevice(receiverId, { status: "disconnected" });
-      senderPeersRef.current.delete(receiverId);
+      persistentSyncRuntime.senderPeers.delete(receiverId);
     });
 
     newPeer.on("error", (err: any) => {
@@ -537,10 +558,10 @@ export default function SettingsPage() {
     setEncryptionKey(eKey);
 
     if (role === "sender") {
-      if (signalListenerCleanupRef.current) {
-        signalListenerCleanupRef.current();
+      if (persistentSyncRuntime.signalListenerCleanup) {
+        persistentSyncRuntime.signalListenerCleanup();
       }
-      signalListenerCleanupRef.current = pollForSignal(sId, eKey, ["JOIN", "ANSWER", "REJECT", "DISCONNECT"], async ({ type, sdp, receiverId }) => {
+      persistentSyncRuntime.signalListenerCleanup = pollForSignal(sId, eKey, ["JOIN", "ANSWER", "REJECT", "DISCONNECT"], async ({ type, sdp, receiverId }) => {
         if (!receiverId) return;
 
         if (type === "JOIN") {
@@ -573,7 +594,7 @@ export default function SettingsPage() {
   };
 
   const handleSenderApproval = (deviceId: string) => {
-    const senderPeer = senderPeersRef.current.get(deviceId);
+    const senderPeer = persistentSyncRuntime.senderPeers.get(deviceId);
     const device = senderDevices.find((entry) => entry.id === deviceId);
     if (!senderPeer || !device?.remoteSdp || !signalId || !encryptionKey) return;
 
@@ -626,8 +647,8 @@ export default function SettingsPage() {
       sendSignal(sId, eKey, "ANSWER", ansSdpStr, receiverDeviceId);
       
       setSyncPhase("connecting");
-      if (signalListenerCleanupRef.current) {
-        signalListenerCleanupRef.current();
+      if (persistentSyncRuntime.signalListenerCleanup) {
+        persistentSyncRuntime.signalListenerCleanup();
       }
       cleanupListener = pollForSignal(sId, eKey, ["APPROVE", "REJECT", "DISCONNECT"], ({ type }) => {
         if (type === "REJECT") {
@@ -642,7 +663,7 @@ export default function SettingsPage() {
         }
         if (cleanupListener) cleanupListener();
       });
-      signalListenerCleanupRef.current = cleanupListener;
+      persistentSyncRuntime.signalListenerCleanup = cleanupListener;
     });
 
     newPeer.on("data", async (msgData: any) => {
@@ -680,6 +701,7 @@ export default function SettingsPage() {
       return;
     }
 
+    persistentSyncRuntime.peer = newPeer;
     setPeer(newPeer);
   };
 
@@ -699,10 +721,10 @@ export default function SettingsPage() {
     setSyncPhase("connecting");
 
     sendSignal(sId, eKey, "JOIN", undefined, localReceiverId);
-    if (signalListenerCleanupRef.current) {
-      signalListenerCleanupRef.current();
+    if (persistentSyncRuntime.signalListenerCleanup) {
+      persistentSyncRuntime.signalListenerCleanup();
     }
-    signalListenerCleanupRef.current = pollForSignal(sId, eKey, ["OFFER", "REJECT", "DISCONNECT"], ({ type, sdp: offerSdp }) => {
+    persistentSyncRuntime.signalListenerCleanup = pollForSignal(sId, eKey, ["OFFER", "REJECT", "DISCONNECT"], ({ type, sdp: offerSdp }) => {
       if (type === "REJECT") {
         addLog("Sync session was rejected.");
         cleanupSync();
@@ -727,6 +749,111 @@ export default function SettingsPage() {
     cleanupSync();
   };
 
+  const resumeSenderSession = useCallback((sId: string, eKey: string, savedDevices: SenderDevice[] = []) => {
+    addLog("Restoring sender relay session after reload...");
+    setP2pRole("sender");
+    setSignalId(sId);
+    setEncryptionKey(eKey);
+    setSyncPhase(savedDevices.some((device) => device.status === "connected") ? "connected" : "pairing");
+    setSenderDevices(savedDevices.map((device) => ({
+      ...device,
+      status: device.status === "connected" ? "disconnected" : device.status,
+    })));
+
+    if (persistentSyncRuntime.signalListenerCleanup) {
+      persistentSyncRuntime.signalListenerCleanup();
+    }
+    persistentSyncRuntime.signalListenerCleanup = pollForSignal(
+      sId,
+      eKey,
+      ["JOIN", "ANSWER", "REJECT", "DISCONNECT"],
+      async ({ type, sdp, receiverId }) => {
+        if (!receiverId) return;
+
+        if (type === "JOIN") {
+          addLog(`Join received from ${receiverId.slice(0, 8)}...`);
+          updateSenderDevice(receiverId, { status: "joined" });
+          await createSenderPeer(receiverId, sId, eKey);
+          return;
+        }
+
+        if (type === "ANSWER") {
+          addLog(`Answer received from ${receiverId.slice(0, 8)}...`);
+          updateSenderDevice(receiverId, { status: "awaiting_approval", remoteSdp: sdp });
+          return;
+        }
+
+        if (type === "REJECT") {
+          addLog(`Device ${receiverId.slice(0, 8)} rejected the connection.`);
+          updateSenderDevice(receiverId, { status: "rejected" });
+          removeSenderPeer(receiverId);
+          return;
+        }
+
+        if (type === "DISCONNECT") {
+          addLog(`Device ${receiverId.slice(0, 8)} disconnected.`);
+          updateSenderDevice(receiverId, { status: "disconnected" });
+          removeSenderPeer(receiverId);
+        }
+      },
+    );
+  }, [addLog, createSenderPeer, pollForSignal, removeSenderPeer, updateSenderDevice]);
+
+  const resumeReceiverSession = useCallback((sId: string, eKey: string, deviceId: string) => {
+    addLog("Restoring receiver session after reload...");
+    setP2pRole("receiver");
+    setSignalId(sId);
+    setEncryptionKey(eKey);
+    setReceiverDeviceId(deviceId);
+    setSyncPhase("connecting");
+
+    sendSignal(sId, eKey, "JOIN", undefined, deviceId);
+    if (persistentSyncRuntime.signalListenerCleanup) {
+      persistentSyncRuntime.signalListenerCleanup();
+    }
+    persistentSyncRuntime.signalListenerCleanup = pollForSignal(
+      sId,
+      eKey,
+      ["OFFER", "REJECT", "DISCONNECT"],
+      ({ type, sdp: offerSdp }) => {
+        if (type === "REJECT") {
+          addLog("Sync session was rejected.");
+          cleanupSync();
+          return;
+        }
+        if (type === "DISCONNECT") {
+          addLog("Source device disconnected.");
+          cleanupSync();
+          return;
+        }
+        addLog("Offer received from source device.");
+        setRemoteSdp(offerSdp!);
+        setSyncPhase("confirming");
+      },
+      deviceId,
+    );
+  }, [addLog, cleanupSync, pollForSignal, sendSignal]);
+
+  useEffect(() => {
+    if (!PeerConstructor || hasAutoReconnectAttemptedRef.current) return;
+
+    const meta = restoredSessionRef.current;
+    if (!meta?.signalId || !meta?.encryptionKey || !meta?.role || !meta?.savedAt) return;
+    if (Date.now() - meta.savedAt > AUTO_RECONNECT_MAX_AGE_MS) return;
+    if (meta.syncPhase === "idle") return;
+
+    hasAutoReconnectAttemptedRef.current = true;
+
+    if (meta.role === "sender") {
+      resumeSenderSession(meta.signalId, meta.encryptionKey, Array.isArray(meta.senderDevices) ? meta.senderDevices : []);
+      return;
+    }
+
+    if (meta.role === "receiver" && meta.receiverDeviceId) {
+      resumeReceiverSession(meta.signalId, meta.encryptionKey, meta.receiverDeviceId);
+    }
+  }, [PeerConstructor, resumeReceiverSession, resumeSenderSession]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -735,6 +862,7 @@ export default function SettingsPage() {
       role: p2pRole,
       syncPhase,
       signalId,
+      encryptionKey,
       receiverDeviceId,
       senderDevices: senderDevices.map(({ id, status, lastUpdated }) => ({
         id,
@@ -744,16 +872,16 @@ export default function SettingsPage() {
     };
 
     localStorage.setItem(SYNC_SESSION_META_KEY, JSON.stringify(sessionMeta));
-  }, [p2pRole, receiverDeviceId, senderDevices, signalId, syncPhase]);
+  }, [encryptionKey, p2pRole, receiverDeviceId, senderDevices, signalId, syncPhase]);
 
   useEffect(() => {
     const senderHasConnections = senderDevices.some((device) => device.status === "connected");
     const receiverHasConnection = p2pRole === "receiver" && syncPhase === "connected" && peer;
 
     if (!senderHasConnections && !receiverHasConnection) {
-      if (syncIntervalRef.current !== null) {
-        window.clearInterval(syncIntervalRef.current);
-        syncIntervalRef.current = null;
+      if (persistentSyncRuntime.syncInterval !== null) {
+        window.clearInterval(persistentSyncRuntime.syncInterval);
+        persistentSyncRuntime.syncInterval = null;
       }
       return;
     }
@@ -761,7 +889,7 @@ export default function SettingsPage() {
     const runSync = async () => {
       const payload = await gatherAllData();
       const hash = computeSyncHash(payload);
-      if (hash === lastSyncedHashRef.current) return;
+      if (hash === persistentSyncRuntime.lastSyncedHash) return;
 
       if (p2pRole === "sender") {
         broadcastLiveSyncToPeers(payload, "host");
@@ -775,12 +903,12 @@ export default function SettingsPage() {
     };
 
     runSync();
-    syncIntervalRef.current = window.setInterval(runSync, LIVE_SYNC_INTERVAL_MS);
+    persistentSyncRuntime.syncInterval = window.setInterval(runSync, LIVE_SYNC_INTERVAL_MS);
 
     return () => {
-      if (syncIntervalRef.current !== null) {
-        window.clearInterval(syncIntervalRef.current);
-        syncIntervalRef.current = null;
+      if (persistentSyncRuntime.syncInterval !== null) {
+        window.clearInterval(persistentSyncRuntime.syncInterval);
+        persistentSyncRuntime.syncInterval = null;
       }
     };
   }, [addLog, broadcastLiveSyncToPeers, computeSyncHash, gatherAllData, p2pRole, peer, receiverDeviceId, senderDevices, sendLiveSyncToPeer, syncPhase]);
