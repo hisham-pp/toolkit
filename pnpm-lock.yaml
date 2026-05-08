@@ -29,6 +29,9 @@ importers:
       '@types/diff':
         specifier: ^7.0.2
         version: 7.0.2
+      '@types/pako':
+        specifier: ^2.0.4
+        version: 2.0.4
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
@@ -119,6 +122,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      pako:
+        specifier: ^2.1.0
+        version: 2.1.0
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3

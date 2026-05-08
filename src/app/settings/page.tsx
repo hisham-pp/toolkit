@@ -17,11 +17,16 @@ import {
   ShieldCheck,
   Terminal,
   Settings as SettingsIcon,
-  ChevronRight
+  ChevronRight,
+  Monitor,
+  Smartphone,
+  Lock,
+  Zap
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
+import CryptoJS from "crypto-js";
 
 // Polyfills for simple-peer in Next.js/Browser
 if (typeof window !== "undefined") {
@@ -41,8 +46,10 @@ import {
 } from "@/utility/constants/storage-keys";
 import { loadTodoWorkspace, saveTodoWorkspace } from "@/utility/helpers/todo-db";
 import { obfuscate, deobfuscate } from "@/utility/helpers/otp";
+import { compressData, decompressData } from "@/utility/helpers/sync";
 
-type SyncPhase = "idle" | "role_select" | "offer" | "answer" | "connecting" | "connected" | "error";
+type SyncPhase = "idle" | "pairing" | "connecting" | "confirming" | "connected" | "error";
+const RELAY_URL = "https://ntfy.sh";
 
 export default function SettingsPage() {
   const [PeerConstructor, setPeerConstructor] = useState<any>(null);
@@ -60,24 +67,47 @@ export default function SettingsPage() {
   const [localSdp, setLocalSdp] = useState("");
   const [remoteSdp, setRemoteSdp] = useState("");
   const [peer, setPeer] = useState<any>(null);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const [isManual, setIsManual] = useState(false);
+  
+  // New relay-based sync states
+  const [signalId, setSignalId] = useState("");
+  const [encryptionKey, setEncryptionKey] = useState("");
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   const cleanupSync = useCallback(() => {
     if (peer) {
       peer.destroy();
       setPeer(null);
     }
-    if (scannerRef.current) {
-      scannerRef.current.clear().catch(console.error);
-      scannerRef.current = null;
+    if (html5QrCodeRef.current) {
+      if (html5QrCodeRef.current.isScanning) {
+        html5QrCodeRef.current.stop().catch(console.error);
+      }
+      html5QrCodeRef.current = null;
+    }
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
     setSyncPhase("idle");
     setP2pRole(null);
     setLocalSdp("");
     setRemoteSdp("");
+    setSignalId("");
+    setEncryptionKey("");
     setIsManual(false);
+    setPendingApproval(false);
   }, [peer]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (html5QrCodeRef.current?.isScanning) html5QrCodeRef.current.stop();
+    };
+  }, []);
 
   const gatherAllData = async () => {
     const storage: Record<string, string | null> = {};
@@ -165,22 +195,151 @@ export default function SettingsPage() {
     }
   };
 
-  const initSender = () => {
-    if (!PeerConstructor) return;
-    setP2pRole("sender");
-    setSyncPhase("offer");
+  const sendSignal = async (id: string, key: string, type: "OFFER" | "ANSWER" | "APPROVE" | "REJECT", sdp?: string) => {
+    try {
+      const payload = { type, sdp: sdp ? compressData(sdp) : undefined };
+      const encrypted = CryptoJS.AES.encrypt(JSON.stringify(payload), key).toString();
+      await fetch(`${RELAY_URL}/${id}`, {
+        method: "POST",
+        body: encrypted,
+        headers: { "Title": "Toolkit Sync" }
+      });
+    } catch (e) {
+      console.error("Signal Send Error", e);
+    }
+  };
+
+  const pollForSignal = (id: string, key: string, targetTypes: ("OFFER" | "ANSWER" | "APPROVE" | "REJECT")[], onSignal: (type: string, sdp?: string) => void) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
     
-    const newPeer = new PeerConstructor({ initiator: true, trickle: false });
+    pollingRef.current = setInterval(async () => {
+      try {
+        const resp = await fetch(`${RELAY_URL}/${id}/json?poll=1`);
+        const messages = await resp.json();
+        
+        for (const msg of messages) {
+          if (!msg.body) continue;
+          try {
+            const bytes = CryptoJS.AES.decrypt(msg.body, key);
+            const decrypted = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+            
+            if (targetTypes.includes(decrypted.type)) {
+              const sdp = decrypted.sdp ? decompressData(decrypted.sdp) : undefined;
+              onSignal(decrypted.type, sdp);
+              // Don't always clear interval, sometimes we need to keep polling (e.g. after receiving offer, wait for approve)
+              if (decrypted.type === "ANSWER" || decrypted.type === "APPROVE" || decrypted.type === "REJECT") {
+                if (pollingRef.current) {
+                  clearInterval(pollingRef.current);
+                  pollingRef.current = null;
+                }
+              }
+              break;
+            }
+          } catch (e) {
+            // Likely not our message or wrong key
+          }
+        }
+      } catch (e) {
+        console.error("Poll Error", e);
+      }
+    }, 2000);
+  };
+
+  const startSync = async (role: "sender" | "receiver") => {
+    if (!PeerConstructor) {
+      toast.error("P2P library not loaded yet. Try again in a moment.");
+      return;
+    }
+
+    setP2pRole(role);
+    setSyncPhase("pairing");
+
+    // Generate pairing credentials
+    const sId = Array.from(crypto.getRandomValues(new Uint8Array(12)))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+    const eKey = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
     
-    newPeer.on("signal", (data: any) => {
-      setLocalSdp(JSON.stringify(data));
+    setSignalId(sId);
+    setEncryptionKey(eKey);
+
+    if (role === "sender") {
+      const newPeer = new PeerConstructor({ initiator: true, trickle: false });
+      
+      newPeer.on("signal", (data: any) => {
+        const sdpStr = JSON.stringify(data);
+        setLocalSdp(sdpStr);
+        sendSignal(sId, eKey, "OFFER", sdpStr);
+      });
+
+      newPeer.on("connect", async () => {
+        setSyncPhase("connected");
+        const allData = await gatherAllData();
+        newPeer.send(JSON.stringify({ type: "FULL_SYNC", payload: allData }));
+        toast.success("Sync successful!");
+      });
+
+      newPeer.on("error", (err: any) => {
+        console.error("P2P Error:", err);
+        setSyncPhase("error");
+      });
+
+      setPeer(newPeer);
+
+      // Poll for answer or rejection
+      pollForSignal(sId, eKey, ["ANSWER", "REJECT"], (type, sdp) => {
+        if (type === "REJECT") {
+          toast.error("Connection rejected by other device");
+          cleanupSync();
+          return;
+        }
+        
+        // When we get an answer, we move to confirming phase
+        setSyncPhase("confirming");
+        setRemoteSdp(sdp!);
+      });
+    }
+  };
+
+  const handleSenderApproval = () => {
+    if (!peer || !remoteSdp || !signalId || !encryptionKey) return;
+    setSyncPhase("connecting");
+    sendSignal(signalId, encryptionKey, "APPROVE");
+    peer.signal(JSON.parse(remoteSdp));
+  };
+
+  const handleReceiverApproval = (offerSdp: string, sId: string, eKey: string) => {
+    const newPeer = new PeerConstructor({ initiator: false, trickle: false });
+    
+    newPeer.on("signal", (ansData: any) => {
+      const ansSdpStr = JSON.stringify(ansData);
+      setLocalSdp(ansSdpStr);
+      sendSignal(sId, eKey, "ANSWER", ansSdpStr);
+      
+      // Now wait for the sender to approve
+      setSyncPhase("connecting");
+      pollForSignal(sId, eKey, ["APPROVE", "REJECT"], (type) => {
+        if (type === "REJECT") {
+          toast.error("Connection rejected by other device");
+          cleanupSync();
+        } else if (type === "APPROVE") {
+          setSyncPhase("connected");
+          toast.success("Connection approved! Receiving data...");
+        }
+      });
     });
 
-    newPeer.on("connect", async () => {
-      setSyncPhase("connected");
-      const allData = await gatherAllData();
-      newPeer.send(JSON.stringify({ type: "FULL_SYNC", payload: allData }));
-      toast.success("Sync successful! All data sent.");
+    newPeer.on("connect", () => {
+      // Phase handled by pollForSignal APPROVE
+    });
+
+    newPeer.on("data", async (msgData: any) => {
+      const msg = JSON.parse(msgData.toString());
+      if (msg.type === "FULL_SYNC") {
+        await mergeData(msg.payload);
+        toast.success("Sync complete!");
+        cleanupSync();
+      }
     });
 
     newPeer.on("error", (err: any) => {
@@ -188,79 +347,66 @@ export default function SettingsPage() {
       setSyncPhase("error");
     });
 
+    newPeer.signal(JSON.parse(offerSdp));
     setPeer(newPeer);
   };
 
-  const initReceiver = () => {
-    setP2pRole("receiver");
-    setSyncPhase("offer");
+  const handleScannedData = (data: string) => {
+    if (!data.startsWith("toolkit-sync:v1:")) {
+      toast.error("Invalid sync QR code");
+      return;
+    }
+
+    const [, , sId, eKey] = data.split(":");
+    setSignalId(sId);
+    setEncryptionKey(eKey);
+    setSyncPhase("confirming");
+
+    // Receiver flow: First wait for offer, then ask for approval
+    pollForSignal(sId, eKey, ["OFFER", "REJECT"], (type, offerSdp) => {
+      if (type === "REJECT") {
+        toast.error("Connection rejected");
+        cleanupSync();
+        return;
+      }
+      setRemoteSdp(offerSdp!);
+    });
   };
 
-  const handleManualOfferSubmit = () => {
-    if (!remoteSdp || !PeerConstructor) return;
-    
-    if (p2pRole === "receiver") {
-      // Create peer and signal the offer
-      try {
-        const offer = JSON.parse(remoteSdp);
-        const newPeer = new PeerConstructor({ initiator: false, trickle: false });
-        
-        newPeer.on("signal", (data: any) => {
-          setLocalSdp(JSON.stringify(data));
-          setSyncPhase("answer");
-        });
+  const handleReject = () => {
+    if (signalId && encryptionKey) {
+      sendSignal(signalId, encryptionKey, "REJECT");
+    }
+    toast.error("Connection rejected");
+    cleanupSync();
+  };
 
-        newPeer.on("connect", () => {
-          setSyncPhase("connected");
-          toast.success("Connected! Receiving data...");
-        });
-
-        newPeer.on("data", async (data: any) => {
-          const msg = JSON.parse(data.toString());
-          if (msg.type === "FULL_SYNC") {
-            await mergeData(msg.payload);
-            toast.success("Sync complete! Your toolkit is updated.");
-            cleanupSync();
-          }
-        });
-
-        newPeer.on("error", (err: any) => {
-          console.error("P2P Error:", err);
-          setSyncPhase("error");
-        });
-
-        newPeer.signal(offer);
-        setPeer(newPeer);
-      } catch (e) {
-        toast.error("Invalid offer code");
-      }
-    } else if (p2pRole === "sender") {
-      // Signal the answer
-      if (!peer) return;
-      try {
-        peer.signal(JSON.parse(remoteSdp));
-        setSyncPhase("connecting");
-      } catch (e) {
-        toast.error("Invalid answer code");
-      }
+  const startCamera = async () => {
+    setIsManual(false);
+    try {
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      html5QrCodeRef.current = html5QrCode;
+      
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          handleScannedData(decodedText);
+          html5QrCode.stop().catch(console.error);
+        },
+        () => {}
+      );
+    } catch (err) {
+      console.error("Camera error", err);
+      toast.error("Could not open camera. Try manual entry.");
+      setIsManual(true);
     }
   };
 
-  const startScanner = (onScan: (data: string) => void) => {
-    setIsManual(false);
-    setTimeout(() => {
-      const scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 }, false);
-      scanner.render((text) => {
-        onScan(text);
-        scanner.clear().catch(console.error);
-        scannerRef.current = null;
-      }, (err) => {});
-      scannerRef.current = scanner;
-    }, 100);
-  };
+  const pairingString = `toolkit-sync:v1:${signalId}:${encryptionKey}`;
 
   return (
-    <div className="space-y-12">
+    <div className="max-w-4xl mx-auto space-y-12">
       <section className="space-y-6">
         <div className="flex items-center gap-4 border-b border-zinc-800 pb-4">
           <div className="w-12 h-12 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-center text-primary shadow-inner">
@@ -268,212 +414,276 @@ export default function SettingsPage() {
           </div>
           <div>
             <h2 className="text-xl font-black uppercase tracking-widest text-white italic">P2P Synchronizer</h2>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">No Cloud • No Server • Direct Peer-to-Peer</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Secure • One-Way Scan • Zero Cloud</p>
           </div>
         </div>
 
-        <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 space-y-8">
-          {syncPhase === "idle" && (
-            <div className="flex flex-col items-center justify-center py-12 space-y-8 text-center">
-              <div className="w-20 h-20 bg-zinc-900 border border-zinc-800 rounded-[2rem] flex items-center justify-center text-zinc-700">
-                <Database className="w-10 h-10" />
-              </div>
-              <div className="max-w-md space-y-3">
-                <h3 className="text-xl font-black text-white uppercase italic tracking-widest">Sync Your Workspace</h3>
-                <p className="text-sm text-zinc-500 leading-relaxed font-medium">
-                  Transfer your 2FA accounts, server configurations, and task lists directly between devices using WebRTC.
-                </p>
-              </div>
-              <div className="flex gap-4 w-full max-w-sm">
-                <Button 
-                  onClick={initSender}
-                  className="flex-1 h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest"
-                >
-                  Send Data
-                </Button>
-                <Button 
-                  onClick={initReceiver}
-                  variant="outline"
-                  className="flex-1 h-14 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white"
-                >
-                  Receive Data
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {syncPhase !== "idle" && (
-            <div className="space-y-8 relative">
-              <button 
-                onClick={cleanupSync}
-                className="absolute -top-4 -right-4 p-2 text-zinc-600 hover:text-white transition-colors"
+        <div className="bg-[#161618] border border-zinc-800 rounded-[2.5rem] p-8 md:p-12 shadow-2xl overflow-hidden relative">
+          <AnimatePresence mode="wait">
+            {syncPhase === "idle" && (
+              <motion.div 
+                key="idle"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="flex flex-col items-center justify-center py-12 space-y-10 text-center"
               >
-                <X className="w-6 h-6" />
-              </button>
-
-              <div className="flex items-center gap-6">
-                <div className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center",
-                  syncPhase === "connected" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
-                )}>
-                  {syncPhase === "connected" ? <CheckCircle2 className="w-6 h-6" /> : <RefreshCw className="w-6 h-6 animate-spin" />}
+                <div className="relative">
+                  <div className="w-24 h-24 bg-zinc-900 border border-zinc-800 rounded-[2.5rem] flex items-center justify-center text-zinc-700 shadow-inner">
+                    <Database className="w-12 h-12" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white animate-bounce shadow-lg shadow-primary/20">
+                    <RefreshCw className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-black uppercase tracking-widest text-white italic">
-                    {p2pRole === "sender" ? "Sending Workspace" : "Receiving Workspace"}
-                  </h4>
-                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                    Phase: {syncPhase.replace("_", " ")}
+                
+                <div className="max-w-md space-y-4">
+                  <h3 className="text-2xl font-black text-white uppercase italic tracking-widest">Sync Your Devices</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed font-medium">
+                    Move your 2FA accounts and settings to your phone or another laptop securely. 
+                    No account needed. No data stored on servers.
                   </p>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                {/* Local SDP View (Offer/Answer) */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                      {p2pRole === "sender" ? (syncPhase === "offer" ? "Your Offer" : "Waiting for Answer") : (syncPhase === "answer" ? "Your Answer" : "Scan Offer First")}
-                    </span>
-                    <button 
-                      onClick={() => setIsManual(!isManual)}
-                      className="text-[9px] font-bold text-primary uppercase tracking-widest hover:underline"
-                    >
-                      {isManual ? "Switch to QR" : "Show Manual Code"}
-                    </button>
-                  </div>
-
-                  {localSdp ? (
-                    isManual ? (
-                      <div className="space-y-4">
-                        <M3Textarea 
-                          readOnly
-                          value={localSdp}
-                          rows={6}
-                          className="font-mono text-[10px] bg-zinc-950 border-zinc-900 rounded-2xl"
-                        />
-                        <Button 
-                          onClick={() => {
-                            navigator.clipboard.writeText(localSdp);
-                            toast.success("Code copied!");
-                          }}
-                          className="w-full bg-zinc-900 border border-zinc-800 text-zinc-400 h-10 rounded-xl text-[10px] uppercase font-black tracking-widest"
-                        >
-                          <Copy className="w-4 h-4 mr-2" /> Copy Manual Code
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="bg-white p-6 rounded-3xl flex items-center justify-center aspect-square max-w-[280px] mx-auto">
-                        <QRCodeSVG value={localSdp} size={240} level="L" />
-                      </div>
-                    )
-                  ) : (
-                    <div className="bg-zinc-950 border border-zinc-900 rounded-3xl aspect-square flex items-center justify-center max-w-[280px] mx-auto">
-                      <p className="text-[10px] font-black text-zinc-800 uppercase italic">Generating...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg">
+                  <button 
+                    onClick={() => startSync("sender")}
+                    className="group relative flex flex-col items-center gap-4 p-8 bg-zinc-950 border border-zinc-900 rounded-[2rem] hover:border-primary/50 transition-all overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Monitor className="w-8 h-8 text-primary" />
+                    <div className="text-center">
+                      <span className="block text-xs font-black text-white uppercase tracking-widest">I am on Laptop</span>
+                      <span className="text-[10px] text-zinc-600 font-bold uppercase">Show QR to Sync</span>
                     </div>
-                  )}
-                </div>
-
-                {/* Remote SDP Input (Scan/Paste) */}
-                <div className="space-y-4">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    {p2pRole === "sender" ? "Step 2: Scan/Paste Remote Answer" : "Step 1: Scan/Paste Remote Offer"}
-                  </span>
+                  </button>
                   
-                  {isManual ? (
-                    <div className="space-y-4">
-                      <M3Textarea 
-                        placeholder="Paste code from other device..."
-                        value={remoteSdp}
-                        onChange={(e) => setRemoteSdp(e.target.value)}
-                        rows={6}
-                        className="font-mono text-[10px] bg-zinc-950 border-zinc-900 rounded-2xl"
-                      />
-                      <Button 
-                        onClick={handleManualOfferSubmit}
-                        disabled={!remoteSdp}
-                        className="w-full bg-primary text-white h-10 rounded-xl text-[10px] uppercase font-black tracking-widest shadow-lg shadow-primary/20"
-                      >
-                        {p2pRole === "sender" ? "Connect" : "Generate Answer"}
-                      </Button>
+                  <button 
+                    onClick={() => { setP2pRole("receiver"); setSyncPhase("pairing"); }}
+                    className="group relative flex flex-col items-center gap-4 p-8 bg-zinc-950 border border-zinc-900 rounded-[2rem] hover:border-primary/50 transition-all overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Smartphone className="w-8 h-8 text-primary" />
+                    <div className="text-center">
+                      <span className="block text-xs font-black text-white uppercase tracking-widest">I am on Mobile</span>
+                      <span className="text-[10px] text-zinc-600 font-bold uppercase">Scan to Receive</span>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div 
-                        id="qr-reader" 
-                        className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 aspect-square flex items-center justify-center max-w-[280px] mx-auto"
-                      >
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {syncPhase !== "idle" && (
+              <motion.div 
+                key="active"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                className="space-y-8"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
+                      syncPhase === "connected" ? "bg-green-500/20 text-green-500" : "bg-primary/10 text-primary"
+                    )}>
+                      {syncPhase === "connected" ? <CheckCircle2 className="w-6 h-6" /> : <RefreshCw className="w-6 h-6 animate-spin" />}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black uppercase tracking-widest text-white italic">
+                        {p2pRole === "sender" ? "Sharing from this device" : "Receiving on this device"}
+                      </h4>
+                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                        Status: <span className="text-primary">{syncPhase.replace("_", " ")}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={cleanupSync}
+                    className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-500 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                  {syncPhase === "confirming" ? (
+                    <div className="col-span-full flex flex-col items-center justify-center py-12 space-y-8 text-center bg-zinc-950 border border-zinc-900 rounded-[3rem]">
+                      <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary animate-pulse">
+                        <ShieldCheck className="w-10 h-10" />
+                      </div>
+                      <div className="space-y-3">
+                        <h3 className="text-xl font-black text-white uppercase italic tracking-widest">Confirm Connection</h3>
+                        <p className="text-sm text-zinc-500 max-w-sm font-medium">
+                          A device is requesting to {p2pRole === "sender" ? "receive your data" : "send you data"}. Do you want to proceed?
+                        </p>
+                      </div>
+                      <div className="flex gap-4 w-full max-w-sm">
                         <Button 
                           onClick={() => {
-                            startScanner((data) => {
-                              setRemoteSdp(data);
-                              if (p2pRole === "receiver") {
-                                // For receiver, we need to create the peer first
-                                if (!PeerConstructor) return;
-                                try {
-                                  const offer = JSON.parse(data);
-                                  const newPeer = new PeerConstructor({ initiator: false, trickle: false });
-                                  
-                                  newPeer.on("signal", (ansData: any) => {
-                                    setLocalSdp(JSON.stringify(ansData));
-                                    setSyncPhase("answer");
-                                  });
-
-                                  newPeer.on("connect", () => {
-                                    setSyncPhase("connected");
-                                    toast.success("Connected! Receiving data...");
-                                  });
-
-                                  newPeer.on("data", async (msgData: any) => {
-                                    const msg = JSON.parse(msgData.toString());
-                                    if (msg.type === "FULL_SYNC") {
-                                      await mergeData(msg.payload);
-                                      toast.success("Sync complete! Your toolkit is updated.");
-                                      cleanupSync();
-                                    }
-                                  });
-
-                                  newPeer.on("error", (err: any) => {
-                                    console.error("P2P Error:", err);
-                                    setSyncPhase("error");
-                                  });
-
-                                  newPeer.signal(offer);
-                                  setPeer(newPeer);
-                                } catch (e) { toast.error("Invalid offer code"); }
-                              } else if (p2pRole === "sender" && peer) {
-                                try {
-                                  peer.signal(JSON.parse(data));
-                                  setSyncPhase("connecting");
-                                } catch (e) { toast.error("Invalid answer code"); }
-                              }
-                            });
+                            if (p2pRole === "sender") handleSenderApproval();
+                            else handleReceiverApproval(remoteSdp, signalId, encryptionKey);
                           }}
-                          className="bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white rounded-2xl p-6 flex flex-col items-center gap-4"
+                          className="flex-1 h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20"
                         >
-                          <Scan className="w-8 h-8" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Start Scanner</span>
+                          Accept
+                        </Button>
+                        <Button 
+                          onClick={handleReject}
+                          variant="outline"
+                          className="flex-1 h-14 rounded-2xl border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-red-500 transition-all"
+                        >
+                          Reject
                         </Button>
                       </div>
                     </div>
+                  ) : p2pRole === "sender" ? (
+                    <>
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Step 1: Scan this QR</h5>
+                          <p className="text-xs text-zinc-400 font-medium">Open this same page on your phone and tap &quot;I am on Mobile&quot; to scan.</p>
+                        </div>
+                        
+                        <div className="bg-white p-6 rounded-[2.5rem] shadow-xl flex items-center justify-center aspect-square max-w-[320px] mx-auto group relative">
+                          {signalId ? (
+                            <QRCodeSVG value={pairingString} size={260} level="M" />
+                          ) : (
+                            <div className="text-zinc-300 animate-pulse">Initializing...</div>
+                          )}
+                          <div className="absolute inset-0 border-8 border-white rounded-[2.5rem] pointer-events-none" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-8">
+                        <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-3xl space-y-4">
+                          <div className="flex items-center gap-3">
+                            <Lock className="w-4 h-4 text-primary" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">End-to-End Encrypted</span>
+                          </div>
+                          <p className="text-[10px] text-zinc-600 font-bold uppercase leading-relaxed">
+                            A secure temporary channel has been created. Once the mobile device scans this QR, you will be asked to approve the connection.
+                          </p>
+                        </div>
+
+                        <div className="space-y-4">
+                          <button 
+                            onClick={() => setIsManual(!isManual)}
+                            className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest hover:text-white transition-colors"
+                          >
+                            {isManual ? "Hide manual code" : "Can't scan? Use manual code"}
+                          </button>
+
+                          {isManual && (
+                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                              <M3Textarea 
+                                readOnly
+                                value={pairingString}
+                                rows={3}
+                                className="font-mono text-[10px] bg-zinc-950 border-zinc-900 rounded-2xl"
+                              />
+                              <Button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText(pairingString);
+                                  toast.success("Copied!");
+                                }}
+                                className="w-full bg-zinc-900 border border-zinc-800 text-zinc-400 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                              >
+                                <Copy className="w-4 h-4 mr-2" /> Copy Pairing String
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Step 1: Scan Laptop QR</h5>
+                          <p className="text-xs text-zinc-400 font-medium">Scan the QR code displayed on your other device.</p>
+                        </div>
+
+                        <div className="relative aspect-square max-w-[320px] mx-auto rounded-[2.5rem] overflow-hidden border-2 border-dashed border-zinc-800 bg-zinc-950 flex items-center justify-center">
+                           <div id="qr-reader" className="absolute inset-0 w-full h-full" />
+                           {syncPhase === "pairing" && (
+                              <Button 
+                                onClick={startCamera}
+                                className="relative z-10 h-20 px-8 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest flex flex-col items-center gap-2 shadow-xl shadow-primary/20"
+                              >
+                                <Scan className="w-8 h-8" />
+                                <span>Start Camera</span>
+                              </Button>
+                           )}
+                           {syncPhase === "connecting" && (
+                              <div className="text-center space-y-4 relative z-10 bg-zinc-950/80 backdrop-blur-md p-8 rounded-3xl border border-zinc-800">
+                                <RefreshCw className="w-12 h-12 text-primary animate-spin mx-auto" />
+                                <p className="text-xs font-black text-white uppercase tracking-widest italic">Establishing Link...</p>
+                              </div>
+                           )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-8">
+                        <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-3xl space-y-4">
+                           <div className="flex items-center gap-3">
+                             <Zap className="w-4 h-4 text-amber-500" />
+                             <span className="text-[10px] font-black uppercase tracking-widest text-white">One-Way Scan Only</span>
+                           </div>
+                           <p className="text-[10px] text-zinc-600 font-bold uppercase leading-relaxed">
+                             Your laptop doesn&apos;t need to scan anything. Just scan its screen once, and we&apos;ll handle the rest securely.
+                           </p>
+                        </div>
+
+                        <div className="space-y-4">
+                           <button 
+                             onClick={() => setIsManual(!isManual)}
+                             className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest hover:text-white transition-colors"
+                           >
+                             {isManual ? "Back to scanner" : "Use manual pairing string"}
+                           </button>
+
+                           {isManual && (
+                              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <M3Textarea 
+                                  placeholder="Paste pairing string from other device..."
+                                  value={remoteSdp}
+                                  onChange={(e) => {
+                                    setRemoteSdp(e.target.value);
+                                    if (e.target.value.startsWith("toolkit-sync:v1:")) {
+                                      handleScannedData(e.target.value);
+                                    }
+                                  }}
+                                  rows={3}
+                                  className="font-mono text-[10px] bg-zinc-950 border-zinc-900 rounded-2xl"
+                                />
+                              </div>
+                           )}
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-40 hover:opacity-100 transition-opacity">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
          {[
-           { icon: Shield, title: "Zero Server", desc: "Data never touches any cloud" },
-           { icon: Terminal, title: "WebRTC P2P", desc: "Direct browser-to-browser sync" },
-           { icon: ShieldCheck, title: "Local Encryption", desc: "Encrypted before transmission" }
+           { icon: Shield, title: "Zero Server", desc: "Your data stays in the P2P tunnel" },
+           { icon: Terminal, title: "E2E Encrypted", desc: "Signals are encrypted with a random key" },
+           { icon: ShieldCheck, title: "Private", desc: "No logs, no storage, no accounts" }
          ].map((feat, i) => (
-           <div key={i} className="bg-zinc-950 border border-zinc-900 p-6 rounded-[2rem] space-y-3">
-              <feat.icon className="w-5 h-5 text-primary" />
-              <h5 className="text-[10px] font-black uppercase text-white tracking-widest">{feat.title}</h5>
-              <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest leading-relaxed">{feat.desc}</p>
+           <div key={i} className="bg-zinc-950 border border-zinc-900 p-8 rounded-[2.5rem] space-y-4 hover:border-zinc-700 transition-colors group">
+              <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-500 group-hover:text-primary transition-colors">
+                <feat.icon className="w-5 h-5" />
+              </div>
+              <div>
+                <h5 className="text-[10px] font-black uppercase text-white tracking-widest mb-1">{feat.title}</h5>
+                <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest leading-relaxed">{feat.desc}</p>
+              </div>
            </div>
          ))}
       </section>
