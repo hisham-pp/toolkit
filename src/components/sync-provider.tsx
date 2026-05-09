@@ -336,7 +336,6 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         await fetch(`${RELAY_URL}/${id}`, {
           method: "POST",
           body: encrypted,
-          headers: { Title: "Toolkit Sync" },
         });
       } catch (error) {
         console.error("Signal Send Error", error);
