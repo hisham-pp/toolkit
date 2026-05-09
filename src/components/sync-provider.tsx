@@ -1287,6 +1287,8 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
   const startCamera = useCallback(async () => {
     setIsManualEntry(false);
+    setP2pRole("receiver");
+    setSyncPhase("pairing");
     try {
       const html5QrCode = new Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
