@@ -120,6 +120,8 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [conflictState, setConflictState] = useState<ConflictState | null>(null);
   const restoredSessionRef = useRef<any>(null);
   const hasAutoReconnectAttemptedRef = useRef(false);
+  const trustedDeviceIdsRef = useRef<Set<string>>(new Set());
+  const isAutoReconnectingRef = useRef(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const scannerAlignTimeoutRef = useRef<number | null>(null);
 
@@ -161,7 +163,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (meta?.syncPhase) setSyncPhase(meta.syncPhase);
       if (meta?.receiverDeviceId) setReceiverDeviceId(meta.receiverDeviceId);
       if (meta?.receiverDeviceName) setReceiverDeviceName(meta.receiverDeviceName);
-      if (Array.isArray(meta?.senderDevices)) setSenderDevices(meta.senderDevices);
+      if (Array.isArray(meta?.senderDevices)) {
+        setSenderDevices(meta.senderDevices);
+        meta.senderDevices.forEach((d: any) => {
+          if (d.status === "connected") trustedDeviceIdsRef.current.add(d.id);
+        });
+      }
       if (persistentSyncRuntime.peer) setPeer(persistentSyncRuntime.peer);
     } catch (error) {
       console.error("Failed to restore sync session metadata", error);
@@ -791,6 +798,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
       nextPeer.on("connect", async () => {
         updateSenderDevice(targetReceiverId, { status: "connected" });
+        trustedDeviceIdsRef.current.add(targetReceiverId);
         setSyncPhase("connected");
         sendPeerMessage(nextPeer, {
           type: "HELLO",
@@ -1072,6 +1080,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     if (meta.syncPhase === "idle") return;
 
     hasAutoReconnectAttemptedRef.current = true;
+    isAutoReconnectingRef.current = true;
 
     if (meta.role === "sender") {
       resumeSenderSession(meta.signalId, meta.encryptionKey, Array.isArray(meta.senderDevices) ? meta.senderDevices : []);
@@ -1102,6 +1111,28 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     };
     localStorage.setItem(SYNC_SESSION_META_KEY, JSON.stringify(sessionMeta));
   }, [encryptionKey, p2pRole, receiverDeviceId, receiverDeviceName, senderDevices, signalId, syncPhase]);
+
+  // Auto-approve logic for re-connections
+  useEffect(() => {
+    if (p2pRole !== "sender") return;
+    senderDevices.forEach((device) => {
+      if (device.status === "awaiting_approval" && device.remoteSdp && trustedDeviceIdsRef.current.has(device.id)) {
+        handleSenderApproval(device.id);
+      }
+    });
+  }, [p2pRole, senderDevices, handleSenderApproval]);
+
+  useEffect(() => {
+    if (p2pRole === "receiver" && syncPhase === "confirming" && remoteOfferSdp && isAutoReconnectingRef.current) {
+      handleReceiverApproval();
+    }
+  }, [p2pRole, syncPhase, remoteOfferSdp, handleReceiverApproval]);
+
+  useEffect(() => {
+    if (syncPhase === "connected" || syncPhase === "idle") {
+      isAutoReconnectingRef.current = false;
+    }
+  }, [syncPhase]);
 
   const requestManualSync = useCallback(async () => {
     if (conflictState) {
