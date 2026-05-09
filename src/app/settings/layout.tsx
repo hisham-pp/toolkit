@@ -1,5 +1,6 @@
 import React from "react";
 import ToolBackButton from "@/components/ToolBackButton";
+import SyncRefreshButton from "@/components/SyncRefreshButton";
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             <div className="h-6 w-[1px] bg-zinc-800 mx-1" />
             <h1 className="text-sm font-bold text-white tracking-tight leading-none uppercase italic">Settings & Sync</h1>
           </div>
+          <SyncRefreshButton />
         </div>
       </header>
       <main className="flex-1 w-full p-6 lg:p-8">

@@ -4,6 +4,7 @@ import { Tool } from "@/utility/constants/tools";
 import ToolBackButton from "@/components/ToolBackButton";
 import HeaderSearch from "@/components/HeaderSearch";
 import { Settings as SettingsIcon } from "lucide-react";
+import SyncRefreshButton from "@/components/SyncRefreshButton";
 
 interface ToolLayoutProps {
   tool: Tool;
@@ -39,6 +40,7 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
           </div>
 
           <div className="flex items-center gap-3 md:gap-6 shrink-0">
+             <SyncRefreshButton />
              <Link 
                href="/settings" 
                className="p-2 text-zinc-600 hover:text-white transition-colors rounded-lg hover:bg-zinc-800"

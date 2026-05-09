@@ -59,6 +59,7 @@ export const viewport = {
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Analytics } from "@vercel/analytics/next";
+import { SyncProvider } from "@/components/sync-provider";
 
 export default function RootLayout({
   children,
@@ -76,11 +77,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            {children}
-            <Toaster position="top-right" richColors />
-            <Analytics />
-          </TooltipProvider>
+          <SyncProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster position="top-right" richColors />
+              <Analytics />
+            </TooltipProvider>
+          </SyncProvider>
         </ThemeProvider>
       </body>
     </html>
