@@ -12,17 +12,36 @@ import React, {
 import { Html5Qrcode } from "html5-qrcode";
 import CryptoJS from "crypto-js";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, Laptop2, RefreshCw, Smartphone } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Laptop2, RefreshCw, Smartphone, X } from "lucide-react";
 
+import { RECENT_TOOLS_KEY } from "@/utility/constants/storage-keys";
 import {
-  AUTHENTICATOR_DATA_KEY,
-  RECENT_TOOLS_KEY,
-  SSH_CONFIGS_KEY,
-  SSH_VAULT_KEY,
-} from "@/utility/constants/storage-keys";
-import { loadTodoWorkspace, saveTodoWorkspace, type TodoWorkspace } from "@/utility/helpers/todo-db";
+  RELAY_URL,
+  SYNC_SESSION_META_KEY,
+  SYNC_DEVICE_ID_KEY,
+  SYNC_DEVICE_NAME_KEY,
+  AUTO_RECONNECT_MAX_AGE_MS,
+  SERVICE_DEFINITIONS,
+  INTERNAL_SYNC_KEYS,
+} from "@/utility/constants/sync";
+import { loadTodoWorkspace, saveTodoWorkspace } from "@/utility/helpers/todo-db";
 import { compressData, decompressData } from "@/utility/helpers/sync";
 import { cn } from "@/utility/helpers/utils";
+import type {
+  SyncPhase,
+  SyncRole,
+  SignalType,
+  SenderDevice,
+  SyncSnapshot,
+  SyncRequestMessage,
+  SyncResultMessage,
+  PeerMessage,
+  ConnectionState,
+  PendingRequest,
+  DifferingService,
+  ConflictState,
+  SyncContextValue,
+} from "@/utility/types/sync";
 
 if (typeof window !== "undefined") {
   const browserWindow = window as typeof window & {
@@ -41,150 +60,16 @@ if (typeof window !== "undefined") {
   };
 }
 
-type SyncPhase = "idle" | "pairing" | "connecting" | "confirming" | "connected" | "error";
-type SyncRole = "sender" | "receiver" | null;
-type SignalType = "JOIN" | "OFFER" | "ANSWER" | "APPROVE" | "REJECT" | "DISCONNECT";
-type PeerMessageType =
-  | "FULL_SNAPSHOT"
-  | "SYNC_REQUEST"
-  | "SYNC_RESULT"
-  | "FORCE_APPLY"
-  | "HELLO";
-type SenderDeviceStatus =
-  | "joined"
-  | "offer_sent"
-  | "awaiting_approval"
-  | "connecting"
-  | "connected"
-  | "rejected"
-  | "disconnected"
-  | "error";
-
-type SenderDevice = {
-  id: string;
-  name: string;
-  status: SenderDeviceStatus;
-  remoteSdp?: string;
-  lastUpdated: number;
-};
-
-type SyncSnapshot = {
-  storage: Record<string, string>;
-  todos: TodoWorkspace;
-  capturedAt: number;
-  deviceId: string;
-  deviceName: string;
-};
-
-type SyncRequestMessage = {
-  type: "SYNC_REQUEST";
-  requestId: string;
-  snapshot: SyncSnapshot;
-  snapshotHash: string;
-  baseHash: string;
-  originId: string;
-  originName: string;
-};
-
-type SyncResultMessage = {
-  type: "SYNC_RESULT";
-  requestId: string;
-  status: "noop" | "applied_requester" | "apply_remote" | "conflict" | "force_apply_complete";
-  snapshot?: SyncSnapshot;
-  snapshotHash?: string;
-  remoteDeviceId: string;
-  remoteDeviceName: string;
-  resolvedHash?: string;
-};
-
-type FullSnapshotMessage = {
-  type: "FULL_SNAPSHOT";
-  snapshot: SyncSnapshot;
-  snapshotHash: string;
-  sourceId: string;
-  sourceName: string;
-};
-
-type ForceApplyMessage = {
-  type: "FORCE_APPLY";
-  requestId: string;
-  snapshot: SyncSnapshot;
-  snapshotHash: string;
-  originId: string;
-  originName: string;
-};
-
-type HelloMessage = {
-  type: "HELLO";
-  deviceId: string;
-  deviceName: string;
-};
-
-type PeerMessage = SyncRequestMessage | SyncResultMessage | FullSnapshotMessage | ForceApplyMessage | HelloMessage;
-
-type ConnectionState = {
-  lastResolvedHash: string;
-  remoteDeviceId: string;
-  remoteDeviceName: string;
-};
-
-type PendingRequest = {
-  peerId: string;
-  localSnapshot: SyncSnapshot;
-  localHash: string;
-};
-
-type ConflictState = {
-  requestId: string;
-  peerId: string;
-  localSnapshot: SyncSnapshot;
-  localHash: string;
-  remoteSnapshot: SyncSnapshot;
-  remoteHash: string;
-  remoteDeviceName: string;
-};
-
-type SyncContextValue = {
-  deviceId: string;
-  deviceName: string;
-  setDeviceName: (value: string) => void;
-  saveDeviceName: (value: string) => void;
-  syncPhase: SyncPhase;
-  p2pRole: SyncRole;
-  signalId: string;
-  encryptionKey: string;
-  receiverDeviceId: string;
-  receiverDeviceName: string;
-  pairingString: string;
-  manualPairingString: string;
-  setManualPairingString: (value: string) => void;
-  senderDevices: SenderDevice[];
-  pendingSenderDevices: SenderDevice[];
-  activeSenderDevices: SenderDevice[];
-  connectionLogs: string[];
-  remoteOfferSdp: string;
-  isManualEntry: boolean;
-  isRefreshing: boolean;
-  hasActiveConnection: boolean;
-  isConnectedToMultipleDevices: boolean;
-  startSync: (role: "sender" | "receiver") => Promise<void>;
-  startCamera: () => Promise<void>;
-  cleanupSync: () => void;
-  handleScannedData: (data: string) => void;
-  handleReject: () => void;
-  handleReceiverApproval: () => void;
-  handleSenderApproval: (deviceId: string) => void;
-  handleSenderReject: (deviceId: string) => void;
-  disconnectSenderDevice: (deviceId: string) => void;
-  requestManualSync: () => Promise<void>;
-};
-
-const RELAY_URL = "https://ntfy.sh";
-const SYNC_SESSION_META_KEY = "toolkit-sync-session-meta";
-const SYNC_DEVICE_ID_KEY = "toolkit-sync-device-id";
-const SYNC_DEVICE_NAME_KEY = "toolkit-sync-device-name";
-const AUTO_RECONNECT_MAX_AGE_MS = 1000 * 60 * 30;
-const INTERNAL_SYNC_KEYS = new Set([SYNC_SESSION_META_KEY, SYNC_DEVICE_ID_KEY, SYNC_DEVICE_NAME_KEY]);
+function mergeRecentTools(localStr: string | null, remoteStr: string | null) {
+  try {
+    const local = localStr ? (JSON.parse(localStr) as string[]) : [];
+    const remote = remoteStr ? (JSON.parse(remoteStr) as string[]) : [];
+    const combined = Array.from(new Set([...local, ...remote]));
+    return JSON.stringify(combined.slice(0, 20));
+  } catch {
+    return localStr || remoteStr || "[]";
+  }
+}
 
 const persistentSyncRuntime = {
   peer: null as any,
@@ -556,6 +441,79 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     [computeSyncHash, deviceId, deviceName, gatherSnapshot, sendPeerMessage, updateConnectionState],
   );
 
+  const getServiceSummary = useCallback((snapshot: SyncSnapshot, serviceId: string) => {
+    if (serviceId === "todos") {
+      const count = snapshot.todos?.todos?.length || 0;
+      const projects = snapshot.todos?.projects?.length || 0;
+      return `${count} tasks, ${projects} projects`;
+    }
+    const def = SERVICE_DEFINITIONS.find((d) => d.id === serviceId);
+    if (def) {
+      const keysPresent = def.keys.filter((k) => k in snapshot.storage).length;
+      return keysPresent > 0 ? `${keysPresent} settings saved` : "Empty";
+    }
+    return "Generic settings changed";
+  }, []);
+
+  const resolveGranularConflict = useCallback(async () => {
+    if (!conflictState) return;
+
+    const finalSnapshot: SyncSnapshot = {
+      ...conflictState.localSnapshot,
+      storage: { ...conflictState.localSnapshot.storage },
+      todos: { ...conflictState.localSnapshot.todos },
+    };
+
+    conflictState.differingServices.forEach(service => {
+      const choice = conflictState.resolutions[service.id];
+      const source = choice === "local" ? conflictState.localSnapshot : conflictState.remoteSnapshot;
+      
+      if (service.isTodos) {
+        finalSnapshot.todos = source.todos;
+      } else if (service.id === "other") {
+        const allKnownKeys = new Set(SERVICE_DEFINITIONS.flatMap(s => s.keys));
+        allKnownKeys.add(RECENT_TOOLS_KEY);
+        Object.entries(source.storage).forEach(([k, v]) => {
+          if (!allKnownKeys.has(k)) finalSnapshot.storage[k] = v;
+        });
+      } else {
+        service.keys.forEach(k => {
+          if (k in source.storage) {
+            finalSnapshot.storage[k] = source.storage[k];
+          } else {
+            delete finalSnapshot.storage[k];
+          }
+        });
+      }
+    });
+
+    const finalHash = computeSyncHash(finalSnapshot);
+    const targetPeer = p2pRole === "sender" 
+      ? persistentSyncRuntime.senderPeers.get(conflictState.peerId)
+      : persistentSyncRuntime.peer;
+
+    if (targetPeer) {
+      sendPeerMessage(targetPeer, {
+        type: "FORCE_APPLY",
+        requestId: conflictState.requestId,
+        snapshot: finalSnapshot,
+        snapshotHash: finalHash,
+        originId: deviceId,
+        originName: deviceName,
+      });
+      await applySnapshot(finalSnapshot);
+      updateConnectionState(conflictState.peerId, {
+        lastResolvedHash: finalHash,
+        remoteDeviceName: conflictState.remoteDeviceName,
+      });
+      toast.success("Conflict resolved successfully");
+    }
+
+    persistentSyncRuntime.pendingRequests.delete(conflictState.requestId);
+    setConflictState(null);
+    setIsRefreshing(false);
+  }, [conflictState, p2pRole, deviceId, deviceName, applySnapshot, updateConnectionState, computeSyncHash, sendPeerMessage]);
+
   const onSyncResult = useCallback(
     async (message: SyncResultMessage) => {
       const pending = persistentSyncRuntime.pendingRequests.get(message.requestId);
@@ -587,18 +545,101 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (message.status === "conflict" && message.snapshot && message.snapshotHash) {
+        const remoteSnapshot = message.snapshot;
+        // Auto-merge non-critical keys
+        const localTools = pending.localSnapshot.storage[RECENT_TOOLS_KEY];
+        const remoteTools = remoteSnapshot.storage[RECENT_TOOLS_KEY];
+        if (localTools !== remoteTools) {
+          const merged = mergeRecentTools(localTools, remoteTools);
+          pending.localSnapshot.storage[RECENT_TOOLS_KEY] = merged;
+          remoteSnapshot.storage[RECENT_TOOLS_KEY] = merged;
+        }
+
+        const diffs: DifferingService[] = [];
+        
+        // Check Todos
+        if (JSON.stringify(pending.localSnapshot.todos) !== JSON.stringify(remoteSnapshot.todos)) {
+          diffs.push({
+            id: "todos",
+            name: "Todos & Projects",
+            keys: [],
+            isTodos: true,
+            localSummary: getServiceSummary(pending.localSnapshot, "todos"),
+            remoteSummary: getServiceSummary(remoteSnapshot, "todos"),
+          });
+        }
+
+        // Check defined services
+        SERVICE_DEFINITIONS.filter(s => s.id !== "todos").forEach(service => {
+          const isDifferent = service.keys.some(k => 
+            pending.localSnapshot.storage[k] !== remoteSnapshot.storage[k]
+          );
+          if (isDifferent) {
+            diffs.push({
+              ...service,
+              localSummary: getServiceSummary(pending.localSnapshot, service.id),
+              remoteSummary: getServiceSummary(remoteSnapshot, service.id),
+            });
+          }
+        });
+
+        // Check everything else (Other)
+        const allKnownKeys = new Set(SERVICE_DEFINITIONS.flatMap(s => s.keys));
+        allKnownKeys.add(RECENT_TOOLS_KEY);
+        const localOther = Object.keys(pending.localSnapshot.storage).filter(k => !allKnownKeys.has(k));
+        const remoteOther = Object.keys(remoteSnapshot.storage).filter(k => !allKnownKeys.has(k));
+        const otherDifferent = Array.from(new Set([...localOther, ...remoteOther])).some(k => 
+          pending.localSnapshot.storage[k] !== remoteSnapshot.storage[k]
+        );
+
+        if (otherDifferent) {
+          diffs.push({
+            id: "other",
+            name: "Other Tool Settings",
+            keys: [],
+            localSummary: "Generic settings changed",
+            remoteSummary: "Generic settings changed",
+          });
+        }
+
+        if (diffs.length === 0) {
+          // Re-sync after auto-merge
+          setIsRefreshing(true);
+          const finalHash = computeSyncHash(pending.localSnapshot);
+          const targetPeer = p2pRole === "sender" 
+            ? persistentSyncRuntime.senderPeers.get(pending.peerId)
+            : persistentSyncRuntime.peer;
+          
+          if (targetPeer) {
+            sendPeerMessage(targetPeer, {
+              type: "FORCE_APPLY",
+              requestId: message.requestId,
+              snapshot: pending.localSnapshot,
+              snapshotHash: finalHash,
+              originId: deviceId,
+              originName: deviceName,
+            });
+            updateConnectionState(pending.peerId, { lastResolvedHash: finalHash });
+          }
+          persistentSyncRuntime.pendingRequests.delete(message.requestId);
+          setIsRefreshing(false);
+          return;
+        }
+
         setConflictState({
           requestId: message.requestId,
           peerId: pending.peerId,
           localSnapshot: pending.localSnapshot,
           localHash: pending.localHash,
-          remoteSnapshot: message.snapshot,
+          remoteSnapshot: remoteSnapshot,
           remoteHash: message.snapshotHash,
           remoteDeviceName: message.remoteDeviceName,
+          differingServices: diffs,
+          resolutions: Object.fromEntries(diffs.map(d => [d.id, "local"])),
         });
       }
     },
-    [applySnapshot, updateConnectionState],
+    [applySnapshot, updateConnectionState, computeSyncHash, deviceId, deviceName, p2pRole, sendPeerMessage, getServiceSummary],
   );
 
   const handleIncomingSyncRequest = useCallback(
@@ -777,6 +818,84 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     [PeerConstructor, deviceId, deviceName, handlePeerData, sendInitialSnapshot, sendPeerMessage, sendSignal, updateSenderDevice],
   );
 
+  const resumeSenderSession = useCallback(
+    (sId: string, eKey: string, savedDevices: SenderDevice[] = []) => {
+      setP2pRole("sender");
+      setSignalId(sId);
+      setEncryptionKey(eKey);
+      setSyncPhase(savedDevices.some((device) => device.status === "connected") ? "connected" : "pairing");
+      setSenderDevices(
+        savedDevices.map((device) => ({
+          ...device,
+          status: device.status === "connected" ? "disconnected" : device.status,
+        })),
+      );
+
+      if (persistentSyncRuntime.signalListenerCleanup) {
+        persistentSyncRuntime.signalListenerCleanup();
+      }
+      persistentSyncRuntime.signalListenerCleanup = pollForSignal(
+        sId,
+        eKey,
+        ["JOIN", "ANSWER", "REJECT", "DISCONNECT"],
+        async ({ type, sdp, receiverId: targetId, deviceName: targetName }) => {
+          if (!targetId) return;
+          if (type === "JOIN") {
+            updateSenderDevice(targetId, { status: "joined", name: targetName || "Other Device" });
+            await createSenderPeer(targetId, targetName || "Other Device", sId, eKey);
+            return;
+          }
+          if (type === "ANSWER") {
+            updateSenderDevice(targetId, { status: "awaiting_approval", remoteSdp: sdp, name: targetName || "Other Device" });
+            return;
+          }
+          if (type === "REJECT") {
+            updateSenderDevice(targetId, { status: "rejected" });
+            removeSenderPeer(targetId);
+            return;
+          }
+          if (type === "DISCONNECT") {
+            updateSenderDevice(targetId, { status: "disconnected" });
+            removeSenderPeer(targetId);
+          }
+        },
+      );
+    },
+    [createSenderPeer, pollForSignal, removeSenderPeer, updateSenderDevice],
+  );
+
+  const resumeReceiverSession = useCallback(
+    (sId: string, eKey: string, currentReceiverId: string, currentReceiverName: string) => {
+      setP2pRole("receiver");
+      setSignalId(sId);
+      setEncryptionKey(eKey);
+      setReceiverDeviceId(currentReceiverId);
+      setReceiverDeviceName(currentReceiverName);
+      setSyncPhase("connecting");
+
+      sendSignal(sId, eKey, "JOIN", { receiverId: currentReceiverId, deviceName });
+      if (persistentSyncRuntime.signalListenerCleanup) {
+        persistentSyncRuntime.signalListenerCleanup();
+      }
+      persistentSyncRuntime.signalListenerCleanup = pollForSignal(
+        sId,
+        eKey,
+        ["OFFER", "REJECT", "DISCONNECT"],
+        ({ type, sdp, deviceName: sourceName }) => {
+          if (type === "REJECT" || type === "DISCONNECT") {
+            cleanupSync();
+            return;
+          }
+          setRemoteOfferSdp(sdp || "");
+          setReceiverDeviceName(sourceName || currentReceiverName || "Other Device");
+          setSyncPhase("confirming");
+        },
+        currentReceiverId,
+      );
+    },
+    [cleanupSync, deviceName, pollForSignal, sendSignal],
+  );
+
   const startSync = useCallback(
     async (role: "sender" | "receiver") => {
       if (!PeerConstructor) {
@@ -793,46 +912,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       setReceiverDeviceName("");
 
       if (role === "sender") {
-        if (persistentSyncRuntime.signalListenerCleanup) {
-          persistentSyncRuntime.signalListenerCleanup();
-        }
-        persistentSyncRuntime.signalListenerCleanup = pollForSignal(
-          sId,
-          eKey,
-          ["JOIN", "ANSWER", "REJECT", "DISCONNECT"],
-          async ({ type, sdp, receiverId: joinedReceiverId, deviceName: joinedDeviceName }) => {
-            if (!joinedReceiverId) return;
-
-            if (type === "JOIN") {
-              updateSenderDevice(joinedReceiverId, { status: "joined", name: joinedDeviceName || "Other Device" });
-              await createSenderPeer(joinedReceiverId, joinedDeviceName || "Other Device", sId, eKey);
-              return;
-            }
-
-            if (type === "ANSWER") {
-              updateSenderDevice(joinedReceiverId, {
-                status: "awaiting_approval",
-                remoteSdp: sdp,
-                name: joinedDeviceName || persistentSyncRuntime.connectionStates.get(joinedReceiverId)?.remoteDeviceName || "Other Device",
-              });
-              return;
-            }
-
-            if (type === "REJECT") {
-              updateSenderDevice(joinedReceiverId, { status: "rejected" });
-              removeSenderPeer(joinedReceiverId);
-              return;
-            }
-
-            if (type === "DISCONNECT") {
-              updateSenderDevice(joinedReceiverId, { status: "disconnected" });
-              removeSenderPeer(joinedReceiverId);
-            }
-          },
-        );
+        resumeSenderSession(sId, eKey, []);
       }
     },
-    [PeerConstructor, createSenderPeer, pollForSignal, removeSenderPeer, updateSenderDevice],
+    [PeerConstructor, resumeSenderSession],
   );
 
   const handleSenderApproval = useCallback(
@@ -879,34 +962,9 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       }
 
       const [, , sId, eKey] = data.split(":");
-      setP2pRole("receiver");
-      setSignalId(sId);
-      setEncryptionKey(eKey);
-      const localReceiverId = deviceId || makeRandomHex(8);
-      setReceiverDeviceId(localReceiverId);
-      setSyncPhase("connecting");
-
-      sendSignal(sId, eKey, "JOIN", { receiverId: localReceiverId, deviceName });
-      if (persistentSyncRuntime.signalListenerCleanup) {
-        persistentSyncRuntime.signalListenerCleanup();
-      }
-      persistentSyncRuntime.signalListenerCleanup = pollForSignal(
-        sId,
-        eKey,
-        ["OFFER", "REJECT", "DISCONNECT"],
-        ({ type, sdp, deviceName: sourceName }) => {
-          if (type === "REJECT" || type === "DISCONNECT") {
-            cleanupSync();
-            return;
-          }
-          setRemoteOfferSdp(sdp || "");
-          setReceiverDeviceName(sourceName || "Other Device");
-          setSyncPhase("confirming");
-        },
-        localReceiverId,
-      );
+      resumeReceiverSession(sId, eKey, deviceId || makeRandomHex(8), deviceName);
     },
-    [cleanupSync, deviceId, deviceName, pollForSignal, sendSignal],
+    [deviceId, deviceName, resumeReceiverSession],
   );
 
   const handleReceiverApproval = useCallback(() => {
@@ -1005,84 +1063,6 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     cleanupSync();
   }, [cleanupSync, deviceName, encryptionKey, receiverDeviceId, sendSignal, signalId]);
 
-  const resumeSenderSession = useCallback(
-    (sId: string, eKey: string, savedDevices: SenderDevice[] = []) => {
-      setP2pRole("sender");
-      setSignalId(sId);
-      setEncryptionKey(eKey);
-      setSyncPhase(savedDevices.some((device) => device.status === "connected") ? "connected" : "pairing");
-      setSenderDevices(
-        savedDevices.map((device) => ({
-          ...device,
-          status: device.status === "connected" ? "disconnected" : device.status,
-        })),
-      );
-
-      if (persistentSyncRuntime.signalListenerCleanup) {
-        persistentSyncRuntime.signalListenerCleanup();
-      }
-      persistentSyncRuntime.signalListenerCleanup = pollForSignal(
-        sId,
-        eKey,
-        ["JOIN", "ANSWER", "REJECT", "DISCONNECT"],
-        async ({ type, sdp, receiverId: targetId, deviceName: targetName }) => {
-          if (!targetId) return;
-          if (type === "JOIN") {
-            updateSenderDevice(targetId, { status: "joined", name: targetName || "Other Device" });
-            await createSenderPeer(targetId, targetName || "Other Device", sId, eKey);
-            return;
-          }
-          if (type === "ANSWER") {
-            updateSenderDevice(targetId, { status: "awaiting_approval", remoteSdp: sdp, name: targetName || "Other Device" });
-            return;
-          }
-          if (type === "REJECT") {
-            updateSenderDevice(targetId, { status: "rejected" });
-            removeSenderPeer(targetId);
-            return;
-          }
-          if (type === "DISCONNECT") {
-            updateSenderDevice(targetId, { status: "disconnected" });
-            removeSenderPeer(targetId);
-          }
-        },
-      );
-    },
-    [createSenderPeer, pollForSignal, removeSenderPeer, updateSenderDevice],
-  );
-
-  const resumeReceiverSession = useCallback(
-    (sId: string, eKey: string, currentReceiverId: string, currentReceiverName: string) => {
-      setP2pRole("receiver");
-      setSignalId(sId);
-      setEncryptionKey(eKey);
-      setReceiverDeviceId(currentReceiverId);
-      setReceiverDeviceName(currentReceiverName);
-      setSyncPhase("connecting");
-
-      sendSignal(sId, eKey, "JOIN", { receiverId: currentReceiverId, deviceName });
-      if (persistentSyncRuntime.signalListenerCleanup) {
-        persistentSyncRuntime.signalListenerCleanup();
-      }
-      persistentSyncRuntime.signalListenerCleanup = pollForSignal(
-        sId,
-        eKey,
-        ["OFFER", "REJECT", "DISCONNECT"],
-        ({ type, sdp, deviceName: sourceName }) => {
-          if (type === "REJECT" || type === "DISCONNECT") {
-            cleanupSync();
-            return;
-          }
-          setRemoteOfferSdp(sdp || "");
-          setReceiverDeviceName(sourceName || currentReceiverName || "Other Device");
-          setSyncPhase("confirming");
-        },
-        currentReceiverId,
-      );
-    },
-    [cleanupSync, deviceName, pollForSignal, sendSignal],
-  );
-
   useEffect(() => {
     if (!PeerConstructor || hasAutoReconnectAttemptedRef.current) return;
 
@@ -1129,7 +1109,6 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If we have an active connection, just sync
     const isActuallyConnected =
       (p2pRole === "sender" && senderDevices.some((d) => d.status === "connected")) ||
       (p2pRole === "receiver" && syncPhase === "connected" && !!peer);
@@ -1180,7 +1159,6 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If not connected, but we have session metadata, try to auto-reconnect first
     const saved = localStorage.getItem(SYNC_SESSION_META_KEY);
     if (saved) {
       try {
@@ -1193,7 +1171,6 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
             resumeReceiverSession(meta.signalId, meta.encryptionKey, meta.receiverDeviceId, meta.receiverDeviceName);
           }
           
-          // Wait a bit for connection, then retry sync once
           setTimeout(() => {
             void requestManualSync();
           }, 3000);
@@ -1221,46 +1198,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     resumeReceiverSession,
   ]);
 
-  const resolveConflict = useCallback(
-    async (choice: "local" | "remote") => {
-      if (!conflictState) return;
-
-      const targetPeer =
-        p2pRole === "sender"
-          ? persistentSyncRuntime.senderPeers.get(conflictState.peerId)
-          : persistentSyncRuntime.peer;
-
-      if (choice === "local" && targetPeer) {
-        sendPeerMessage(targetPeer, {
-          type: "FORCE_APPLY",
-          requestId: conflictState.requestId,
-          snapshot: conflictState.localSnapshot,
-          snapshotHash: conflictState.localHash,
-          originId: deviceId,
-          originName: deviceName,
-        });
-        updateConnectionState(conflictState.peerId, {
-          lastResolvedHash: conflictState.localHash,
-          remoteDeviceName: conflictState.remoteDeviceName,
-        });
-        toast.success(`Kept ${deviceName} changes`);
-      }
-
-      if (choice === "remote") {
-        await applySnapshot(conflictState.remoteSnapshot);
-        updateConnectionState(conflictState.peerId, {
-          lastResolvedHash: conflictState.remoteHash,
-          remoteDeviceName: conflictState.remoteDeviceName,
-        });
-        toast.success(`Applied ${conflictState.remoteDeviceName} changes`);
-      }
-
-      persistentSyncRuntime.pendingRequests.delete(conflictState.requestId);
-      setConflictState(null);
-      setIsRefreshing(false);
-    },
-    [applySnapshot, conflictState, deviceId, deviceName, p2pRole, sendPeerMessage, updateConnectionState],
-  );
+  const updateConflictResolution = (serviceId: string, choice: "local" | "remote") => {
+    setConflictState(prev => prev ? {
+      ...prev,
+      resolutions: { ...prev.resolutions, [serviceId]: choice }
+    } : null);
+  };
 
   const alignScannerPreview = useCallback(() => {
     const reader = document.getElementById("qr-reader");
@@ -1439,48 +1382,97 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     <SyncContext.Provider value={value}>
       {children}
       {conflictState ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4">
-          <div className="w-full max-w-xl rounded-[2rem] border border-zinc-800 bg-[#111113] p-6 shadow-2xl shadow-black/50">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-300">
-                <AlertTriangle className="h-6 w-6" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-[2.5rem] border border-zinc-800 bg-[#111113] p-8 shadow-2xl shadow-black/50">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-300">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-300">Sync Conflict Detected</p>
+                  <h3 className="text-2xl font-black uppercase italic tracking-tight text-white">Compare & Resolve</h3>
+                  <p className="max-w-md text-sm text-zinc-400">
+                    Both devices have changed since the last sync. Choose which version to keep for each service.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-300">Sync Conflict</p>
-                <h3 className="text-xl font-black uppercase italic tracking-wide text-white">Both devices changed</h3>
-                <p className="text-sm text-zinc-400">
-                  Choose which version should win for all synced data. This will replace saved local app data on the other side.
-                </p>
-              </div>
+              <button onClick={cleanupSync} className="text-zinc-500 hover:text-white transition">
+                <X className="h-6 w-6" />
+              </button>
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <button
-                onClick={() => void resolveConflict("local")}
-                className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-5 text-left transition hover:border-primary/60"
-              >
-                <div className="flex items-center gap-3">
-                  <Laptop2 className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-white">{deviceName}</p>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Keep this device</p>
+            <div className="mt-8 space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+              {conflictState.differingServices.map((service) => (
+                <div key={service.id} className="group rounded-[2rem] border border-zinc-800 bg-zinc-950 p-6 transition hover:border-zinc-700">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h4 className="text-lg font-black uppercase tracking-wide text-white italic">{service.name}</h4>
+                      <p className="text-xs text-zinc-500 mt-1 uppercase font-bold tracking-widest">Select version to keep</p>
+                    </div>
+                    <div className="flex rounded-full bg-[#111113] p-1.5 border border-zinc-800 self-start md:self-auto">
+                      <button
+                        onClick={() => updateConflictResolution(service.id, "local")}
+                        className={cn("px-5 py-2 text-[10px] font-black uppercase rounded-full transition-all duration-300", 
+                          conflictState.resolutions[service.id] === "local" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500 hover:text-zinc-300")}
+                      >
+                        Local
+                      </button>
+                      <button
+                        onClick={() => updateConflictResolution(service.id, "remote")}
+                        className={cn("px-5 py-2 text-[10px] font-black uppercase rounded-full transition-all duration-300", 
+                          conflictState.resolutions[service.id] === "remote" ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-zinc-500 hover:text-zinc-300")}
+                      >
+                        Remote
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <p className="mt-4 text-xs text-zinc-400">Use the data from the device that clicked refresh.</p>
-              </button>
 
-              <button
-                onClick={() => void resolveConflict("remote")}
-                className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-5 text-left transition hover:border-primary/60"
-              >
-                <div className="flex items-center gap-3">
-                  <Smartphone className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-white">{conflictState.remoteDeviceName}</p>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Use remote device</p>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div 
+                      onClick={() => updateConflictResolution(service.id, "local")}
+                      className={cn("cursor-pointer space-y-2 p-4 rounded-2xl border transition-all duration-300", 
+                        conflictState.resolutions[service.id] === "local" 
+                          ? "bg-primary/5 border-primary/40 ring-1 ring-primary/20" 
+                          : "bg-zinc-900/50 border-zinc-800/50 opacity-40 hover:opacity-60 grayscale")}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Laptop2 className="h-4 w-4 text-primary" />
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">On {deviceName}</p>
+                      </div>
+                      <p className="text-sm font-medium text-zinc-200">{service.localSummary}</p>
+                    </div>
+
+                    <div 
+                      onClick={() => updateConflictResolution(service.id, "remote")}
+                      className={cn("cursor-pointer space-y-2 p-4 rounded-2xl border transition-all duration-300", 
+                        conflictState.resolutions[service.id] === "remote" 
+                          ? "bg-primary/5 border-primary/40 ring-1 ring-primary/20" 
+                          : "bg-zinc-900/50 border-zinc-800/50 opacity-40 hover:opacity-60 grayscale")}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="h-4 w-4 text-primary" />
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">On {conflictState.remoteDeviceName}</p>
+                      </div>
+                      <p className="text-sm font-medium text-zinc-200">{service.remoteSummary}</p>
+                    </div>
                   </div>
                 </div>
-                <p className="mt-4 text-xs text-zinc-400">Pull the saved data from the other connected device instead.</p>
+              ))}
+            </div>
+
+            <div className="mt-10 flex flex-col md:flex-row gap-4">
+              <button
+                onClick={resolveGranularConflict}
+                className="flex-1 rounded-full bg-primary px-8 py-4 text-xs font-black uppercase tracking-[0.3em] text-white transition hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-primary/20"
+              >
+                Apply Selected Changes
+              </button>
+              <button
+                onClick={cleanupSync}
+                className="rounded-full border border-zinc-800 bg-zinc-900/50 px-8 py-4 text-xs font-black uppercase tracking-[0.3em] text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              >
+                Cancel Sync
               </button>
             </div>
           </div>
