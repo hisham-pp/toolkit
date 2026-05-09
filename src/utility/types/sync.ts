@@ -96,7 +96,7 @@ export type PendingRequest = {
 export type DifferingService = {
   id: string;
   name: string;
-  keys: string[];
+  keys: readonly string[];
   isTodos?: boolean;
   localSummary: string;
   remoteSummary: string;

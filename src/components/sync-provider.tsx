@@ -471,7 +471,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       if (service.isTodos) {
         finalSnapshot.todos = source.todos;
       } else if (service.id === "other") {
-        const allKnownKeys = new Set(SERVICE_DEFINITIONS.flatMap(s => s.keys));
+        const allKnownKeys = new Set<string>(SERVICE_DEFINITIONS.flatMap(s => s.keys as readonly string[]));
         allKnownKeys.add(RECENT_TOOLS_KEY);
         Object.entries(source.storage).forEach(([k, v]) => {
           if (!allKnownKeys.has(k)) finalSnapshot.storage[k] = v;
@@ -584,7 +584,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         });
 
         // Check everything else (Other)
-        const allKnownKeys = new Set(SERVICE_DEFINITIONS.flatMap(s => s.keys));
+        const allKnownKeys = new Set<string>(SERVICE_DEFINITIONS.flatMap(s => s.keys as readonly string[]));
         allKnownKeys.add(RECENT_TOOLS_KEY);
         const localOther = Object.keys(pending.localSnapshot.storage).filter(k => !allKnownKeys.has(k));
         const remoteOther = Object.keys(remoteSnapshot.storage).filter(k => !allKnownKeys.has(k));
