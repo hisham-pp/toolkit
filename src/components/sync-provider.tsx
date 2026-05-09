@@ -23,6 +23,7 @@ import {
   AUTO_RECONNECT_MAX_AGE_MS,
   SERVICE_DEFINITIONS,
   INTERNAL_SYNC_KEYS,
+  PAIRING_RELAY_PREFIX,
 } from "@/utility/constants/sync";
 import { loadTodoWorkspace, saveTodoWorkspace } from "@/utility/helpers/todo-db";
 import { compressData, decompressData } from "@/utility/helpers/sync";
@@ -87,6 +88,10 @@ function makeRandomHex(bytes: number) {
     .join("");
 }
 
+function makeOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 function makeDefaultDeviceName() {
   if (typeof navigator === "undefined") return "This Device";
   const isMobile = /android|iphone|ipad|mobile/i.test(navigator.userAgent);
@@ -108,6 +113,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [senderDevices, setSenderDevices] = useState<SenderDevice[]>([]);
   const [signalId, setSignalId] = useState("");
   const [encryptionKey, setEncryptionKey] = useState("");
+  const [pairingOtp, setPairingOtp] = useState("");
   const [receiverDeviceId, setReceiverDeviceId] = useState("");
   const [receiverDeviceName, setReceiverDeviceName] = useState("");
   const [manualPairingString, setManualPairingString] = useState("");
@@ -920,10 +926,33 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       setReceiverDeviceName("");
 
       if (role === "sender") {
+        const otp = makeOtp();
+        setPairingOtp(otp);
         resumeSenderSession(sId, eKey, []);
+
+        // Also listen on the OTP topic for pairing requests
+        const otpListener = pollForSignal(
+          `${PAIRING_RELAY_PREFIX}${otp}`,
+          otp,
+          ["JOIN"],
+          ({ receiverId: tempReceiverId }) => {
+            if (!tempReceiverId) return;
+            // Send the real pairing details to the requester's temp topic
+            sendSignal(tempReceiverId, otp, "ANSWER", {
+              sdp: `toolkit-sync:v1:${sId}:${eKey}`,
+            });
+          },
+        );
+
+        // Chain the cleanup
+        const originalCleanup = persistentSyncRuntime.signalListenerCleanup;
+        persistentSyncRuntime.signalListenerCleanup = () => {
+          if (originalCleanup) originalCleanup();
+          otpListener();
+        };
       }
     },
-    [PeerConstructor, resumeSenderSession],
+    [PeerConstructor, pollForSignal, resumeSenderSession, sendSignal],
   );
 
   const handleSenderApproval = useCallback(
@@ -973,6 +1002,31 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       resumeReceiverSession(sId, eKey, deviceId || makeRandomHex(8), deviceName);
     },
     [deviceId, deviceName, resumeReceiverSession],
+  );
+
+  const connectWithOtp = useCallback(
+    async (otp: string) => {
+      if (otp.length !== 6) {
+        toast.error("Please enter a 6-digit code");
+        return;
+      }
+
+      const tempReceiverId = makeRandomHex(12);
+      addLog(`Requesting pairing with code ${otp}...`);
+
+      // Send the request
+      sendSignal(`${PAIRING_RELAY_PREFIX}${otp}`, otp, "JOIN", { receiverId: tempReceiverId });
+
+      // Listen for the response
+      const cleanupTempListener = pollForSignal(tempReceiverId, otp, ["ANSWER"], ({ sdp }) => {
+        if (sdp?.startsWith("toolkit-sync:v1:")) {
+          addLog("Pairing details received, connecting...");
+          handleScannedData(sdp);
+          cleanupTempListener();
+        }
+      });
+    },
+    [addLog, handleScannedData, sendSignal, pollForSignal],
   );
 
   const handleReceiverApproval = useCallback(() => {
@@ -1353,6 +1407,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       receiverDeviceId,
       receiverDeviceName,
       pairingString,
+      pairingOtp,
       manualPairingString,
       setManualPairingString,
       senderDevices,
@@ -1368,6 +1423,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       startCamera,
       cleanupSync,
       handleScannedData,
+      connectWithOtp,
       handleReject,
       handleReceiverApproval,
       handleSenderApproval,
@@ -1377,6 +1433,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       cleanupSync,
+      connectWithOtp,
       connectionLogs,
       deviceId,
       deviceName,
@@ -1393,6 +1450,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       isRefreshing,
       manualPairingString,
       p2pRole,
+      pairingOtp,
       pairingString,
       pendingSenderDevices,
       receiverDeviceId,

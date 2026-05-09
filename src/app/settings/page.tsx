@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Copy, Monitor, QrCode, RefreshCw, Scan, Smartphone, Unplug, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ export default function SettingsPage() {
     manualPairingString,
     p2pRole,
     pairingString,
+    pairingOtp,
     pendingSenderDevices,
     receiverDeviceName,
     requestManualSync,
@@ -31,7 +33,10 @@ export default function SettingsPage() {
     startCamera,
     startSync,
     syncPhase,
+    connectWithOtp,
   } = useSync();
+
+  const [otpInput, setOtpInput] = useState("");
 
   return (
     <div className="space-y-10">
@@ -133,28 +138,50 @@ export default function SettingsPage() {
 
           {p2pRole === "sender" ? (
             <div className="mt-6 space-y-6">
-              {pairingString ? (
-                <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-5">
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
+              {pairingOtp ? (
+                <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-6">
+                  <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="space-y-4">
                       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Pairing code</p>
-                      <p className="mt-2 break-all font-mono text-sm text-zinc-200">{pairingString}</p>
+                      <div className="flex gap-2">
+                        {pairingOtp.split("").map((digit, i) => (
+                          <div
+                            key={i}
+                            className="flex h-14 w-10 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-2xl font-black text-primary md:h-16 md:w-12 md:text-3xl"
+                          >
+                            {digit}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-zinc-400">Enter this 6-digit code on your other device to connect.</p>
                     </div>
+
                     <div className="flex flex-col items-start gap-4 lg:items-end">
                       <div className="rounded-[1.5rem] border border-zinc-800 bg-white p-4">
                         <QRCodeSVG value={pairingString} size={148} bgColor="#ffffff" fgColor="#09090b" />
                       </div>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await navigator.clipboard.writeText(pairingString);
-                          toast.success("Pairing code copied");
-                        }}
-                        className="inline-flex items-center gap-2 rounded-full border border-zinc-800 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-zinc-200 transition hover:border-primary hover:text-white"
-                      >
-                        <Copy className="h-4 w-4" />
-                        Copy
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(pairingOtp);
+                            toast.success("OTP copied");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-full border border-zinc-800 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-zinc-200 transition hover:border-primary hover:text-white"
+                        >
+                          Copy code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(pairingString);
+                            toast.success("Long code copied");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-full border border-zinc-800 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-200"
+                        >
+                          Copy long code
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -222,36 +249,86 @@ export default function SettingsPage() {
 
           {p2pRole === "receiver" ? (
             <div className="mt-6 space-y-6">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-6">
+                  <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-6">
+                    <div className="flex items-center gap-3">
+                      <Smartphone className="h-5 w-5 text-primary" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Enter pairing code</p>
+                    </div>
+                    <div className="mt-6 flex justify-between gap-2">
+                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                        <input
+                          key={i}
+                          type="text"
+                          maxLength={1}
+                          value={otpInput[i] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            const newOtpArr = otpInput.split("");
+                            if (val) {
+                              newOtpArr[i] = val;
+                              const finalOtp = newOtpArr.join("").slice(0, 6);
+                              setOtpInput(finalOtp);
+                              if (i < 5) {
+                                const next = e.currentTarget.nextElementSibling as HTMLInputElement;
+                                if (next) next.focus();
+                              }
+                            } else {
+                              newOtpArr[i] = "";
+                              setOtpInput(newOtpArr.join(""));
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Backspace" && !otpInput[i] && i > 0) {
+                              const prev = e.currentTarget.previousElementSibling as HTMLInputElement;
+                              if (prev) prev.focus();
+                            }
+                          }}
+                          className="h-14 w-full rounded-xl border border-zinc-800 bg-zinc-900 text-center text-xl font-black text-white outline-none transition focus:border-primary md:h-16 md:text-2xl"
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={otpInput.length !== 6}
+                      onClick={() => void connectWithOtp(otpInput)}
+                      className="mt-6 w-full rounded-full border border-primary/40 bg-primary/10 py-3 text-xs font-black uppercase tracking-[0.2em] text-primary transition hover:bg-primary hover:text-white disabled:opacity-30"
+                    >
+                      Connect with code
+                    </button>
+                  </div>
+
+                  <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-5">
+                    <div className="flex items-center gap-3">
+                      <Smartphone className="h-5 w-5 text-primary" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Paste long code</p>
+                    </div>
+                    <textarea
+                      value={manualPairingString}
+                      onChange={(event) => setManualPairingString(event.target.value)}
+                      placeholder="toolkit-sync:v1:..."
+                      className="mt-4 h-32 w-full rounded-[1.5rem] border border-zinc-800 bg-[#111113] p-4 text-sm text-white outline-none transition focus:border-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleScannedData(manualPairingString)}
+                      className="mt-4 w-full rounded-full border border-zinc-800 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-primary hover:text-white"
+                    >
+                      Connect with long code
+                    </button>
+                  </div>
+                </div>
+
                 <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-5">
                   <div className="flex items-center gap-3">
                     <QrCode className="h-5 w-5 text-primary" />
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Scan QR code</p>
                   </div>
-                  <div className="relative mt-4 h-[320px] overflow-hidden rounded-[1.5rem] border border-zinc-800 bg-black">
+                  <div className="relative mt-4 h-[380px] overflow-hidden rounded-[1.5rem] border border-zinc-800 bg-black">
                     <div id="qr-reader" className="absolute inset-0" />
                   </div>
-                  {isManualEntry ? <p className="mt-3 text-xs text-zinc-500">Camera unavailable. Use manual entry below.</p> : null}
-                </div>
-
-                <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950 p-5">
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="h-5 w-5 text-primary" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Paste pairing code</p>
-                  </div>
-                  <textarea
-                    value={manualPairingString}
-                    onChange={(event) => setManualPairingString(event.target.value)}
-                    placeholder="toolkit-sync:v1:..."
-                    className="mt-4 h-40 w-full rounded-[1.5rem] border border-zinc-800 bg-[#111113] p-4 text-sm text-white outline-none transition focus:border-primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleScannedData(manualPairingString)}
-                    className="mt-4 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-primary transition hover:bg-primary hover:text-white"
-                  >
-                    Connect with code
-                  </button>
+                  {isManualEntry ? <p className="mt-3 text-xs text-zinc-500">Camera unavailable. Use manual entry.</p> : null}
                 </div>
               </div>
 

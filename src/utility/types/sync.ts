@@ -126,6 +126,7 @@ export type SyncContextValue = {
   receiverDeviceId: string;
   receiverDeviceName: string;
   pairingString: string;
+  pairingOtp: string;
   manualPairingString: string;
   setManualPairingString: (value: string) => void;
   senderDevices: SenderDevice[];
@@ -141,6 +142,7 @@ export type SyncContextValue = {
   startCamera: () => Promise<void>;
   cleanupSync: () => void;
   handleScannedData: (data: string) => void;
+  connectWithOtp: (otp: string) => Promise<void>;
   handleReject: () => void;
   handleReceiverApproval: () => void;
   handleSenderApproval: (deviceId: string) => void;
