@@ -1129,62 +1129,97 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (p2pRole === "sender") {
-      const connected = senderDevices.filter((device) => device.status === "connected");
-      if (!connected.length) {
-        toast.error("Connect another device first");
-        return;
-      }
+    // If we have an active connection, just sync
+    const isActuallyConnected =
+      (p2pRole === "sender" && senderDevices.some((d) => d.status === "connected")) ||
+      (p2pRole === "receiver" && syncPhase === "connected" && !!peer);
 
+    if (isActuallyConnected) {
       setIsRefreshing(true);
       const snapshot = await gatherSnapshot();
       const snapshotHash = computeSyncHash(snapshot);
-      connected.forEach((device) => {
-        const activePeer = persistentSyncRuntime.senderPeers.get(device.id);
-        if (!activePeer) return;
+
+      if (p2pRole === "sender") {
+        const connected = senderDevices.filter((device) => device.status === "connected");
+        connected.forEach((device) => {
+          const activePeer = persistentSyncRuntime.senderPeers.get(device.id);
+          if (!activePeer) return;
+          const requestId = crypto.randomUUID();
+          persistentSyncRuntime.pendingRequests.set(requestId, {
+            peerId: device.id,
+            localSnapshot: snapshot,
+            localHash: snapshotHash,
+          });
+          sendPeerMessage(activePeer, {
+            type: "SYNC_REQUEST",
+            requestId,
+            snapshot,
+            snapshotHash,
+            baseHash: persistentSyncRuntime.connectionStates.get(device.id)?.lastResolvedHash || "",
+            originId: deviceId,
+            originName: deviceName,
+          });
+        });
+      } else if (p2pRole === "receiver" && peer) {
         const requestId = crypto.randomUUID();
         persistentSyncRuntime.pendingRequests.set(requestId, {
-          peerId: device.id,
+          peerId: receiverDeviceId || "host",
           localSnapshot: snapshot,
           localHash: snapshotHash,
         });
-        sendPeerMessage(activePeer, {
+        sendPeerMessage(peer, {
           type: "SYNC_REQUEST",
           requestId,
           snapshot,
           snapshotHash,
-          baseHash: persistentSyncRuntime.connectionStates.get(device.id)?.lastResolvedHash || "",
+          baseHash: persistentSyncRuntime.connectionStates.get(receiverDeviceId || "host")?.lastResolvedHash || "",
           originId: deviceId,
           originName: deviceName,
         });
-      });
+      }
       return;
     }
 
-    if (p2pRole === "receiver" && peer) {
-      setIsRefreshing(true);
-      const snapshot = await gatherSnapshot();
-      const snapshotHash = computeSyncHash(snapshot);
-      const requestId = crypto.randomUUID();
-      persistentSyncRuntime.pendingRequests.set(requestId, {
-        peerId: receiverDeviceId || "host",
-        localSnapshot: snapshot,
-        localHash: snapshotHash,
-      });
-      sendPeerMessage(peer, {
-        type: "SYNC_REQUEST",
-        requestId,
-        snapshot,
-        snapshotHash,
-        baseHash: persistentSyncRuntime.connectionStates.get(receiverDeviceId || "host")?.lastResolvedHash || "",
-        originId: deviceId,
-        originName: deviceName,
-      });
-      return;
+    // If not connected, but we have session metadata, try to auto-reconnect first
+    const saved = localStorage.getItem(SYNC_SESSION_META_KEY);
+    if (saved) {
+      try {
+        const meta = JSON.parse(saved);
+        if (meta.signalId && meta.encryptionKey && meta.role) {
+          toast.info("Reconnecting to sync session...");
+          if (meta.role === "sender") {
+            resumeSenderSession(meta.signalId, meta.encryptionKey, meta.senderDevices || []);
+          } else if (meta.role === "receiver" && meta.receiverDeviceId) {
+            resumeReceiverSession(meta.signalId, meta.encryptionKey, meta.receiverDeviceId, meta.receiverDeviceName);
+          }
+          
+          // Wait a bit for connection, then retry sync once
+          setTimeout(() => {
+            void requestManualSync();
+          }, 3000);
+          return;
+        }
+      } catch (e) {
+        console.error("Auto-reconnect failed", e);
+      }
     }
 
-    toast.error("Open Settings & Sync and connect a device first");
-  }, [computeSyncHash, conflictState, deviceId, deviceName, gatherSnapshot, p2pRole, peer, receiverDeviceId, sendPeerMessage, senderDevices]);
+    toast.error("Please connect a device in Settings & Sync first");
+  }, [
+    conflictState,
+    p2pRole,
+    senderDevices,
+    syncPhase,
+    peer,
+    gatherSnapshot,
+    computeSyncHash,
+    deviceId,
+    deviceName,
+    receiverDeviceId,
+    sendPeerMessage,
+    resumeSenderSession,
+    resumeReceiverSession,
+  ]);
 
   const resolveConflict = useCallback(
     async (choice: "local" | "remote") => {
