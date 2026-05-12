@@ -272,6 +272,15 @@ export class ToolRegistry {
       ["aes", "encryption", "decryption", "security", "crypto"]
     ),
     new Tool(
+      "file-encryptor",
+      "File Guard",
+      "Securely encrypt and decrypt files with military-grade AES-256 password protection.",
+      ShieldCheck,
+      "/tools/file-encryptor",
+      ToolCategory.Security,
+      ["file", "encryption", "decryption", "security", "password", "protect"]
+    ),
+    new Tool(
       "bcrypt-generator",
       "Bcrypt Generator",
       "Generate secure Bcrypt hashes for passwords with adjustable cost.",
