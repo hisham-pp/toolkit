@@ -19,7 +19,7 @@ This document tracks the implementation of new utilities for the DevHub toolkit.
   - *Priority:* Medium
 
 ## Priority 3: Low/Niche Impact
-- [ ] **Byte/Data Size Converter** (Converters)
+- [x] **Byte/Data Size Converter** (Converters)
   - *Description:* Convert between bytes, KB, MB, GB, TB (Decimal vs Binary).
   - *Priority:* Low
 

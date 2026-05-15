@@ -24,6 +24,7 @@ import {
   Split,
   Files,
   FileCode,
+  HardDrive,
   Palette,
   Pipette,
   Layers,
@@ -559,6 +560,15 @@ export class ToolRegistry {
       "/tools/weight-converter",
       ToolCategory.Converters,
       ["weight", "convert", "mass", "units"]
+    ),
+    new Tool(
+      "byte-converter",
+      "Byte Converter",
+      "Convert between various data units (Bytes, KB, MB, GB, TB) in Decimal or Binary systems.",
+      HardDrive,
+      "/tools/byte-converter",
+      ToolCategory.Converters,
+      ["byte", "bit", "kb", "mb", "gb", "converter", "data", "storage"]
     ),
     new Tool(
       "distance-converter",
