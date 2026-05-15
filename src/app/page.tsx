@@ -246,7 +246,7 @@ export default function Home() {
                   transition={{ delay: index * 0.1 }}
                 >
                   <Tooltip>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger>
                       <Link 
                         href={tool.route} 
                         className="group relative block aspect-square"
