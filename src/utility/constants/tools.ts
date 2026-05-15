@@ -119,6 +119,15 @@ export class ToolRegistry {
       ["json", "typescript", "zod", "go", "schema", "interface", "converter"]
     ),
     new Tool(
+      "svg-jsx",
+      "SVG to JSX",
+      "Optimize and convert raw SVG code into production-ready React components.",
+      FileCode,
+      "/tools/svg-jsx",
+      ToolCategory.Formatting,
+      ["svg", "jsx", "react", "icon", "optimizer", "converter"]
+    ),
+    new Tool(
       "json-formatter",
       "JSON Formatter",
       "Prettify, minify, and validate complex JSON data structures.",
@@ -666,15 +675,6 @@ export class ToolRegistry {
       "/tools/advanced-todos",
       ToolCategory.Utils,
       ["todo", "tasks", "management", "productivity", "dev"]
-    ),
-    new Tool(
-      "json-sorter",
-      "JSON Sorter",
-      "Sort JSON keys alphabetically or by length.",
-      ListFilter,
-      "/tools/json-sorter",
-      ToolCategory.Formatting,
-      ["sort", "organize", "alphabetical", "visualize"]
     ),
   ];
 

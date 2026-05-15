@@ -11,7 +11,7 @@ This document tracks the implementation of new utilities for the DevHub toolkit.
   - *Priority:* High
 
 ## Priority 2: Medium Impact
-- [ ] **SVG to JSX Optimizer** (Formatting/Utils)
+- [x] **SVG to JSX Optimizer** (Formatting/Utils)
   - *Description:* Clean and convert SVGs to React components.
   - *Priority:* Medium
 - [ ] **Visual Cron Builder** (Utils/Generation)
