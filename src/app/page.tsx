@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
-import { motion } from "motion/react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { ArrowRight, Sparkles, ChevronDown, Search, Command, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { TOOLS, Tool } from "@/utility/constants/tools";
 import { RECENT_TOOLS_KEY } from "@/utility/constants/storage-keys";
 import Link from "next/link";
 import { cn } from "@/utility/helpers/utils";
+import { useRouter } from "next/navigation";
+import { getRecentToolIds } from "@/utility/helpers/tools";
 
 import {
   Tooltip,
@@ -16,23 +18,24 @@ import {
 
 export default function Home() {
   const [recentIds, setRecentIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const router = useRouter();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(RECENT_TOOLS_KEY);
-    if (saved) {
-      try {
-        setRecentIds(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse recent tools", e);
-      }
-    }
+    setRecentIds(getRecentToolIds());
   }, []);
 
-  const trackToolClick = (id: string) => {
-    const newRecent = [id, ...recentIds.filter(rid => rid !== id)].slice(0, 10);
-    setRecentIds(newRecent);
-    localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(newRecent));
-  };
+  const filteredTools = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const lowerQuery = searchQuery.toLowerCase();
+    return TOOLS.filter(tool => 
+      tool.name.toLowerCase().includes(lowerQuery) ||
+      tool.description.toLowerCase().includes(lowerQuery) ||
+      tool.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
+    ).slice(0, 10);
+  }, [searchQuery]);
 
   const recentTools = useMemo(() => {
     return recentIds
@@ -56,6 +59,21 @@ export default function Home() {
     return list.slice(0, 7);
   }, [recentTools, recentIds]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === "Escape") {
+        setSearchQuery("");
+        searchInputRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <main className="min-h-screen w-full bg-[#09090B] text-zinc-400">
       {/* Hero Section - Full Screen */}
@@ -68,7 +86,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 flex flex-col items-center gap-12"
+          className="relative z-10 flex flex-col items-center gap-12 w-full max-w-4xl"
         >
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
             <div className="w-28 h-28 bg-zinc-950 border border-white/10 rounded-[2.5rem] flex items-center justify-center text-primary font-black text-6xl shadow-2xl shadow-primary/20 rotate-3 hover:rotate-0 transition-transform duration-700">
@@ -89,15 +107,100 @@ export default function Home() {
             </p>
           </div>
 
+          {/* New Integrated Search Bar */}
+          <div className="w-full max-w-2xl relative group">
+            <div className={cn(
+              "relative bg-zinc-950/50 border border-zinc-800 rounded-full flex items-center px-8 h-20 transition-all duration-500",
+              isSearchFocused ? "border-primary shadow-[0_0_40px_rgba(var(--primary-rgb),0.15)] bg-zinc-900" : "hover:border-zinc-700"
+            )}>
+              <Search className={cn(
+                "w-6 h-6 mr-4 transition-colors",
+                isSearchFocused ? "text-primary" : "text-zinc-600"
+              )} />
+              <input 
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search tools (Press / or ⌘K)"
+                className="flex-1 bg-transparent border-none outline-none text-xl text-white placeholder:text-zinc-700 font-medium"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && filteredTools.length > 0) {
+                    router.push(filteredTools[0].route);
+                  }
+                }}
+              />
+              <div className="flex items-center gap-3">
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery("")}
+                    className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-zinc-500" />
+                  </button>
+                )}
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-500">
+                  <Command className="w-3 h-3" />
+                  <span className="text-[10px] font-black tracking-widest uppercase">K</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Results Overlay */}
+            <AnimatePresence>
+              {searchQuery && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full left-0 w-full mt-4 bg-zinc-950 border border-zinc-800 rounded-[2rem] shadow-2xl overflow-hidden z-[100] p-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {filteredTools.length > 0 ? (
+                      filteredTools.map((tool) => (
+                        <Link 
+                          key={tool.id} 
+                          href={tool.route}
+                          className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all group/item"
+                        >
+                          <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-500 group-hover/item:text-primary transition-colors">
+                            <tool.icon className="w-6 h-6" />
+                          </div>
+                          <div className="text-left min-w-0">
+                            <h4 className="text-white font-bold text-sm tracking-tight group-hover/item:text-primary transition-colors truncate">
+                              {tool.name}
+                            </h4>
+                            <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-black truncate">
+                              {tool.category}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 ml-auto text-zinc-800 group-hover/item:text-primary transition-all group-hover/item:translate-x-1" />
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="col-span-2 py-12 flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center">
+                          <Search className="w-8 h-8 text-zinc-800" />
+                        </div>
+                        <p className="text-zinc-600 font-black uppercase tracking-[0.3em] text-[10px]">No matches found</p>
+                      </div>
+                    )}
+                  </div>
+                  {filteredTools.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-zinc-900 flex justify-center">
+                       <Link href="/tools" className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600 hover:text-white transition-colors italic">
+                         View Full Directory Inventory
+                       </Link>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <div className="flex flex-col items-center gap-8 pt-8">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
-              className="px-16 py-7 bg-white text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-full hover:bg-primary hover:text-white transition-all shadow-2xl shadow-white/10"
-            >
-              Access Engine Room
-            </motion.button>
             <div className="animate-bounce mt-4 cursor-pointer" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}>
               <ChevronDown className="w-8 h-8 text-zinc-800" />
             </div>
@@ -143,10 +246,9 @@ export default function Home() {
                   transition={{ delay: index * 0.1 }}
                 >
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger asChild>
                       <Link 
                         href={tool.route} 
-                        onClick={() => trackToolClick(tool.id)}
                         className="group relative block aspect-square"
                       >
                         <div className="h-full bg-zinc-950 border border-zinc-800 rounded-[2.5rem] p-6 flex flex-col items-center justify-center gap-6 transition-all duration-700 group-hover:bg-[#111113] group-hover:border-primary group-hover:-translate-y-4 shadow-xl hover:shadow-primary/10 overflow-hidden">

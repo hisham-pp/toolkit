@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { Tool } from "@/utility/constants/tools";
 import ToolBackButton from "@/components/ToolBackButton";
 import HeaderSearch from "@/components/HeaderSearch";
 import { Settings as SettingsIcon } from "lucide-react";
 import SyncRefreshButton from "@/components/SyncRefreshButton";
+import { trackToolVisit } from "@/utility/helpers/tools";
 
 interface ToolLayoutProps {
   tool: Tool;
@@ -12,6 +13,10 @@ interface ToolLayoutProps {
 }
 
 export default function ToolLayout({ tool, children }: ToolLayoutProps) {
+  useEffect(() => {
+    trackToolVisit(tool.id);
+  }, [tool.id]);
+
   return (
     <div className="min-h-screen bg-[#09090B] text-zinc-400 flex flex-col font-sans">
       {/* Tool Header */}
