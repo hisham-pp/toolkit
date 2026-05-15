@@ -218,6 +218,15 @@ export class ToolRegistry {
       ["json", "sort", "keys", "alphabetical"]
     ),
     new Tool(
+      "curl-converter",
+      "cURL Converter",
+      "Convert cURL commands into production-ready Fetch, Axios, Python, or Go code.",
+      Terminal,
+      "/tools/curl-converter",
+      ToolCategory.Converters,
+      ["curl", "api", "fetch", "axios", "python", "go", "request", "converter"]
+    ),
+    new Tool(
       "xml-json",
       "XML to JSON",
       "Seamlessly convert XML data to JSON format and vice versa.",

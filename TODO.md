@@ -6,7 +6,7 @@ This document tracks the implementation of new utilities for the DevHub toolkit.
 - [x] **JSON to TypeScript/Zod Generator** (Converters/Generation)
   - *Description:* Convert JSON objects into TypeScript Interfaces or Zod Schemas.
   - *Priority:* Critical
-- [ ] **cURL to Code Converter** (Converters)
+- [x] **cURL to Code Converter** (Converters)
   - *Description:* Convert cURL commands to Fetch, Axios, Python, etc.
   - *Priority:* High
 
