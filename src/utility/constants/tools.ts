@@ -110,6 +110,15 @@ export class ToolRegistry {
       ["environment", "variables", "secrets", "config", "dotenv"]
     ),
     new Tool(
+      "json-type-gen",
+      "JSON Type Generator",
+      "Convert JSON objects into TypeScript Interfaces, Zod Schemas, or Go Structs.",
+      Zap,
+      "/tools/json-type-gen",
+      ToolCategory.Converters,
+      ["json", "typescript", "zod", "go", "schema", "interface", "converter"]
+    ),
+    new Tool(
       "json-formatter",
       "JSON Formatter",
       "Prettify, minify, and validate complex JSON data structures.",
