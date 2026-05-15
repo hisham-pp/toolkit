@@ -20,6 +20,7 @@ export default function Home() {
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,6 +36,10 @@ export default function Home() {
       tool.description.toLowerCase().includes(lowerQuery) ||
       tool.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
     ).slice(0, 10);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setSelectedIndex(-1);
   }, [searchQuery]);
 
   const recentTools = useMemo(() => {
@@ -61,18 +66,37 @@ export default function Home() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      // Focus on '/' or '⌘K'
+      if ((e.key === "/" || ((e.ctrlKey || e.metaKey) && e.key === "k")) && document.activeElement !== searchInputRef.current) {
         e.preventDefault();
         searchInputRef.current?.focus();
+        return;
       }
+
       if (e.key === "Escape") {
         setSearchQuery("");
+        setSelectedIndex(-1);
         searchInputRef.current?.blur();
+        return;
+      }
+
+      // Result navigation
+      if (searchQuery && filteredTools.length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedIndex(prev => (prev < filteredTools.length - 1 ? prev + 1 : prev));
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
+        } else if (e.key === "Enter" && selectedIndex >= 0) {
+          e.preventDefault();
+          router.push(filteredTools[selectedIndex].route);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [searchQuery, filteredTools, selectedIndex, router]);
 
   return (
     <main className="min-h-screen w-full bg-[#09090B] text-zinc-400">
@@ -159,24 +183,39 @@ export default function Home() {
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {filteredTools.length > 0 ? (
-                      filteredTools.map((tool) => (
+                      filteredTools.map((tool, index) => (
                         <Link 
                           key={tool.id} 
                           href={tool.route}
-                          className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all group/item"
+                          onMouseEnter={() => setSelectedIndex(index)}
+                          className={cn(
+                            "flex items-center gap-4 p-4 rounded-2xl border border-transparent transition-all group/item",
+                            selectedIndex === index 
+                              ? "bg-primary/10 border-primary/20" 
+                              : "hover:bg-primary/5 hover:border-primary/10"
+                          )}
                         >
-                          <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-500 group-hover/item:text-primary transition-colors">
+                          <div className={cn(
+                            "w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center transition-colors",
+                            selectedIndex === index ? "text-primary border-primary/30" : "text-zinc-500 group-hover/item:text-primary"
+                          )}>
                             <tool.icon className="w-6 h-6" />
                           </div>
                           <div className="text-left min-w-0">
-                            <h4 className="text-white font-bold text-sm tracking-tight group-hover/item:text-primary transition-colors truncate">
+                            <h4 className={cn(
+                              "font-bold text-sm tracking-tight transition-colors truncate",
+                              selectedIndex === index ? "text-primary" : "text-white group-hover/item:text-primary"
+                            )}>
                               {tool.name}
                             </h4>
                             <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-black truncate">
                               {tool.category}
                             </p>
                           </div>
-                          <ArrowRight className="w-4 h-4 ml-auto text-zinc-800 group-hover/item:text-primary transition-all group-hover/item:translate-x-1" />
+                          <ArrowRight className={cn(
+                            "w-4 h-4 ml-auto transition-all",
+                            selectedIndex === index ? "text-primary translate-x-1" : "text-zinc-800 group-hover/item:text-primary group-hover/item:translate-x-1"
+                          )} />
                         </Link>
                       ))
                     ) : (
