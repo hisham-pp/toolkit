@@ -14,7 +14,7 @@ This document tracks the implementation of new utilities for the DevHub toolkit.
 - [x] **SVG to JSX Optimizer** (Formatting/Utils)
   - *Description:* Clean and convert SVGs to React components.
   - *Priority:* Medium
-- [ ] **Visual Cron Builder** (Utils/Generation)
+- [x] **Visual Cron Builder** (Utils/Generation)
   - *Description:* UI-based cron expression generator.
   - *Priority:* Medium
 

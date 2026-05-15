@@ -12,6 +12,7 @@ import {
   Key, 
   AlignLeft, 
   Clock, 
+  Calendar,
   ShieldCheck, 
   Eye,
   Plus,
@@ -405,6 +406,15 @@ export class ToolRegistry {
       "/tools/psk-generator",
       ToolCategory.Security,
       ["psk", "key", "vpn", "wifi", "security"]
+    ),
+    new Tool(
+      "cron-builder",
+      "Cron Builder",
+      "Visual interface to build and generate complex cron expressions for scheduled tasks.",
+      Calendar,
+      "/tools/cron-builder",
+      ToolCategory.Generation,
+      ["cron", "schedule", "builder", "expression", "visual", "generator"]
     ),
     new Tool(
       "uuid-generator",
