@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { M3Textarea } from "@/components/ui/m3-ui";
 import { toast } from "sonner";
-import { generatePdfFromHtml, printElement } from "@/utility/helpers/pdf";
+import { generatePdfFromMarkdown, printElement } from "@/utility/helpers/pdf";
 import { cn } from "@/utility/helpers/utils";
 
 export default function MarkdownToPdf() {
@@ -41,11 +41,9 @@ export default function MarkdownToPdf() {
       return;
     }
 
-    if (!previewRef.current) return;
-
     const toastId = toast.loading("Generating PDF...");
     try {
-      await generatePdfFromHtml(previewRef.current, "markdown-document");
+      await generatePdfFromMarkdown(content, "markdown-document");
       toast.success("PDF generated successfully", { id: toastId });
     } catch (error) {
       console.error(error);
@@ -144,7 +142,7 @@ export default function MarkdownToPdf() {
           <AlertCircle className="w-4 h-4" />
         </div>
         <p className="text-[10px] text-zinc-500 leading-relaxed font-medium">
-          PDF is generated locally in your browser. Styles in the preview (white background) reflect how the document will look in the exported PDF.
+          PDF is generated locally in your browser and rendered as selectable text (headings, lists, tables, code &amp; more) via jspdf-md-renderer. Use Print for a preview-styled hard copy.
         </p>
       </div>
 
