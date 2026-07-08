@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { toCanvas } from "html-to-image";
+import { MdTextRender, type RenderOption } from "jspdf-md-renderer";
 
 export async function generatePdfFromHtml(htmlElement: HTMLElement, fileName: string) {
   try {
@@ -90,6 +91,52 @@ export async function generatePdfFromHtml(htmlElement: HTMLElement, fileName: st
     console.error("PDF Generation Error:", error);
     throw error;
   }
+}
+
+/**
+ * Renders a Markdown string directly into a text-based (selectable) PDF using
+ * the jspdf-md-renderer library (https://github.com/JeelGajera/jspdf-md-renderer),
+ * rather than rasterizing the HTML preview. Supports headings, lists, tables,
+ * code blocks, blockquotes, links and images.
+ */
+export async function generatePdfFromMarkdown(markdown: string, fileName: string) {
+  // A4 portrait in millimetres (210 x 297).
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+
+  const options: RenderOption = {
+    cursor: { x: 12, y: 15 },
+    page: {
+      format: "a4",
+      unit: "mm",
+      orientation: "portrait",
+      maxContentWidth: 186,
+      maxContentHeight: 275,
+      lineSpace: 1.6,
+      defaultLineHeightFactor: 1.25,
+      defaultFontSize: 11,
+      defaultTitleFontSize: 20,
+      topmargin: 15,
+      xpading: 12,
+      xmargin: 12,
+      indent: 5,
+    },
+    font: {
+      regular: { name: "helvetica", style: "normal" },
+      bold: { name: "helvetica", style: "bold" },
+      light: { name: "helvetica", style: "normal" },
+      italic: { name: "helvetica", style: "italic" },
+      boldItalic: { name: "helvetica", style: "bolditalic" },
+      code: { name: "courier", style: "normal" },
+    },
+    footer: {
+      showPageNumbers: true,
+    },
+    // Required by the renderer; we don't need the final cursor position.
+    endCursorYHandler: () => {},
+  };
+
+  await MdTextRender(doc, markdown, options);
+  doc.save(`${fileName}.pdf`);
 }
 
 export function generatePdfFromText(text: string, fileName: string) {
